@@ -1,0 +1,8 @@
+openai
+gspread
+google-auth
+pinecone-client
+cassandra-driver
+langchain
+tiktoken
+protobuf~=3.19.0

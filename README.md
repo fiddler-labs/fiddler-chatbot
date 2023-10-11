@@ -1,2 +1,2 @@
-# fiddler-chatbot
-This repo stores the code for the Fiddler chatbot available on docs.fiddler.ai
+# fiddlerchat
+This is a ChatBot poweredby OpenAI to answer questions about Fiddler Documentation
