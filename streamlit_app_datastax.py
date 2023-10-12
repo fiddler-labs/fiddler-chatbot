@@ -36,7 +36,7 @@ class StreamHandler(BaseCallbackHandler):
 ASTRA_DB_SECURE_BUNDLE_PATH = 'datastax_auth/secure-connect-fiddlerai.zip'
 ASTRA_DB_TOKEN_JSON_PATH = 'datastax_auth/danny@fiddler.ai-token.json'
 ASTRA_DB_KEYSPACE = 'fiddlerai'
-ASTRA_DB_TABLE_NAME = 'fiddler_doc_snippets_llmprovider'
+ASTRA_DB_TABLE_NAME = 'fiddler_doc_snippets_openai'
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
 # models
@@ -188,6 +188,7 @@ def erase_history():
 
 
 def main():
+    text=''
     # st.image('poweredby.jpg', width=550)
     st.title("Fiddler Chatbot")
     if not st.session_state[UUID] or st.session_state[UUID] is None:
@@ -215,7 +216,10 @@ def main():
                                               memory=st.session_state[MEMORY], max_tokens_limit=4000,return_source_documents=True)
 
             full_response = qa(prompt)
+            
+
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
+        text = str(full_response["source_documents"])
         st.session_state[ANSWER] = full_response["answer"]
         store_query(full_response["question"], full_response["answer"], full_response["source_documents"])
 
@@ -234,6 +238,8 @@ def main():
             if not st.session_state[WHATEVER] or st.session_state[WHATEVER] is None:
                 st.button("🤷", key="neutral", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID]})
             # User input
+            
+    st.markdown(text)
 
 if __name__ == "__main__":
     main()
