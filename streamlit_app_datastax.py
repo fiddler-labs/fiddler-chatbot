@@ -189,7 +189,7 @@ def erase_history():
 
 def main():
     text=''
-    # st.image('poweredby.jpg', width=550)
+    # st.image('images/poweredby.jpg', width=550)
     st.title("Fiddler Chatbot")
     if not st.session_state[UUID] or st.session_state[UUID] is None:
         st.session_state[UUID] = uuid_g.uuid4()
@@ -204,7 +204,7 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        with st.chat_message("assistant", avatar="logo.png"):
+        with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
             llm = ChatOpenAI(model_name=GPT_MODEL, streaming=True, callbacks=[callback],
                              temperature=0)
