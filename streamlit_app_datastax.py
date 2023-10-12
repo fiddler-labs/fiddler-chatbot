@@ -219,7 +219,7 @@ def main():
             
 
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
-        text = str(full_response["source_documents"])
+        #text = str(full_response["source_documents"])
         st.session_state[ANSWER] = full_response["answer"]
         store_query(full_response["question"], full_response["answer"], full_response["source_documents"])
 
@@ -239,7 +239,7 @@ def main():
                 st.button("🤷", key="neutral", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID]})
             # User input
             
-    st.markdown(text)
+    #st.markdown(text)
 
 if __name__ == "__main__":
     main()
