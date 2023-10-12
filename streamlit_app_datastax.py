@@ -34,10 +34,10 @@ class StreamHandler(BaseCallbackHandler):
 
         
 ASTRA_DB_SECURE_BUNDLE_PATH = 'datastax_auth/secure-connect-fiddlerai.zip'
-ASTRA_DB_TOKEN_JSON_PATH = 'datastax_auth/danny@fiddler.ai-token.json'
 ASTRA_DB_KEYSPACE = 'fiddlerai'
 ASTRA_DB_TABLE_NAME = 'fiddler_doc_snippets_openai'
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+ASTRA_DB_APPLICATION_TOKEN = os.environ.get('ASTRA_DB_APPLICATION_TOKEN')
 
 # models
 EMBEDDING_MODEL = "text-embedding-ada-002"
@@ -66,21 +66,11 @@ cloud_config= {
   "secure_connect_bundle": ASTRA_DB_SECURE_BUNDLE_PATH
 }
 
-with open(ASTRA_DB_TOKEN_JSON_PATH) as f:
-    secrets = json.load(f)
-ASTRA_DB_APPLICATION_TOKEN = secrets["token"] # token is pulled from your token json file
-
 auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
 cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
 astraSession = cluster.connect()
 
-#index_name = "fiddlerchat"
-#pinecone.init(api_key=os.environ["PINECONE_API_KEY"], environment="gcp-starter")
-#index = pinecone.Index(index_name)
-
 embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
-#docsearch = Pinecone.from_existing_index(index_name, embeddings)
-
 
 docsearch_preexisting = Cassandra(
     embedding=embeddings,
@@ -88,7 +78,6 @@ docsearch_preexisting = Cassandra(
     keyspace=ASTRA_DB_KEYSPACE,
     table_name=ASTRA_DB_TABLE_NAME,
 )
-
 
 non_stream_llm = ChatOpenAI(model_name=GPT_MODEL, temperature=0)
 memory = ConversationSummaryBufferMemory(llm=non_stream_llm, memory_key="chat_history", return_messages=True, max_tokens_limit=50, output_key='answer')
@@ -104,6 +93,7 @@ THUMB_DOWN = "thumbs_down_button"
 WHATEVER = "neutral"
 COMMENT = "comment"
 UUID = 'uuid'
+SESSION_ID = 'session_id'
 
 
 if THUMB_DOWN not in st.session_state:
@@ -126,6 +116,9 @@ if ANSWER not in st.session_state:
     
 if UUID not in st.session_state:
     st.session_state[UUID] = None
+    
+if SESSION_ID not in st.session_state:
+    st.session_state[SESSION_ID] = None
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -154,9 +147,10 @@ def store_query(
     
     astraSession.execute(
                 "INSERT INTO fiddlerai.fiddler_chatbot_history \
-                (row_id, question, question_vector, source_docs, source_docs_vector, response, response_vector, ts) \
-                VALUES (%s,%s,%s,%s,%s,%s,%s, toTimestamp(now())) " ,
-                [str(st.session_state[UUID]), query.replace("'","''"), get_embeddings(query), sd, get_embeddings(sd), response.replace("'","''"), get_embeddings(response)]
+                (row_id, session_id, question, question_vector, source_docs, source_docs_vector, response, response_vector, ts) \
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s, toTimestamp(now())) " ,
+                [str(st.session_state[UUID]), str(st.session_state[SESSION_ID]), query.replace("'","''"), get_embeddings(query), sd, \
+                 get_embeddings(sd), response.replace("'","''"), get_embeddings(response)]
     )
     return
     
@@ -185,6 +179,7 @@ def erase_history():
     st.session_state[ANSWER] = None
     st.session_state[COMMENT] = ""
     st.session_state[UUID] = None
+    st.session_state[SESSION_ID] = None
 
 
 def main():
@@ -193,6 +188,9 @@ def main():
     st.title("Fiddler Chatbot")
     if not st.session_state[UUID] or st.session_state[UUID] is None:
         st.session_state[UUID] = uuid_g.uuid4()
+    
+    if not st.session_state[SESSION_ID] or st.session_state[SESSION_ID] is None:
+        st.session_state[SESSION_ID] = uuid_g.uuid4()
     
     if st.session_state.messages:
         for message in st.session_state.messages:
