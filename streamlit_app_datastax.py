@@ -43,6 +43,19 @@ ASTRA_DB_APPLICATION_TOKEN = os.environ.get('ASTRA_DB_APPLICATION_TOKEN')
 EMBEDDING_MODEL = "text-embedding-ada-002"
 GPT_MODEL = "gpt-3.5-turbo"
 
+openai.api_key = os.environ.get('OPENAI_API_KEY')
+MEMORY = 'memory'
+QA = "qa"
+ANSWER = 'answer'
+COL_RANGE = 'A:F'
+THUMB_UP = "thumbs_up_button"
+THUMB_DOWN = "thumbs_down_button"
+WHATEVER = "neutral"
+COMMENT = "comment"
+UUID = 'uuid'
+SESSION_ID = 'session_id'
+DB_CONN = 'db_conn'
+
 template = """You are a tool called Fiddler Chatbot. 
 Your purpose is to use the below documentation from the company Fiddler to answer the subsequent documentation questions.
 Also, if possible, give the reference URLs according to the following instructions. 
@@ -66,34 +79,13 @@ cloud_config= {
   "secure_connect_bundle": ASTRA_DB_SECURE_BUNDLE_PATH
 }
 
-auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
-cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
-astraSession = cluster.connect()
-
 embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
 
-docsearch_preexisting = Cassandra(
-    embedding=embeddings,
-    session=astraSession,
-    keyspace=ASTRA_DB_KEYSPACE,
-    table_name=ASTRA_DB_TABLE_NAME,
-)
+
 
 non_stream_llm = ChatOpenAI(model_name=GPT_MODEL, temperature=0)
 memory = ConversationSummaryBufferMemory(llm=non_stream_llm, memory_key="chat_history", return_messages=True, max_tokens_limit=50, output_key='answer')
 question_generator = LLMChain(llm=non_stream_llm, prompt=CONDENSE_QUESTION_PROMPT)
-
-openai.api_key = os.environ.get('OPENAI_API_KEY')
-MEMORY = 'memory'
-QA = "qa"
-ANSWER = 'answer'
-COL_RANGE = 'A:F'
-THUMB_UP = "thumbs_up_button"
-THUMB_DOWN = "thumbs_down_button"
-WHATEVER = "neutral"
-COMMENT = "comment"
-UUID = 'uuid'
-SESSION_ID = 'session_id'
 
 
 if THUMB_DOWN not in st.session_state:
@@ -120,9 +112,23 @@ if UUID not in st.session_state:
 if SESSION_ID not in st.session_state:
     st.session_state[SESSION_ID] = None
 
+if DB_CONN not in st.session_state:
+    st.session_state[DB_CONN] = None
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
+    auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
+    cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
+    st.session_state[DB_CONN] = cluster.connect()
+    
+docsearch_preexisting = Cassandra(
+    embedding=embeddings,
+    session=st.session_state[DB_CONN],
+    keyspace=ASTRA_DB_KEYSPACE,
+    table_name=ASTRA_DB_TABLE_NAME,
+)
     
 def get_embeddings(text: str):
     
@@ -145,6 +151,7 @@ def store_query(
 
     sd = sd.replace("'","''")
     
+    astraSession = st.session_state[DB_CONN]
     astraSession.execute(
                 "INSERT INTO fiddlerai.fiddler_chatbot_history \
                 (row_id, session_id, question, question_vector, source_docs, source_docs_vector, response, response_vector, ts) \
@@ -157,6 +164,7 @@ def store_query(
     
 def store_feedback(uuid, feedback=-1):
 
+    astraSession = st.session_state[DB_CONN]
     astraSession.execute(
                 f"UPDATE fiddlerai.fiddler_chatbot_history SET feedback = {feedback} WHERE row_id = '{uuid}'"
     )
@@ -166,6 +174,7 @@ def store_feedback(uuid, feedback=-1):
 def store_comment(uuid):
 
     comment = str(st.session_state[COMMENT]).replace("'","''")
+    astraSession = st.session_state[DB_CONN]
     astraSession.execute(
                 f"UPDATE fiddlerai.fiddler_chatbot_history SET comment = '{comment}' WHERE row_id = '{uuid}'"
     )
