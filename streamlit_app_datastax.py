@@ -132,6 +132,14 @@ docsearch_preexisting = Cassandra(
     
 def get_embeddings(text: str):
     
+    
+    # Define the maximum length you want
+    max_length = 8192  # This is the longest length of text that OpenAI can produce embeddings for.
+
+    # Truncate the string
+    if len(text) > max_length:
+        text = text[:max_length]
+    
     response = openai.Embedding.create(model=EMBEDDING_MODEL, input=text)
     return response["data"][0]["embedding"]
 
