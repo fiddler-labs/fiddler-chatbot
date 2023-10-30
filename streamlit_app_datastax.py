@@ -239,10 +239,9 @@ def main():
         store_query(full_response["question"], full_response["answer"], full_response["source_documents"])
 
     if st.session_state[ANSWER] is not None:
-        st.button("Reset Chat History", on_click=erase_history)
-        st.text_input("Any comments on the bot response?", key="comment", on_change=store_comment, kwargs={'uuid': st.session_state[UUID]}, value="")
+        
         # Display thumbs up and thumbs down buttons
-        col1, col2, col3 = st.columns([0.5, 0.5, 5])
+        col1, col2, col3, col4 = st.columns([0.5, 0.5, 0.5, 4.5])
         with col1:
             if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
                 st.button("👍", key="thumbs_up_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 1})
@@ -252,9 +251,20 @@ def main():
         with col3:
             if not st.session_state[WHATEVER] or st.session_state[WHATEVER] is None:
                 st.button("🤷", key="neutral", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID]})
-            # User input
+        with col4:
+            st.button("Reset Chat History", on_click=erase_history)
+        
+        with st.expander("Click here to leave your feedback on the chatbot response"):
+            st.text_input("Leave your comments here.", key="comment", on_change=store_comment, kwargs={'uuid': st.session_state[UUID]}, value="")
             
-    #st.markdown(text)
+        hide = """
+        <style>
+            ul.streamlit-expander {
+                border: 0 !important;
+        </style>
+        """
+
+        st.markdown(hide, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
