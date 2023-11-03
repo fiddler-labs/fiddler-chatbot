@@ -1,50 +1,5 @@
 text
 "---
-title: ""Release 23.5 Notes""
-slug: ""release-235-notes""
-createdAt: ""2023-10-18T20:05:05.046Z""
-hidden: false
----
-This page enumerates the new features and updates in Release 23.5 of the Fiddler platform.
-
-## Release of Fiddler platform version 23.5:
-
-- Support for new `Vector` data type
-
-- Support for new `Frequency` statistics metric
-
-- Support for new `NOT_SET` task type
-
-- New standalone bookmarks page
-
-- Contact your customer success team to get access and documentation to the below:
-  - Addition of LLM task
-  - Auto embeddings on Text (Prompt, Response, etc) and Image data 
-  - Auto enrichments of Toxicity, PII, and Hallucination on LLM task
-  - 3D UMAP visualization of high-dimensional embeddings
-  - Support for user-defined metrics -> Custom metrics.  Alerts can be set on these custom metrics and plotted in charts and dashboards.
-
-## What's New and Improved:
-
-- **New Vector input type**
-  - You can now create custom features from Vector data type
-  - The DI violation functionality on vector data types is now available to quickly detect any issues in your data pipelines. As vector and embedding pipelines are complex and prone to errors, we hope this functionality will be of value.
-    - Violation of value - Dimension does not match the expected dimension
-    - Violation of nullable - Vector length equals zero or received NULL value
-    - Violation of type - Value is not of the type of VECTOR or VECTOR contains a non-numerical type
-  - Clusters of Text Embeddings have a short summary to understand which of your clusters have the most problematic drift.
-  - Events of a particular cluster can be queried in the 'Analyze' tab of the model. This can be used to pinpoint the most problematic prompts/responses in an LLM scenario or images in a CV scenario. This information can be used to improve your models. 
-- **New Task Type for Task-less Models**
-  - You can now add models without a task by choosing the `NOT_SET` task type when onboarding your model.
-  - Note that task-less models have no restrictions on output and target columns, but performance metrics are disabled when a task is not specified.
-- **Standalone Bookmarks Page**
-  - Access all your bookmarked projects, models, datasets, charts, and dashboards through the Bookmarks page in the navigation bar.
-  - Learn more on the [Product Tour](doc:product-tour)
-
-### Client Version
-
-Client version 2.1+ is required for the updates and features mentioned in this release."
-"---
 title: ""fdl.FiddlerApi""
 slug: ""client-setup""
 hidden: false
@@ -7726,6 +7681,184 @@ As stated above, Fiddler requires a Kubernetes cluster to install into.  The fol
   | :------------ | :----- | :--------- | :--------- |
   | Minimum       | m5.4xl | Std_D16_v3 | c2d_std_16 |
   | Recommended   | m5.8xl | Std_D32_v3 | c2d_std_32 |"
+"---
+title: ""Release 23.2 Notes""
+slug: ""release-232""
+createdAt: ""2023-06-21T18:53:58.434Z""
+hidden: false
+---
+This page enumerates the new features and updates in Release 23.2 of the Fiddler platform.
+
+## Release of Fiddler platform version 23.2:
+
+- Support for uploading multiple baselines to a model
+
+- Alert context overlay on the chart editor
+
+- Ability to customize scale and range of y-axis on the chart editor
+
+## What's New and Improved:
+
+- **Support for uploading multiple baselines**
+  - Flexibility to add baseline datasets or use production data as the baseline.
+  - Perform comparisons amongst multiple baselines to understand how different baselines — data shifts due seasonality or geography for example — may influence model drift and model behavior.
+  - Learn more on the [Baselines Platform Guide](doc:fiddler-baselines).
+
+- **Alert context overlay on the chart editor**
+  - For absolute alerts, alert context is an overlay on the chart area to easily identify critical and warning thresholds.
+  - For relative alerts, Fiddler will automatically plot historic comparison data for additional context on why the alert fired.
+
+- **Customization in the chart editor**
+  - Further customize charts by toggling between logarithmic and linear scale, and manually setting the min and max values of the y-axis.
+  - Learn more on the [Monitoring Charts](doc:monitoring-charts-ui) page.
+
+### Client Version
+
+Client version 1.8 is required for the updates and features mentioned in this release."
+"---
+title: ""Release 23.3 Notes""
+slug: ""release-233""
+createdAt: ""2023-08-15T18:03:45.797Z""
+hidden: false
+---
+This page enumerates the new features and updates in Release 23.3 of the Fiddler platform.
+
+> 📘 Platform Release Version 23.3 & Doc v1.8 compatability note
+> 
+> Note that the documentation version remains v1.8 with this release. The new and improved functionalities are added to their respective pages with the note regarding platform version 23.3 as a requirement.
+
+## Release of Fiddler platform version 23.3:
+
+- Support for added charting up to 6 metrics for one or multiple models 
+
+- Ability to assign metrics to the left or right y-axis in monitoring charts
+
+- Addition of automatically created model monitoring dashboards
+
+- New Root Cause Analysis tab with data drift and data integrity information in monitoring charts 
+
+## What's New and Improved:
+
+- **Multiple metric queries in monitoring charts**
+  - Flexibility to add up to 6 metrics queries to visualize multiple metrics or models in one chart.
+  - Enables model-to-model comparison in a single chart.
+  - Learn more on the [Monitoring Charts Platform Guide](doc:monitoring-charts-platform).
+
+- **Y-axis assignment in monitoring charts**
+  - Further, customize charts by assigning metric queries to a left or right y-axis in the customize tab.
+  - Learn more on the [Monitoring Charts UI Guide](doc:monitoring-charts-ui).
+
+- **Automatically generated model dashboards**
+  - Fiddler will automatically create a model dashboard for all models added to the platform, consisting of charts that display data drift, performance, data integrity, and traffic information.
+  - Learn more on the[Dashboards Platform Guide](doc:dashboards-platform).
+
+- **Root cause analysis in monitoring charts**
+  - Examine specific timestamps within a monitoring time series chart to reveal the underlying reasons for model underperformance, using visualizations of data drift and data integrity insights.
+  - Learn more on the page  [Monitoring Charts UI Guide](doc:monitoring-charts-ui).
+
+### Client Version
+
+Client version 1.8 is required for the updates and features mentioned in this release."
+"---
+title: ""Release 23.4 Notes""
+slug: ""release-234-notes""
+createdAt: ""2023-10-06T16:46:58.080Z""
+hidden: false
+---
+> 📘 **Version Numbering Update**
+> 
+> As of version 23.4, the documentation versioning will mirror the **platform release version numbers**, rather than the** client version numbers**.
+> 
+> Please refer to the bottom of the release notes for information on which client version is recommended for a given platform release.
+
+## Release of Fiddler platform version 23.4:
+
+- Support for custom features in Charts, Alerts, and Root Cause Analysis
+- Ability to set alerts on multiple columns at once
+- Support for webhook alert notifications
+- Two new monitoring metrics for analyzing numeric columns (Average and Sum)
+- Improved Python client usability
+
+## What’s New and Improved:
+
+- **Custom Features**
+  - Custom features can plotted on Charts
+  - Alerts can be set on Custom features
+- **Alert Rules on Multiple Columns**
+  - Streamlined the workflow by enabling users to designate alert rules for up to 20 specified columns
+- **Webhook Alert Integration**
+  - Webhook is available as a new destination for alert notifications. 
+- **Statistic Metrics**
+  - Adds a new Metric Type to Charts and Alerts, enabling two new Metrics:
+    - Average (takes the average of a numeric Column)
+    - Sum (takes the sum of a numeric Column)
+  - Learn more on the page [Statistics](doc:statistics)
+- **Python client 2.0**
+  - Refactors the client structure for improved usability (see API documentation for detailed information)
+  - Removed methods:
+    - run_feature_importance
+    - run_explanation
+    - run_fairness
+    - run_model
+  - New methods:
+    - [get_feature_importance](doc:clientget_feature_importance) 
+    - [get_feature_impact](doc:clientget_feature_impact) 
+    - [get_explanation](doc:clientget_explanation) 
+    - [get_fairness](doc:clientget_fairness) 
+    - [get_predictions](doc:clientget_predictions) 
+  - Updated methods:
+    - [get_mutual_information](doc:clientget_mutual_information) 
+    - [add_alert_rule](doc:clientget_alert_rule) 
+    - [get_alert_rules](doc:clientget_alert_rules) 
+
+### Client Version
+
+Client version 2.0 or above is required for the updates and features mentioned in the 23.4 release."
+"---
+title: ""Release 23.5 Notes""
+slug: ""release-235-notes""
+createdAt: ""2023-10-18T20:05:05.046Z""
+hidden: false
+---
+This page enumerates the new features and updates in Release 23.5 of the Fiddler platform.
+
+## Release of Fiddler platform version 23.5:
+
+- Support for new `Vector` data type
+
+- Support for new `Frequency` statistics metric
+
+- Support for new `NOT_SET` task type
+
+- New standalone bookmarks page
+
+- Contact your customer success team to get access and documentation to the below:
+  - Addition of LLM task
+  - Auto embeddings on Text (Prompt, Response, etc) and Image data 
+  - Auto enrichments of Toxicity, PII, and Hallucination on LLM task
+  - 3D UMAP visualization of high-dimensional embeddings
+  - Support for user-defined metrics -> Custom metrics.  Alerts can be set on these custom metrics and plotted in charts and dashboards.
+
+## What's New and Improved:
+
+- **New Vector input type**
+  - You can now create custom features from Vector data type
+  - The DI violation functionality on vector data types is now available to quickly detect any issues in your data pipelines. As vector and embedding pipelines are complex and prone to errors, we hope this functionality will be of value.
+    - Violation of value - Dimension does not match the expected dimension
+    - Violation of nullable - Vector length equals zero or received NULL value
+    - Violation of type - Value is not of the type of VECTOR or VECTOR contains a non-numerical type
+  - Clusters of Text Embeddings have a short summary to understand which of your clusters have the most problematic drift.
+  - Events of a particular cluster can be queried in the 'Analyze' tab of the model. This can be used to pinpoint the most problematic prompts/responses in an LLM scenario or images in a CV scenario. This information can be used to improve your models. 
+- **New Task Type for Task-less Models**
+  - You can now add models without a task by choosing the `NOT_SET` task type when onboarding your model.
+  - Note that task-less models have no restrictions on output and target columns, but performance metrics are disabled when a task is not specified.
+- **Standalone Bookmarks Page**
+  - Access all your bookmarked projects, models, datasets, charts, and dashboards through the Bookmarks page in the navigation bar.
+  - Learn more on the [Product Tour](doc:product-tour)
+
+### Client Version
+
+Client version 2.1+ is required for the updates and features mentioned in this release."
 "---
 title: ""client.add_model_artifact""
 slug: ""clientadd_model_artifact""
