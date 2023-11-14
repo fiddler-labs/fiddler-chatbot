@@ -142,8 +142,8 @@ def get_embeddings(text: str):
     if len(text) > max_length:
         text = text[:max_length]
     
-    response = client.embeddings.create(model=EMBEDDING_MODEL, input=text)
-    return response["data"][0]["embedding"]
+    response = client.embeddings.create(input=[text], model=EMBEDDING_MODEL)
+    return response.data[0].embedding
 
 
 def store_query(
