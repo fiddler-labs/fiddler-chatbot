@@ -1,6 +1,8 @@
 import streamlit as st
 import os
-import openai
+from openai import OpenAI
+
+client = OpenAI(api_key="os.environ.get('OPENAI_API_KEY')")
 import json
 import uuid as uuid_g
 
@@ -43,7 +45,7 @@ ASTRA_DB_APPLICATION_TOKEN = os.environ.get('ASTRA_DB_APPLICATION_TOKEN')
 EMBEDDING_MODEL = "text-embedding-ada-002"
 GPT_MODEL = "gpt-3.5-turbo"
 
-openai.api_key = os.environ.get('OPENAI_API_KEY')
+
 MEMORY = 'memory'
 QA = "qa"
 ANSWER = 'answer'
@@ -140,7 +142,7 @@ def get_embeddings(text: str):
     if len(text) > max_length:
         text = text[:max_length]
     
-    response = openai.Embedding.create(model=EMBEDDING_MODEL, input=text)
+    response = client.embeddings.create(model=EMBEDDING_MODEL, input=text)
     return response["data"][0]["embedding"]
 
 
