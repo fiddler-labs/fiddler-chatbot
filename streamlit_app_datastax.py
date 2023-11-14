@@ -2,7 +2,7 @@ import streamlit as st
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key="os.environ.get('OPENAI_API_KEY')")
+client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 import json
 import uuid as uuid_g
 
