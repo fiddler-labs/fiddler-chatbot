@@ -1,6 +1,4 @@
 openai
-cassandra-driver
-cassio
-langchain
+ragstack-ai==0.3.1
 tiktoken
 protobuf~=3.19.0
