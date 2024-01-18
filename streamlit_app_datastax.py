@@ -65,6 +65,7 @@ The way to create the URLs is: add "https://docs.fiddler.ai/docs/" before the "s
 For any URL references that start with "doc:" or "ref:" 
 use its value to create a URL by adding "https://docs.fiddler.ai/docs/" before that value.
 For reference URLs about release notes add "https://docs.fiddler.ai/changelog/" before the "slug" value of the document. 
+For any URLs found immediately after "BlogLink:" just provide that URL in the output.
 Do not use page titles to create urls. 
 Note that if a user asks about uploading events, it means the same as publishing events.
 If the answer cannot be found in the documentation, write "I could not find an answer.
