@@ -35,28 +35,21 @@ print(f"Running client version {fdl.__version__}")
 
 Before you can register your model with Fiddler, you'll need to connect using our API client.
 
-
 ---
-
 
 **We need a few pieces of information to get started.**
 1. The URL you're using to connect to Fiddler
-
-
-```python
-URL = '' # Make sure to include the full URL (including https://).
-```
-
-
-```python
-ORG_ID = ''
-AUTH_TOKEN = ''
-```
-
 2. Your organization ID
 3. Your authorization token
 
-Both of these can be found by clicking the URL you entered and navigating to the **Settings** page of your Fiddler environment.
+These can be found by navigating to the **Settings** page of your Fiddler environment.
+
+
+```python
+URL = ''  # Make sure to include the full URL (including https://).
+ORG_ID = ''
+AUTH_TOKEN = ''
+```
 
 Now just run the following code block to connect to the Fiddler API!
 

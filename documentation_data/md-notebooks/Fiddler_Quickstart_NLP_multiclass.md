@@ -58,8 +58,7 @@ Next we run the following code block to connect to the Fiddler API.
 client = fdl.FiddlerApi(
     url=URL,
     org_id=ORG_ID,
-    auth_token=AUTH_TOKEN,
-)
+    auth_token=AUTH_TOKEN)
 ```
 
 Once you connect, you can create a new project by specifying a unique project ID in the client's `create_project` function.
@@ -259,7 +258,7 @@ for event_df in event_batches_df:
     timestamp += daily_time_gap
 ```
 
-Publish events
+### Lastly, publish events
 
 
 ```python
@@ -268,7 +267,7 @@ for event_df in event_batches_df:
         project_id=PROJECT_ID,
         model_id=MODEL_ID,
         batch_source=event_df,
-        timestamp_field= 'timestamp' #comment this line if you are not adding timestamps
+        timestamp_field= 'timestamp'
     )
 ```
 

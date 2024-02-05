@@ -285,13 +285,14 @@ def get_cifar_dataloader(train_data=False, batch_size=32, shuffle_data=False, im
         num_workers=2
     )
     return dataloader
-
+  
 # functions to show an image
 def imshow(img):
     img = img / 2 + 0.5     # unnormalize
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
+    
 ```
 
 We'll now extract the embeddings for training data which will serve as baseline for monitoring.
@@ -390,7 +391,7 @@ client.add_model(
 
 # 5. Inject data drift and publish production events
 
-Netx, we'll inject data drift in form of blurring and brightness-reduction. The following cell illustrates these transforms.
+Next, we'll inject data drift in form of blurring and brightness-reduction. The following cell illustrates these transforms.
 
 
 ```python
