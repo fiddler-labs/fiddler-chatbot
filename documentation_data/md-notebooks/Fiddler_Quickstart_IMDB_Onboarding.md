@@ -357,6 +357,16 @@ explanation
 ```
 
 
+```python
+predictions = client.get_predictions(
+    project_id=PROJECT_ID,
+    model_id=MODEL_ID,
+    input_df=baseline_df.iloc[:5],
+)
+predictions
+```
+
+
 
 ---
 

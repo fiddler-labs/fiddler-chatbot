@@ -35,14 +35,10 @@ First we install and import the Fiddler Python client.
 
 
 ```python
-!pip install -q fiddler-client==2.1.0.dev6
+!pip install -q fiddler-client
 import fiddler as fdl
 print(f"Running client version {fdl.__version__}")
 ```
-
-    [33mDEPRECATION: pyodbc 4.0.0-unsupported has a non-standard version number. pip 24.0 will enforce this behaviour change. A possible replacement is to upgrade to a newer version of pyodbc or contact the author to suggest that they release a version with a conforming version number. Discussion can be found at https://github.com/pypa/pip/issues/12063[0m[33m
-    [0mRunning client version 2.1.0.dev6
-
 
 Before you can add information about your model with Fiddler, you'll need to connect using our API client.
 
@@ -57,8 +53,8 @@ The latter two of these can be found by pointing your browser to your Fiddler UR
 
 
 ```python
-URL = 'https://preprod.fiddler.ai'  # Make sure to include the full URL (including https://).
-ORG_ID = 'preprod'
+URL = ''  # Make sure to include the full URL (including https://).
+ORG_ID = ''
 AUTH_TOKEN = ''
 ```
 
@@ -69,15 +65,14 @@ Next we run the following code block to connect to the Fiddler API.
 client = fdl.FiddlerApi(
     url=URL,
     org_id=ORG_ID,
-    auth_token=AUTH_TOKEN,
-)
+    auth_token=AUTH_TOKEN)
 ```
 
 Once you connect, you can create a new project by specifying a unique project ID in the client's `create_project` function.
 
 
 ```python
-PROJECT_ID = 'nlp_newsgroups_danny3'
+PROJECT_ID = 'nlp_newsgroups'
 
 if not PROJECT_ID in client.list_projects():
     print(f'Creating project: {PROJECT_ID}')
@@ -85,9 +80,6 @@ if not PROJECT_ID in client.list_projects():
 else:
     print(f'Project: {PROJECT_ID} already exists')
 ```
-
-    Creating project: nlp_newsgroups_danny3
-
 
 # 2. Upload the Assets and Vectorize Text Data
 
@@ -99,130 +91,6 @@ DATA_PATH = 'https://media.githubusercontent.com/media/fiddler-labs/fiddler-exam
 source_df = pd.read_csv(DATA_PATH + '20newsgroups_preprocessed.csv')
 source_df
 ```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>original_text</th>
-      <th>original_target</th>
-      <th>target</th>
-      <th>n_tokens</th>
-      <th>string_size</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Yeah, do you expect people to read the FAQ, et...</td>
-      <td>alt.atheism</td>
-      <td>religion</td>
-      <td>117</td>
-      <td>539</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Notwithstanding all the legitimate fuss about ...</td>
-      <td>sci.crypt</td>
-      <td>science</td>
-      <td>181</td>
-      <td>987</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>Well, I will have to change the scoring on my ...</td>
-      <td>rec.sport.hockey</td>
-      <td>recreation</td>
-      <td>58</td>
-      <td>341</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>I read somewhere, I think in Morton Smith's _J...</td>
-      <td>soc.religion.christian</td>
-      <td>religion</td>
-      <td>53</td>
-      <td>258</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>Ok.  I have a record that shows a IIsi with an...</td>
-      <td>comp.sys.mac.hardware</td>
-      <td>computer</td>
-      <td>231</td>
-      <td>3266</td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-    </tr>
-    <tr>
-      <th>9327</th>
-      <td>I'd like to share my thoughts on this topic of...</td>
-      <td>soc.religion.christian</td>
-      <td>religion</td>
-      <td>629</td>
-      <td>3391</td>
-    </tr>
-    <tr>
-      <th>9328</th>
-      <td>My sunroof leaks.  I've always thought those t...</td>
-      <td>rec.autos</td>
-      <td>recreation</td>
-      <td>36</td>
-      <td>177</td>
-    </tr>
-    <tr>
-      <th>9329</th>
-      <td>I agree.  Home runs off Clemens are always mem...</td>
-      <td>rec.sport.baseball</td>
-      <td>recreation</td>
-      <td>22</td>
-      <td>121</td>
-    </tr>
-    <tr>
-      <th>9330</th>
-      <td>I used HP DeskJet with Orange Micros Grappler ...</td>
-      <td>comp.sys.mac.hardware</td>
-      <td>computer</td>
-      <td>58</td>
-      <td>278</td>
-    </tr>
-    <tr>
-      <th>9331</th>
-      <td>No argument at all with Murphy.  He scared the...</td>
-      <td>rec.sport.baseball</td>
-      <td>recreation</td>
-      <td>271</td>
-      <td>1360</td>
-    </tr>
-  </tbody>
-</table>
-<p>9332 rows × 5 columns</p>
-</div>
-
-
 
 # Vectorization via Text Embeddings
 
@@ -317,142 +185,6 @@ df_all
 ```
 
 
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>original_text</th>
-      <th>original_target</th>
-      <th>target</th>
-      <th>n_tokens</th>
-      <th>string_size</th>
-      <th>embeddings</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>Yeah, do you expect people to read the FAQ, et...</td>
-      <td>alt.atheism</td>
-      <td>religion</td>
-      <td>117</td>
-      <td>539</td>
-      <td>[0.0080470368266105, -0.0023013832978904, -0.0...</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>Notwithstanding all the legitimate fuss about ...</td>
-      <td>sci.crypt</td>
-      <td>science</td>
-      <td>181</td>
-      <td>987</td>
-      <td>[0.0055142152123153, -0.0208945162594318, 0.01...</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>Well, I will have to change the scoring on my ...</td>
-      <td>rec.sport.hockey</td>
-      <td>recreation</td>
-      <td>58</td>
-      <td>341</td>
-      <td>[-0.0251500103622674, -0.0106350593268871, 0.0...</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>I read somewhere, I think in Morton Smith's _J...</td>
-      <td>soc.religion.christian</td>
-      <td>religion</td>
-      <td>53</td>
-      <td>258</td>
-      <td>[0.0195247139781713, -0.0153835099190473, -0.0...</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>Ok.  I have a record that shows a IIsi with an...</td>
-      <td>comp.sys.mac.hardware</td>
-      <td>computer</td>
-      <td>231</td>
-      <td>3266</td>
-      <td>[-0.0100752981379628, 0.0093823242932558, 0.01...</td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-    </tr>
-    <tr>
-      <th>9327</th>
-      <td>I'd like to share my thoughts on this topic of...</td>
-      <td>soc.religion.christian</td>
-      <td>religion</td>
-      <td>629</td>
-      <td>3391</td>
-      <td>[0.0205918475985527, -0.0005615213303826, -0.0...</td>
-    </tr>
-    <tr>
-      <th>9328</th>
-      <td>My sunroof leaks.  I've always thought those t...</td>
-      <td>rec.autos</td>
-      <td>recreation</td>
-      <td>36</td>
-      <td>177</td>
-      <td>[-0.0117185348644852, -0.0022944109514355, 0.0...</td>
-    </tr>
-    <tr>
-      <th>9329</th>
-      <td>I agree.  Home runs off Clemens are always mem...</td>
-      <td>rec.sport.baseball</td>
-      <td>recreation</td>
-      <td>22</td>
-      <td>121</td>
-      <td>[-0.0085480129346251, -0.0057959374971687, 0.0...</td>
-    </tr>
-    <tr>
-      <th>9330</th>
-      <td>I used HP DeskJet with Orange Micros Grappler ...</td>
-      <td>comp.sys.mac.hardware</td>
-      <td>computer</td>
-      <td>58</td>
-      <td>278</td>
-      <td>[-0.0081979148089885, 0.000937653472647, -0.00...</td>
-    </tr>
-    <tr>
-      <th>9331</th>
-      <td>No argument at all with Murphy.  He scared the...</td>
-      <td>rec.sport.baseball</td>
-      <td>recreation</td>
-      <td>271</td>
-      <td>1360</td>
-      <td>[-0.0178242791444063, -0.0281952694058418, 0.0...</td>
-    </tr>
-  </tbody>
-</table>
-<p>9332 rows × 6 columns</p>
-</div>
-
-
-
-
 ```python
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
@@ -494,224 +226,12 @@ print('accuracy on baseline:{:.2f}'.format(acc_baseline))
 print('accuracy on test data:{:.2f}'.format(acc_production))
 ```
 
-    accuracy on baseline:0.92
-    accuracy on test data:0.89
-
-
 
 ```python
 #baseline_df = baseline_df.drop('embeddings', axis=1)
 #baseline_df['embeddings'][0]
 baseline_df
 ```
-
-
-
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>predicted_target</th>
-      <th>prob_computer</th>
-      <th>prob_forsale</th>
-      <th>prob_recreation</th>
-      <th>prob_religion</th>
-      <th>prob_science</th>
-      <th>original_text</th>
-      <th>original_target</th>
-      <th>target</th>
-      <th>n_tokens</th>
-      <th>string_size</th>
-      <th>embeddings</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>334</th>
-      <td>science</td>
-      <td>0.049720</td>
-      <td>0.015294</td>
-      <td>0.040910</td>
-      <td>0.025433</td>
-      <td>0.868644</td>
-      <td>: Has anyone ever heard of a food product call...</td>
-      <td>sci.space</td>
-      <td>science</td>
-      <td>87</td>
-      <td>482</td>
-      <td>[0.005415956955403, -0.0052763880230486, 0.008...</td>
-    </tr>
-    <tr>
-      <th>6162</th>
-      <td>computer</td>
-      <td>0.749487</td>
-      <td>0.045994</td>
-      <td>0.019984</td>
-      <td>0.016209</td>
-      <td>0.168327</td>
-      <td>Getting an image from a computer monitor to a ...</td>
-      <td>comp.graphics</td>
-      <td>computer</td>
-      <td>108</td>
-      <td>589</td>
-      <td>[0.0003820292768068, -0.0372284166514873, 0.02...</td>
-    </tr>
-    <tr>
-      <th>1057</th>
-      <td>forsale</td>
-      <td>0.068282</td>
-      <td>0.739602</td>
-      <td>0.088766</td>
-      <td>0.032307</td>
-      <td>0.071043</td>
-      <td>The following used CD's are for sale.  They ar...</td>
-      <td>misc.forsale</td>
-      <td>forsale</td>
-      <td>128</td>
-      <td>775</td>
-      <td>[-0.0119583001360297, -0.0272749867290258, -0....</td>
-    </tr>
-    <tr>
-      <th>4889</th>
-      <td>science</td>
-      <td>0.060254</td>
-      <td>0.036090</td>
-      <td>0.072608</td>
-      <td>0.028312</td>
-      <td>0.802736</td>
-      <td>Since your MOSFET is a 1972 vintage, it's prob...</td>
-      <td>sci.electronics</td>
-      <td>science</td>
-      <td>117</td>
-      <td>652</td>
-      <td>[-0.0066026477143168, -0.0114285349845886, -0....</td>
-    </tr>
-    <tr>
-      <th>8785</th>
-      <td>computer</td>
-      <td>0.259612</td>
-      <td>0.088936</td>
-      <td>0.198272</td>
-      <td>0.206862</td>
-      <td>0.246319</td>
-      <td>Are 'Moody Monthly' and 'Moody' the same magaz...</td>
-      <td>soc.religion.christian</td>
-      <td>religion</td>
-      <td>26</td>
-      <td>148</td>
-      <td>[-0.0157314892858266, -0.0035735564306378, 0.0...</td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-      <td>...</td>
-    </tr>
-    <tr>
-      <th>2895</th>
-      <td>science</td>
-      <td>0.284201</td>
-      <td>0.027899</td>
-      <td>0.018825</td>
-      <td>0.012399</td>
-      <td>0.656676</td>
-      <td>Yes.  I use 74HC4066 and others commerically f...</td>
-      <td>sci.electronics</td>
-      <td>science</td>
-      <td>100</td>
-      <td>513</td>
-      <td>[-0.0135004445910453, 0.0036913710646331, -0.0...</td>
-    </tr>
-    <tr>
-      <th>7813</th>
-      <td>science</td>
-      <td>0.140781</td>
-      <td>0.017383</td>
-      <td>0.120168</td>
-      <td>0.063662</td>
-      <td>0.658006</td>
-      <td>Even if they somehow address this issue it is ...</td>
-      <td>sci.crypt</td>
-      <td>science</td>
-      <td>38</td>
-      <td>222</td>
-      <td>[-0.0071658981032669, -0.0195329654961824, 0.0...</td>
-    </tr>
-    <tr>
-      <th>905</th>
-      <td>computer</td>
-      <td>0.937898</td>
-      <td>0.017932</td>
-      <td>0.009471</td>
-      <td>0.007481</td>
-      <td>0.027219</td>
-      <td>Hello,      I am searching for rendering softw...</td>
-      <td>comp.graphics</td>
-      <td>computer</td>
-      <td>39</td>
-      <td>215</td>
-      <td>[-0.0553081035614013, -0.0141412764787673, -0....</td>
-    </tr>
-    <tr>
-      <th>5192</th>
-      <td>science</td>
-      <td>0.153452</td>
-      <td>0.039111</td>
-      <td>0.073378</td>
-      <td>0.030796</td>
-      <td>0.703263</td>
-      <td>For those of you interested in the above Proce...</td>
-      <td>sci.med</td>
-      <td>science</td>
-      <td>114</td>
-      <td>556</td>
-      <td>[0.0026687982026487, 0.0220743585377931, 0.024...</td>
-    </tr>
-    <tr>
-      <th>235</th>
-      <td>science</td>
-      <td>0.191443</td>
-      <td>0.061594</td>
-      <td>0.044375</td>
-      <td>0.032202</td>
-      <td>0.670386</td>
-      <td>Someone in Canada asked me to send him some pu...</td>
-      <td>sci.crypt</td>
-      <td>science</td>
-      <td>101</td>
-      <td>343</td>
-      <td>[-0.0098311584442853, -0.0261749420315027, -0....</td>
-    </tr>
-  </tbody>
-</table>
-<p>2333 rows × 12 columns</p>
-</div>
-
-
 
 # 4. Upload Baseline Data to Fiddler
 
@@ -722,140 +242,6 @@ Now we create a [DatasetInfo](https://docs.fiddler.ai/reference/fdldatasetinfo) 
 dataset_info = fdl.DatasetInfo.from_dataframe(baseline_df, max_inferred_cardinality=100)
 dataset_info
 ```
-
-
-
-
-<div style="border: thin solid rgb(41, 57, 141); padding: 10px;"><h3 style="text-align: center; margin: auto;">DatasetInfo
-</h3><pre>display_name: 
-files: []
-</pre><hr>Columns:<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>column</th>
-      <th>dtype</th>
-      <th>count(possible_values)</th>
-      <th>is_nullable</th>
-      <th>value_range</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>predicted_target</td>
-      <td>CATEGORY</td>
-      <td>5</td>
-      <td>False</td>
-      <td></td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>prob_computer</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.005 - 0.978</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>prob_forsale</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.002 - 0.812</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>prob_recreation</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.004 - 0.972</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>prob_religion</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.002 - 0.96</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>prob_science</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.007 - 0.957</td>
-    </tr>
-    <tr>
-      <th>6</th>
-      <td>original_text</td>
-      <td>STRING</td>
-      <td></td>
-      <td>False</td>
-      <td></td>
-    </tr>
-    <tr>
-      <th>7</th>
-      <td>original_target</td>
-      <td>CATEGORY</td>
-      <td>17</td>
-      <td>False</td>
-      <td></td>
-    </tr>
-    <tr>
-      <th>8</th>
-      <td>target</td>
-      <td>CATEGORY</td>
-      <td>5</td>
-      <td>False</td>
-      <td></td>
-    </tr>
-    <tr>
-      <th>9</th>
-      <td>n_tokens</td>
-      <td>INTEGER</td>
-      <td></td>
-      <td>False</td>
-      <td>1 - 3,136</td>
-    </tr>
-    <tr>
-      <th>10</th>
-      <td>string_size</td>
-      <td>INTEGER</td>
-      <td></td>
-      <td>False</td>
-      <td>5 - 7,870</td>
-    </tr>
-    <tr>
-      <th>11</th>
-      <td>embeddings</td>
-      <td>VECTOR</td>
-      <td></td>
-      <td>False</td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-</div></div>
-
-
 
 Next we call the [upload_dataset()](https://docs.fiddler.ai/reference/clientupload_dataset) API to upload a baseline  to Fiddler. In addition to the baseline data, we also uploaded the whole production data framework as the 'test_data' dataset which allows us to look at the model performance metrics for unseen data.
 
@@ -878,13 +264,6 @@ else:
                'The new dataset is not uploaded. (please use a different name.)') 
 ```
 
-    Upload dataset newsgroups_baseline
-
-
-    baseline.parquet: 100%|██████████| 1/1 [00:04<00:00,  4.22s/it]
-    test_data.parquet: 100%|██████████| 1/1 [00:08<00:00,  8.69s/it]
-
-
 # 5. Add Metadata About the Model
 
 Next we should tell Fiddler a bit more about our model by creating a [model_info](https://docs.fiddler.ai/reference/fdlmodelinfo) object that specifies the model's task, inputs, outputs, and other information such as the custom features and the targets for a multi-class classification model.
@@ -898,34 +277,6 @@ In addition to univariate numerical features which Fiddler monitors by default, 
 Before creating a model info object, we define a custom feature using the [CustomFeature.from_columns()](https://docs.fiddler.ai/reference/fdlcustomfeaturefrom_columns) API. When creating a custom feature, a name must be assigned to the custom feature using the `custom_name` argument. Each custom feature appears in the monitoring tab in Fiddler UI with this assigned name. Finally, the default clustering setup can be modified by passing the number of cluster centroids to the `n_clusters` argument.
 
 Here we define a custom feature that is a vector whose elements are stored in columns that are the dimensions of the OpenAI embeddings.
-
-
-```python
-??fdl.TextEmbedding
-```
-
-
-    [0;31mInit signature:[0m
-    [0mfdl[0m[0;34m.[0m[0mTextEmbedding[0m[0;34m([0m[0;34m[0m
-    [0;34m[0m    [0;34m*[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m    [0mname[0m[0;34m:[0m [0mstr[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m    [0mtype[0m[0;34m:[0m [0mfiddler[0m[0;34m.[0m[0mschemas[0m[0;34m.[0m[0mcustom_features[0m[0;34m.[0m[0mCustomFeatureType[0m [0;34m=[0m [0;34m<[0m[0mCustomFeatureType[0m[0;34m.[0m[0mFROM_TEXT_EMBEDDING[0m[0;34m:[0m [0;34m'FROM_TEXT_EMBEDDING'[0m[0;34m>[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m    [0mn_clusters[0m[0;34m:[0m [0mint[0m [0;34m=[0m [0;36m5[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m    [0mcentroids[0m[0;34m:[0m [0mList[0m [0;34m=[0m [0;32mNone[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m    [0mcolumns[0m[0;34m:[0m [0mList[0m[0;34m[[0m[0mstr[0m[0;34m][0m [0;34m=[0m [0;32mNone[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m    [0mcolumn[0m[0;34m:[0m [0mstr[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m    [0msource_column[0m[0;34m:[0m [0mstr[0m [0;34m=[0m [0;32mNone[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m    [0mn_tags[0m[0;34m:[0m [0mint[0m [0;34m=[0m [0;36m5[0m[0;34m,[0m[0;34m[0m
-    [0;34m[0m[0;34m)[0m [0;34m->[0m [0;32mNone[0m[0;34m[0m[0;34m[0m[0m
-    [0;31mSource:[0m        
-    [0;32mclass[0m [0mTextEmbedding[0m[0;34m([0m[0mVectorFeature[0m[0;34m)[0m[0;34m:[0m[0;34m[0m
-    [0;34m[0m    [0mtype[0m[0;34m:[0m [0mCustomFeatureType[0m [0;34m=[0m [0mCustomFeatureType[0m[0;34m.[0m[0mFROM_TEXT_EMBEDDING[0m[0;34m[0m
-    [0;34m[0m    [0mn_tags[0m[0;34m:[0m [0mOptional[0m[0;34m[[0m[0mint[0m[0;34m][0m [0;34m=[0m [0mDEFAULT_NUM_TAGS[0m[0;34m[0m[0;34m[0m[0m
-    [0;31mFile:[0m           ~/opt/anaconda3/lib/python3.8/site-packages/fiddler/schemas/custom_features.py
-    [0;31mType:[0m           ModelMetaclass
-    [0;31mSubclasses:[0m     
-
-
 
 
 ```python
@@ -965,271 +316,6 @@ model_info
 ```
 
 
-
-
-<div style="border: thin solid rgb(41, 57, 141); padding: 10px;"><h3 style="text-align: center; margin: auto;">ModelInfo
-</h3><pre>  display_name:  model
-  description: A multi-class calssifier trained on NLP embeddings.
-  input_type: ModelInputType.TABULAR
-  model_task: ModelTask.MULTICLASS_CLASSIFICATION
-  target_class_order: ['computer', 'forsale', 'recreation', 'religion', 'science']
-  preferred_explanation: None
-  custom_explanation_names: []
-  misc: {}</pre><hr>targets:<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>column</th>
-      <th>dtype</th>
-      <th>count(possible_values)</th>
-      <th>is_nullable</th>
-      <th>value_range</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>target</td>
-      <td>CATEGORY</td>
-      <td>5</td>
-      <td>False</td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-</div><hr>inputs:<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>column</th>
-      <th>dtype</th>
-      <th>count(possible_values)</th>
-      <th>is_nullable</th>
-      <th>value_range</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>embeddings</td>
-      <td>VECTOR</td>
-      <td></td>
-      <td>False</td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-</div><hr>outputs:<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>column</th>
-      <th>dtype</th>
-      <th>count(possible_values)</th>
-      <th>is_nullable</th>
-      <th>value_range</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>prob_computer</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.005 - 0.978</td>
-    </tr>
-    <tr>
-      <th>1</th>
-      <td>prob_forsale</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.002 - 0.812</td>
-    </tr>
-    <tr>
-      <th>2</th>
-      <td>prob_recreation</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.004 - 0.972</td>
-    </tr>
-    <tr>
-      <th>3</th>
-      <td>prob_religion</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.002 - 0.96</td>
-    </tr>
-    <tr>
-      <th>4</th>
-      <td>prob_science</td>
-      <td>FLOAT</td>
-      <td></td>
-      <td>False</td>
-      <td>0.007 - 0.957</td>
-    </tr>
-  </tbody>
-</table>
-</div><hr>custom features:<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>name</th>
-      <th>type</th>
-      <th>column</th>
-      <th>source</th>
-      <th>embeddings</th>
-      <th>n_clusters</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>openai_embeddings</td>
-      <td>FROM_TEXT_EMBEDDING</td>
-      <td>embeddings</td>
-      <td>original_text</td>
-      <td>embeddings</td>
-      <td>6</td>
-    </tr>
-  </tbody>
-</table>
-</div><hr>decisions:<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>column</th>
-      <th>dtype</th>
-      <th>count(possible_values)</th>
-      <th>is_nullable</th>
-      <th>value_range</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>predicted_target</td>
-      <td>CATEGORY</td>
-      <td>5</td>
-      <td>False</td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-</div><hr>metadata:<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>column</th>
-      <th>dtype</th>
-      <th>count(possible_values)</th>
-      <th>is_nullable</th>
-      <th>value_range</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>original_text</td>
-      <td>STRING</td>
-      <td></td>
-      <td>False</td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-</div></div>
-
-
-
-
 ```python
 MODEL_ID = 'logistic_regression'
 
@@ -1243,46 +329,6 @@ if not MODEL_ID in client.list_models(project_id=PROJECT_ID):
 else:
     print(f'Model: {MODEL_ID} already exists in Project: {PROJECT_ID}. Please use a different name.')
 ```
-
-
-    ---------------------------------------------------------------------------
-
-    AsyncJobFailed                            Traceback (most recent call last)
-
-    <ipython-input-33-b109332fb61e> in <module>
-          2 
-          3 if not MODEL_ID in client.list_models(project_id=PROJECT_ID):
-    ----> 4     client.add_model(
-          5         project_id=PROJECT_ID,
-          6         dataset_id=DATASET_ID,
-
-
-    ~/opt/anaconda3/lib/python3.8/site-packages/fiddler/utils/decorators.py in wrapper(*args, **kwargs)
-         71     def wrapper(*args, **kwargs):
-         72         try:
-    ---> 73             return func(*args, **kwargs)
-         74         except HTTPError as error:
-         75             logger.error(
-
-
-    ~/opt/anaconda3/lib/python3.8/site-packages/fiddler/api/model_mixin.py in add_model(self, project_id, model_id, dataset_id, model_info, is_sync)
-        139         if model.job_uuid and is_sync:
-        140             job_name = f'Model[{project_id}/{model_id}] - Initializing monitoring'
-    --> 141             self.wait_for_job(uuid=model.job_uuid, job_name=job_name)  # type: ignore  # noqa
-        142 
-        143         return model
-
-
-    ~/opt/anaconda3/lib/python3.8/site-packages/fiddler/api/job_mixin.py in wait_for_job(self, uuid, interval, timeout, job_name)
-         85                 logger.info('%s: successfully completed', log_prefix)
-         86             elif job.status == JobStatus.FAILURE:
-    ---> 87                 raise AsyncJobFailed(
-         88                     f'{log_prefix} failed with {job.error_reason or "Exception"}: '
-         89                     f'{job.error_message}'
-
-
-    AsyncJobFailed: Model[nlp_newsgroups_danny3/logistical_regression] - Initializing monitoring failed with IndexError: tuple index out of range
-
 
 # 6. Manufacture Synthetic Data Drift and Publish Production Events
 
@@ -1403,8 +449,3 @@ Check out [our docs](https://docs.fiddler.ai/) for a more detailed explanation o
 Join our [community Slack](http://fiddler-community.slack.com/) to ask any questions!
 
 If you're still looking for answers, fill out a ticket on [our support page](https://fiddlerlabs.zendesk.com/) and we'll get back to you shortly.
-
-
-```python
-
-```

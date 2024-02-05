@@ -60,7 +60,7 @@ Once you connect, you can create a new project by specifying a unique project ID
 
 
 ```python
-PROJECT_ID = 'danny3_search_ranking'
+PROJECT_ID = 'search_ranking_example'
 
 if not PROJECT_ID in client.list_projects():
     print(f'Creating project: {PROJECT_ID}')
@@ -75,8 +75,8 @@ Now we retrieve the Expedia Dataset as a baseline for this model.
 
 
 ```python
-df = pd.read_csv("https://media.githubusercontent.com/media/fiddler-labs/fiddler-examples/main/quickstart/data/expedia_baseline_data.csv")
-df.head()
+baseline_df = pd.read_csv("https://media.githubusercontent.com/media/fiddler-labs/fiddler-examples/main/quickstart/data/expedia_baseline_data.csv")
+baseline_df
 ```
 
 Fiddler uses this baseline dataset to keep track of important information about your data.
@@ -89,7 +89,7 @@ You can construct a `DatasetInfo` object to be used as **a schema for keeping tr
 
 
 ```python
-dataset_info = fdl.DatasetInfo.from_dataframe(df=df, max_inferred_cardinality=100)
+dataset_info = fdl.DatasetInfo.from_dataframe(df=baseline_df, max_inferred_cardinality=100)
 dataset_info
 ```
 
@@ -104,7 +104,7 @@ Then use the client's [upload_dataset](https://docs.fiddler.ai/reference/clientu
 ```python
 DATASET_ID = 'expedia_data'
 client.upload_dataset(project_id=PROJECT_ID,
-                      dataset={'baseline': df},
+                      dataset={'baseline': baseline_df},
                       dataset_id=DATASET_ID,
                       info=dataset_info)
 ```
@@ -113,7 +113,7 @@ client.upload_dataset(project_id=PROJECT_ID,
 
 
 ```python
-#create model directory to sotre your model files
+#create model directory to store your model files
 import os
 model_dir = "model"
 os.makedirs(model_dir)
@@ -137,7 +137,7 @@ This will be the list of possible values for the target **ordered**. The first e
 
 ```python
 target = 'binary_relevance'
-features = list(df.drop(columns=['binary_relevance', 'score', 'graded_relevance', 'position']).columns)
+features = list(baseline_df.drop(columns=['binary_relevance', 'score', 'graded_relevance', 'position']).columns)
 
 model_info = fdl.ModelInfo.from_dataset_info(
     dataset_info=client.get_dataset_info(project_id=PROJECT_ID, dataset_id=DATASET_ID),
@@ -230,7 +230,7 @@ To explain a model's inner workigs we need to upload the model artifacts. We wil
 
 ```python
 import urllib.request
-urllib.request.urlretrieve("https://github.com/fiddler-labs/fiddler-examples/blob/main/quickstart/models/ranking_model.pkl", "model/model.pkl")
+urllib.request.urlretrieve("https://raw.githubusercontent.com/fiddler-labs/fiddler-examples/main/quickstart/models/model_ranking.pkl", "model/model.pkl")
 ```
 
 ### 3.d Upload the model files to Fiddler
@@ -258,7 +258,7 @@ client.add_model_artifact(
 )
 ```
 
-# 5. Send Traffic For Monitoring
+# 5. Publish Events For Monitoring
 
 ### 5.a Gather and prepare Production Events
 This is the production log file we are going to upload in Fiddler.
@@ -266,12 +266,12 @@ This is the production log file we are going to upload in Fiddler.
 
 ```python
 df_logs = pd.read_csv('https://media.githubusercontent.com/media/fiddler-labs/fiddler-examples/main/quickstart/data/expedia_logs.csv')
-df_logs.tail()
+df_logs
 ```
 
 
 ```python
-#timeshift to move the data to last 29 days
+#timeshift the data to be current day
 df_logs['time_epoch'] = df_logs['time_epoch'] + (float(time.time()) - df_logs['time_epoch'].max())
 ```
 
@@ -282,11 +282,7 @@ You can use the `convert_flat_csv_data_to_grouped` utility function to do the tr
 
 ```python
 df_logs_grouped = fdl.utils.pandas_helper.convert_flat_csv_data_to_grouped(input_data=df_logs, group_by_col='srch_id')
-```
-
-
-```python
-df_logs_grouped.head(2)
+df_logs_grouped
 ```
 
 ### 5.b Publish events
@@ -299,7 +295,7 @@ client.publish_events_batch(project_id=PROJECT_ID,
                             timestamp_field='time_epoch')
 ```
 
-# 7. Get insights
+# 6. Get insights
 
 
 **You're all done!**

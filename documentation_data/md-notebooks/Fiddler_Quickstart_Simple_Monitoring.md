@@ -11,11 +11,12 @@ You can start using Fiddler ***in minutes*** by following these 7 quick steps:
 2. Connect to Fiddler
 3. Upload a baseline dataset
 4. Add metadata about your model with Fiddler
-5. Set up Alerts and Notifications (Optional)
-6. Publish production events
-7. Get insights
-
-**Don't have a Fiddler account? [Sign-up for a 14-day free trial](https://www.fiddler.ai/trial?utm_source=fiddler_docs&utm_medium=referral).**
+5. Set up alerts (Optional)
+6. Configure a custom metric (Optional)
+7. Configure a rolling baseline (Optional)
+8. Configure Segments (Optional)
+9. Publish production events
+19. Get insights
 
 ## 1. Imports
 
@@ -41,19 +42,14 @@ Before you can add information about your model with Fiddler, you'll need to con
 
 **We need a few pieces of information to get started.**
 1. The URL you're using to connect to Fiddler
-
-
-```python
-URL = '' # Make sure to include the full URL (including https://). For example, https://abc.xyz.ai
-```
-
 2. Your organization ID
 3. Your authorization token
 
-Both of these can be found by clicking the URL you entered and navigating to the **Settings** page of your Fiddler environment.
+These can be found by navigating to the **Settings** page of your Fiddler environment.
 
 
 ```python
+URL = ''  # Make sure to include the full URL (including https://).
 ORG_ID = ''
 AUTH_TOKEN = ''
 ```
@@ -246,9 +242,9 @@ On the project page, you should now be able to see the newly onboarded model wit
     </tr>
 </table>
 
-## 5. Set up Alerts and Notifications (Optional)
+## 5. Set up alerts (Optional)
 
-Fiddler Client API function [add_alert_rule](https://dash.readme.com/project/fiddler/v1.5/refs/clientadd_alert_rule) allow creating rules to receive email and pagerduty notifications when your data or model predictions deviates from it's expected behavior.
+Fiddler's Client API function [add_alert_rule](https://docs.fiddler.ai/reference/clientadd_alert_rule) allow creating rules when your data or model predictions deviates from it's expected behavior.
 
 The rules can of **Data Drift, Performance, Data Integrity,** and **Service Metrics** types and they can be compared to **absolute** or **relative** values.
 
@@ -256,7 +252,7 @@ Please refer [our documentation](https://docs.fiddler.ai/docs/alerts) for more i
 
 ---
   
-Let's set up a few Alert Rules.
+Let's set up a few alert rules.
 
 The following API call sets up a Data Integrity type rule which triggers an email notification when published events have 2 or more range violations in any 1 day bin for the ```numofproducts``` column.
 
@@ -308,7 +304,69 @@ client.add_alert_rule(
 )
 ```
 
-## 6. Publish production events
+## 6. Configure a custom metric (Optional)
+
+Fiddler's Client API function [add_custom_metric](https://docs.fiddler.ai/reference/clientadd_custom_metric) allows for the creation of custom metrics.  Custom metrics will be tracked over time and can be charted and alerted upon just like any other out of the box metric offered by the Fiddler platform.  Custom metrics can obviously be configured through the Fiddler UI too.
+
+Please refer [our documentation](https://docs.fiddler.ai/docs/custom-metrics) for more information on Custom Metrics. 
+
+---
+  
+Let's set up a custom metric.
+
+
+```python
+client.add_custom_metric(
+    name='Lost Revenue',
+    description='A metric to track revenue lost for each false positive prediction.',
+    project_id=PROJECT_ID,
+    model_id=MODEL_ID,
+    definition="""sum(if(fp(),1,0) * -100)"""  # This is an excel like formula which adds -$100 for each false positive predicted by the model
+)
+```
+
+## 7. Configure a rolling baseline (Optional)
+
+Fiddler's Client API function [add_baseline](https://docs.fiddler.ai/reference/add_baseline) allows for the creation of alternate baselines.  Baselines serve as a point of comparison when calculating metrics such as drift or data integrity violations. 
+
+Please refer [our documentation](https://docs.fiddler.ai/docs/fiddler-baselines) for more information on Baselines. 
+
+---
+  
+Let's set up a rolling baseline that will allow us to calculate drift relative to events 1 month back.
+
+
+```python
+BASELINE_NAME = 'rolling_baseline_1month'
+
+client.add_baseline(
+      project_id=PROJECT_ID,
+      model_id=MODEL_ID,
+      baseline_id=BASELINE_NAME,
+      type=fdl.BaselineType.ROLLING_PRODUCTION,
+      offset=fdl.WindowSize.ONE_MONTH, # How far back to set our window
+      window_size=fdl.WindowSize.ONE_WEEK, # Size of the sliding window
+)
+```
+
+## 8. Configure a Segment (Optional)
+Fiddler's Client API function add_segment allows for the creation of cohorts/sub-segments in your production data. These segments can be tracked over time, added to charts, and alerted upon. Segments can also be configured through the Fiddler UI as well.
+
+Please refer to our documentation for more information on the creation and management of segments.
+
+Let's set a segment to track customers from Hawaii for a specific age range.
+
+
+```python
+client.add_segment(
+            name='Hawaii Customers between 30 and 60',
+            project_id=PROJECT_ID,
+            model_id=MODEL_ID,
+            definition="(age<60 or age>30) and geography=='Hawaii'",
+            description='Hawaii Customers between 30 and 60')
+```
+
+## 9. Publish production events
 
 Information about your model is added to Fiddler and now it's time to start publishing some production data!  
 Fiddler will **monitor this data and compare it to your baseline to generate powerful insights into how your model is behaving**.
@@ -348,7 +406,7 @@ client.publish_events_batch(
 )
 ```
 
-## 7. Get insights
+## 10. Get insights
   
 Return to your Fiddler environment to get enhanced observability into your model's performance.
 
