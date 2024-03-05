@@ -122,17 +122,29 @@ if UUID not in st.session_state:
     
 if SESSION_ID not in st.session_state:
     st.session_state[SESSION_ID] = None
-
+    
 if DB_CONN not in st.session_state:
-    st.session_state[DB_CONN] = None
+     st.session_state[DB_CONN] = None
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+
+# @st.cache
+# def get_db_conn():
+#     auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
+#     cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
+#     return cluster.connect()
+
+@st.cache_resource(show_spinner=False)
+def get_fiddler_callback_handler():
+    fiddler_callback_handler = FiddlerCallbackHandler(url=URL, org=ORG_NAME,  project=PROJECT_NAME, model = MODEL_NAME, api_key=FIDDLER_API_TOKEN)
+    return fiddler_callback_handler
 
 if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
     auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
     cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
     st.session_state[DB_CONN] = cluster.connect()
+
     
 docsearch_preexisting = Cassandra(
     embedding=embeddings,
@@ -142,7 +154,6 @@ docsearch_preexisting = Cassandra(
 )
     
 def get_embeddings(text: str):
-    
     
     # Define the maximum length you want
     max_length = 8192  # This is the longest length of text that OpenAI can produce embeddings for.
@@ -171,12 +182,17 @@ def store_query(
     sd = sd.replace("'","''")
     
     astraSession = st.session_state[DB_CONN]
+#     astraSession.execute(
+#                 "INSERT INTO fiddlerai.fiddler_chatbot_history \
+#                 (row_id, session_id, question, question_vector, source_docs, source_docs_vector, response, response_vector, ts) \
+#                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s, toTimestamp(now())) " ,
+#                 [str(st.session_state[UUID]), str(st.session_state[SESSION_ID]), query.replace("'","''"), get_embeddings(query), sd, \
+#                  get_embeddings(sd), response.replace("'","''"), get_embeddings(response)]
     astraSession.execute(
                 "INSERT INTO fiddlerai.fiddler_chatbot_history \
-                (row_id, session_id, question, question_vector, source_docs, source_docs_vector, response, response_vector, ts) \
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s, toTimestamp(now())) " ,
-                [str(st.session_state[UUID]), str(st.session_state[SESSION_ID]), query.replace("'","''"), get_embeddings(query), sd, \
-                 get_embeddings(sd), response.replace("'","''"), get_embeddings(response)]
+                (row_id, session_id, question, source_docs, response, ts) \
+                VALUES (%s,%s,%s,%s,%s,toTimestamp(now())) " ,
+                [str(st.session_state[UUID]), str(st.session_state[SESSION_ID]), query.replace("'","''"), sd, response.replace("'","''")]
     )
     return
     
@@ -232,8 +248,8 @@ def main():
 
         with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
-            fiddler_handler = FiddlerCallbackHandler(url=URL, org=ORG_NAME,  project=PROJECT_NAME, model = MODEL_NAME, api_key=FIDDLER_API_TOKEN)
-            llm = ChatOpenAI(model_name=GPT_MODEL, streaming=True, callbacks=[callback, fiddler_handler], temperature=0)
+            fiddler_callback_handler = get_fiddler_callback_handler()
+            llm = ChatOpenAI(model_name=GPT_MODEL, streaming=True, callbacks=[callback, fiddler_callback_handler], temperature=0)
             doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
 
             qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
