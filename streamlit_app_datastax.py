@@ -24,207 +24,18 @@ from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.llm import LLMChain
 from langchain.callbacks.base import BaseCallbackHandler
 
+from langchain_community.callbacks.fiddler_callback import FiddlerCallbackHandler
+
 from typing import Any, Dict, List, Optional
 from langchain_core.outputs import LLMResult
 from langchain_community.callbacks.utils import import_pandas
 import time
 
-TOKEN_USAGE = "token_usage"
-PROMPT = "prompt"
-RESPONSE = "response"
-TOTAL_TOKENS = "total_tokens"
-PROMPT_TOKENS = "prompt_tokens"
-COMPLETION_TOKENS = "completion_tokens"
-DURATION = "duration"
-RUN_ID = "run_id"
-MODEL_NAME = "model_name"
-URL = 'https://demo.fiddler.ai'
-ORG_NAME = 'demo'
+PROJECT_NAME = "fiddler_chatbot"
+MODEL_NAME = "fiddler_chatbot"
+URL = 'https://preprod.fiddler.ai'
+ORG_NAME = 'preprod'
 FIDDLER_API_TOKEN = os.environ.get('FIDDLER_API_TOKEN')
-
-_re_dict = {
-    PROMPT : ["fiddler"] * 10,
-    RESPONSE : ["fiddler"] * 10,
-    MODEL_NAME : ["gpt-3.5-turbo-instruct"] * 10,
-    RUN_ID : ['123e4567-e89b-12d3-a456-426614174000'] * 10,
-    TOTAL_TOKENS : [0, 65536] * 5,
-    PROMPT_TOKENS : [0, 65536] * 5,
-    COMPLETION_TOKENS : [0, 4096] * 5,
-    DURATION : [1, 120] * 5,
-}
-
-def import_fiddler() -> Any:
-    """Import the fiddler python package and raise an error if it is not installed."""
-    try:
-        import fiddler  # noqa: F401
-    except ImportError:
-        raise ImportError(
-            "To use the fiddler callback manager you need to have the `fiddler-client` python "
-            "package installed. Please install it with `pip install fiddler-client`"
-        )
-    return fiddler
-
-# First, define custom callback handler implementations
-class FiddlerCallbackHandler(BaseCallbackHandler):
-    def __init__(
-        self,
-        url : Optional[str] = None,
-        org: Optional[str] = None,
-        project: Optional[str] = None,
-        model : Optional[str] = None,
-        API_KEY: Optional[str] = None,
-    ) -> None:
-        """Initialize callback handler."""
-        super().__init__()
-        # Initialize Fiddler client and other necessary properties
-        self.fdl = import_fiddler()
-        self.pd = import_pandas()
-        
-        self.url = url
-        self.org = org
-        self.project = project
-        self.model = model
-        self.api_key = API_KEY
-        self._df = self.pd.DataFrame(_re_dict)
-
-        self.run_id_prompts : Dict[str, List[str]] = {}
-        self.run_id_starttime : Dict[str, int] = {}
-
-        # Initialize Fiddler client here
-        self.fiddler_client = self.fdl.FiddlerApi(url, org_id=org, auth_token=API_KEY)
-
-        if self.project not in self.fiddler_client.get_project_names():
-            print(f'adding project {self.project}')
-            self.fiddler_client.add_project(self.project)
-
-        dataset_info = self.fdl.DatasetInfo.from_dataframe(self._df, max_inferred_cardinality=0)
-        if self.model not in self.fiddler_client.get_dataset_names(self.project):
-            print(f'adding dataset {self.model} to project {self.project}. Only has to be done once.')
-            self.fiddler_client.upload_dataset(
-                project_id=self.project,
-                dataset_id=self.model,
-                dataset={
-                    'train': self._df
-                },
-                info=dataset_info
-            )
-            
-        model_info = self.fdl.ModelInfo.from_dataset_info(
-            dataset_info=dataset_info,
-            dataset_id='train',
-            model_task=self.fdl.ModelTask.LLM,
-            features=[PROMPT, RESPONSE],
-            metadata_cols=[RUN_ID, TOTAL_TOKENS, PROMPT_TOKENS, COMPLETION_TOKENS, MODEL_NAME],
-            custom_features=self.custom_features
-        )
-        
-        if self.model not in self.fiddler_client.get_model_names(self.project):
-            print(f'adding model {self.model} to project {self.project}. Only has to be done once.')
-            self.fiddler_client.add_model(
-                project_id=self.project,
-                dataset_id=self.model,
-                model_id=self.model,
-                model_info=model_info,
-            )
-
-    @property
-    def custom_features(self):
-        return [
-            self.fdl.Enrichment(
-                name='Prompt Embedding',
-                enrichment='embedding',
-                columns=[PROMPT],
-            ),
-            self.fdl.TextEmbedding(
-                name='Prompt CF',
-                source_column=PROMPT,
-                column='Prompt Embedding',
-            ),
-            self.fdl.Enrichment(
-                name='Response Embedding',
-                enrichment='embedding',
-                columns=[RESPONSE],
-            ),
-            self.fdl.TextEmbedding(
-                name='Response CF',
-                source_column=RESPONSE,
-                column='Response Embedding',
-            ),
-            self.fdl.Enrichment(
-                name='Text Statistics',
-                enrichment='textstat',
-                columns=[PROMPT, RESPONSE],
-                config = {
-                    "statistics" : [
-                        "automated_readability_index",
-                        "coleman_liau_index",
-                        "dale_chall_readability_score",
-                        "difficult_words",
-                        "flesch_reading_ease",
-                        "flesch_kincaid_grade",
-                        "gunning_fog",
-                        "linsear_write_formula",
-                    ]
-                }
-            ),
-            self.fdl.Enrichment(
-                name='PII',
-                enrichment='pii',
-                columns=[PROMPT, RESPONSE],
-            ),
-            self.fdl.Enrichment(
-                name='Sentiment',
-                enrichment='sentiment',
-                columns=[PROMPT, RESPONSE],
-            )
-        ]
-            
-    def on_llm_start(
-        self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any
-    ) -> Any:
-        run_id = kwargs[RUN_ID]
-        self.run_id_prompts[run_id] = prompts
-        self.run_id_starttime[run_id] = int(time.time())
-
-    def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:        
-        flattened_llmresult = response.flatten()
-        token_usage_dict = {}
-        run_id = kwargs[RUN_ID]
-        run_duration = self.run_id_starttime[run_id] - int(time.time())
-        prompt_responses = []
-        model_name = ''
-        
-        if isinstance(response.llm_output, dict):
-            if TOKEN_USAGE in response.llm_output:
-                token_usage_dict = response.llm_output[TOKEN_USAGE]
-            if MODEL_NAME in response.llm_output:
-                model_name = response.llm_output[MODEL_NAME]
-
-        for llmresult in flattened_llmresult:
-            prompt_responses.append(llmresult.generations[0][0].text)
-
-        df = self.pd.DataFrame( 
-            {
-                PROMPT : self.run_id_prompts[run_id],
-                RESPONSE : prompt_responses,
-            }
-        )
-
-        if TOTAL_TOKENS in token_usage_dict:
-            df[PROMPT_TOKENS] = int(token_usage_dict[TOTAL_TOKENS])
-
-        if PROMPT_TOKENS in token_usage_dict:
-            df[TOTAL_TOKENS] = int(token_usage_dict[PROMPT_TOKENS])
-
-        if COMPLETION_TOKENS in token_usage_dict:
-            df[COMPLETION_TOKENS] = token_usage_dict[COMPLETION_TOKENS]
-
-        df[MODEL_NAME] = model_name
-        df[RUN_ID] = str(run_id)
-        df[DURATION] = run_duration
-
-        self.fiddler_client.publish_events_batch(self.project, self.model, df)
-
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
@@ -245,7 +56,6 @@ ASTRA_DB_APPLICATION_TOKEN = os.environ.get('ASTRA_DB_APPLICATION_TOKEN')
 # models
 EMBEDDING_MODEL = "text-embedding-ada-002"
 GPT_MODEL = "gpt-3.5-turbo"
-
 
 MEMORY = 'memory'
 QA = "qa"
@@ -285,12 +95,9 @@ cloud_config= {
 
 embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
 
-
-
 non_stream_llm = ChatOpenAI(model_name=GPT_MODEL, temperature=0)
 memory = ConversationSummaryBufferMemory(llm=non_stream_llm, memory_key="chat_history", return_messages=True, max_tokens_limit=50, output_key='answer')
 question_generator = LLMChain(llm=non_stream_llm, prompt=CONDENSE_QUESTION_PROMPT)
-
 
 if THUMB_DOWN not in st.session_state:
     st.session_state[THUMB_DOWN] = None
@@ -425,7 +232,7 @@ def main():
 
         with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
-            fiddler_handler = FiddlerCallbackHandler(url=URL, org=ORG_NAME,  project='docs_chatbot', model = 'chat', API_KEY=FIDDLER_API_TOKEN)
+            fiddler_handler = FiddlerCallbackHandler(url=URL, org=ORG_NAME,  project=PROJECT_NAME, model = MODEL_NAME, api_key=FIDDLER_API_TOKEN)
             llm = ChatOpenAI(model_name=GPT_MODEL, streaming=True, callbacks=[callback, fiddler_handler], temperature=0)
             doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
 
