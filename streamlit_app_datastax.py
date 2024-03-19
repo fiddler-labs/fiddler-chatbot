@@ -5,6 +5,7 @@ from openai import OpenAI
 client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 import json
 import uuid as uuid_g
+from fiddler_chatbot_callback_handler import FiddlerChatbotCallbackHandler
 
 import cassandra
 from cassandra.cluster import Cluster
@@ -31,11 +32,12 @@ from langchain_core.outputs import LLMResult
 from langchain_community.callbacks.utils import import_pandas
 import time
 
-PROJECT_NAME = "fiddler_chatbot"
-MODEL_NAME = "fiddler_chatbot"
-URL = 'https://preprod.fiddler.ai'
-ORG_NAME = 'preprod'
-FIDDLER_API_TOKEN = os.environ.get('FIDDLER_API_TOKEN')
+PROJECT_NAME = "fiddler_chatbot2"
+MODEL_NAME = "fiddler_rag_chatbot"
+URL = 'https://mainbuild.dev.fiddler.ai'
+ORG_NAME = 'mainbuild'
+#FIDDLER_API_TOKEN = os.environ.get('FIDDLER_API_TOKEN')
+FIDDLER_API_TOKEN = 'IkX6tatV_HrrxqoLO4q3rcaKUAPIK2jGk-oI4X4LAQ8'
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
@@ -50,6 +52,7 @@ class StreamHandler(BaseCallbackHandler):
 ASTRA_DB_SECURE_BUNDLE_PATH = 'datastax_auth/secure-connect-fiddlerai.zip'
 ASTRA_DB_KEYSPACE = 'fiddlerai'
 ASTRA_DB_TABLE_NAME = 'fiddler_doc_snippets_openai'
+ASTRA_DB_LEDGER_TABLE_NAME = 'fiddler_chatbot_ledger'
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 ASTRA_DB_APPLICATION_TOKEN = os.environ.get('ASTRA_DB_APPLICATION_TOKEN')
 
@@ -128,24 +131,22 @@ if DB_CONN not in st.session_state:
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-# @st.cache
-# def get_db_conn():
-#     auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
-#     cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
-#     return cluster.connect()
+    
+if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
+    auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
+    cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
+    st.session_state[DB_CONN] = cluster.connect()
 
 @st.cache_resource(show_spinner=False)
 def get_fiddler_callback_handler():
     fiddler_callback_handler = FiddlerCallbackHandler(url=URL, org=ORG_NAME,  project=PROJECT_NAME, model = MODEL_NAME, api_key=FIDDLER_API_TOKEN)
     return fiddler_callback_handler
 
-if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
-    auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
-    cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
-    st.session_state[DB_CONN] = cluster.connect()
+@st.cache_resource(show_spinner=False)
+def get_fiddler_chatbot_callback_handler():
+    fiddler_chatbot_callback_handler = FiddlerChatbotCallbackHandler(dbconn=st.session_state[DB_CONN], table=ASTRA_DB_LEDGER_TABLE_NAME)
+    return fiddler_chatbot_callback_handler
 
-    
 docsearch_preexisting = Cassandra(
     embedding=embeddings,
     session=st.session_state[DB_CONN],
@@ -189,8 +190,8 @@ def store_query(
 #                 [str(st.session_state[UUID]), str(st.session_state[SESSION_ID]), query.replace("'","''"), get_embeddings(query), sd, \
 #                  get_embeddings(sd), response.replace("'","''"), get_embeddings(response)]
     astraSession.execute(
-                "INSERT INTO fiddlerai.fiddler_chatbot_history \
-                (row_id, session_id, question, source_docs, response, ts) \
+                "INSERT INTO fiddlerai.fiddler_chatbot_ledger \
+                (row_id, session_id, prompt, source_doc0, response, ts) \
                 VALUES (%s,%s,%s,%s,%s,toTimestamp(now())) " ,
                 [str(st.session_state[UUID]), str(st.session_state[SESSION_ID]), query.replace("'","''"), sd, response.replace("'","''")]
     )
@@ -201,7 +202,7 @@ def store_feedback(uuid, feedback=-1):
 
     astraSession = st.session_state[DB_CONN]
     astraSession.execute(
-                f"UPDATE fiddlerai.fiddler_chatbot_history SET feedback = {feedback} WHERE row_id = '{uuid}'"
+                f"UPDATE fiddlerai.fiddler_chatbot_ledger SET feedback = {feedback} WHERE row_id = '{uuid}'"
     )
     return
 
@@ -211,7 +212,7 @@ def store_comment(uuid):
     comment = str(st.session_state[COMMENT]).replace("'","''")
     astraSession = st.session_state[DB_CONN]
     astraSession.execute(
-                f"UPDATE fiddlerai.fiddler_chatbot_history SET comment = '{comment}' WHERE row_id = '{uuid}'"
+                f"UPDATE fiddlerai.fiddler_chatbot_ledger SET comment = '{comment}' WHERE row_id = '{uuid}'"
     )
     st.session_state[COMMENT] = ""
     return
@@ -249,7 +250,8 @@ def main():
         with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
             fiddler_callback_handler = get_fiddler_callback_handler()
-            llm = ChatOpenAI(model_name=GPT_MODEL, streaming=True, callbacks=[callback, fiddler_callback_handler], temperature=0)
+            fiddler_chatbot_callback_handler = get_fiddler_chatbot_callback_handler()
+            llm = ChatOpenAI(model_name=GPT_MODEL, streaming=True, callbacks=[callback, fiddler_callback_handler, fiddler_chatbot_callback_handler], temperature=0)
             doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
 
             qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
@@ -263,7 +265,7 @@ def main():
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
         #text = str(full_response["source_documents"])
         st.session_state[ANSWER] = full_response["answer"]
-        store_query(full_response["question"], full_response["answer"], full_response["source_documents"])
+        #store_query(full_response["question"], full_response["answer"], full_response["source_documents"])
 
     if st.session_state[ANSWER] is not None:
         
