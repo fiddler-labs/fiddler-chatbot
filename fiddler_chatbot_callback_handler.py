@@ -65,6 +65,12 @@ class FiddlerChatbotCallbackHandler(BaseCallbackHandler):
 
     def on_llm_start(self, serialized: Dict[str, Any], prompts: List[str], **kwargs: Any) -> Any:
         run_id = kwargs[RUN_ID]
+        
+        i=0
+        for prompt in prompts:
+            print('-------> prompt ' + str(i) + ': ' + prompt)
+            i=i+1
+            
         self.run_id_prompts[run_id] = prompts
         self.run_id_starttime[run_id] = int(time.time() * 1000)
 
