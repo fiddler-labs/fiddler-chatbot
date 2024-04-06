@@ -1,11 +1,11 @@
 import streamlit as st
 import os
 from openai import OpenAI
-
-
 import json
 import uuid as uuid_g
-#from fiddler_chatbot_callback_handler import FiddlerChatbotCallbackHandler
+import fiddler as fdl
+import time
+from typing import Any, Dict, List, Optional
 
 import cassandra
 from cassandra.cluster import Cluster
@@ -15,7 +15,6 @@ from langchain.vectorstores.cassandra import Cassandra
 from langchain.indexes.vectorstore import VectorStoreIndexWrapper
 from langchain.llms import OpenAI
 from langchain.embeddings import OpenAIEmbeddings
-
 from langchain.prompts import PromptTemplate
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
@@ -24,34 +23,17 @@ from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_
 from langchain.chains.question_answering import load_qa_chain
 from langchain.chains.llm import LLMChain
 from langchain.callbacks.base import BaseCallbackHandler
-
-from langchain_community.callbacks.fiddler_callback import FiddlerCallbackHandler
-
-from typing import Any, Dict, List, Optional
 from langchain_core.outputs import LLMResult
-from langchain_community.callbacks.utils import import_pandas
-import fiddler as fdl
-import time
+#from langchain_community.callbacks.utils import import_pandas
 
 client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
 FIDDLER_CHATBOT_PROJECT_NAME = "fiddler_chatbot2"
 FIDDLER_CHATBOT_MODEL_NAME = "fiddler_rag_chatbot"
-FIDDLER_URL = 'https://preprod.fiddler.ai'
-FIDDLER_ORG_NAME = 'preprod'
-#FIDDLER_API_TOKEN = os.environ.get('FIDDLER_API_TOKEN')
-FIDDLER_API_TOKEN = 'vaQ2IMrKMdsaYXq2dzdUnCztnhaBtxGZEJnnbsk1yX8'
+FIDDLER_URL = 'https://demo.fiddler.ai'
+FIDDLER_ORG_NAME = 'demo'
+FIDDLER_API_TOKEN = os.environ.get('FIDDLER_API_TOKEN')
 
-class StreamHandler(BaseCallbackHandler):
-    def __init__(self, container, initial_text=""):
-        self.container = container
-        self.text = initial_text
-
-    def on_llm_new_token(self, token: str, **kwargs):
-        self.text += token
-        self.container.markdown(self.text)
-
-        
 ASTRA_DB_SECURE_BUNDLE_PATH = 'datastax_auth/secure-connect-fiddlerai.zip'
 ASTRA_DB_KEYSPACE = 'fiddlerai'
 ASTRA_DB_TABLE_NAME = 'fiddler_doc_snippets_openai'
@@ -157,15 +139,20 @@ if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
     cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
     st.session_state[DB_CONN] = cluster.connect()
 
-@st.cache_resource(show_spinner=False)
-def get_fiddler_callback_handler():
-    fiddler_callback_handler = FiddlerCallbackHandler(url=URL, org=ORG_NAME,  project=PROJECT_NAME, model = MODEL_NAME, api_key=FIDDLER_API_TOKEN)
-    return fiddler_callback_handler
+# @st.cache_resource(show_spinner=False)
+# def get_fiddler_callback_handler():
+#     fiddler_callback_handler = FiddlerCallbackHandler(url=URL, org=ORG_NAME,  project=PROJECT_NAME, model = MODEL_NAME, api_key=FIDDLER_API_TOKEN)
+#     return fiddler_callback_handler
 
-@st.cache_resource(show_spinner=False)
-def get_fiddler_chatbot_callback_handler():
-    fiddler_chatbot_callback_handler = FiddlerChatbotCallbackHandler(dbconn=st.session_state[DB_CONN], table=ASTRA_DB_LEDGER_TABLE_NAME)
-    return fiddler_chatbot_callback_handler
+
+class StreamHandler(BaseCallbackHandler):
+    def __init__(self, container, initial_text=""):
+        self.container = container
+        self.text = initial_text
+
+    def on_llm_new_token(self, token: str, **kwargs):
+        self.text += token
+        self.container.markdown(self.text)
 
 @st.cache_resource(show_spinner=False)
 def get_fiddler_client():
@@ -239,10 +226,10 @@ def publish_and_store(
     #Sore the trace/event to DataStax
     astraSession = st.session_state[DB_CONN]
     astraSession.execute(
-                "INSERT INTO fiddlerai.fiddler_chatbot_ledger \
-                (row_id, run_id, session_id, prompt, source_doc0, source_doc1, source_doc2, response, model_name, duration, prompt_tokens, completion_tokens, total_tokens, ts) \
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,toTimestamp(now())) " ,
-                [row_id, run_id, session_id, prompt, source_doc0, source_doc1, source_doc2, response, model_name, duration, prompt_tokens, completion_tokens, total_tokens]
+        "INSERT INTO fiddlerai.fiddler_chatbot_ledger \
+        (row_id, run_id, session_id, prompt, source_doc0, source_doc1, source_doc2, response, model_name, duration, prompt_tokens, completion_tokens, total_tokens, ts) \
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,toTimestamp(now())) " ,
+        [row_id, run_id, session_id, prompt, source_doc0, source_doc1, source_doc2, response, model_name, duration, prompt_tokens, completion_tokens, total_tokens]
     )
     
     #Publish the trace/event to Fiddler
@@ -291,7 +278,7 @@ def erase_history():
     st.session_state[UUID] = None
     st.session_state[SESSION_ID] = None
 
-
+    
 def main():
     text=''
     # st.image('images/poweredby.jpg', width=550)
@@ -314,9 +301,6 @@ def main():
 
         with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
-            #fiddler_callback_handler = get_fiddler_callback_handler()
-            #fiddler_chatbot_callback_handler = get_fiddler_chatbot_callback_handler()
-            #llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback, fiddler_callback_handler, fiddler_chatbot_callback_handler], temperature=0)
             llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
             doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
             
@@ -328,10 +312,9 @@ def main():
             full_response = qa(prompt)
             end_time = time.time()
             
-
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
-        #text = str(full_response["source_documents"])
         st.session_state[ANSWER] = full_response["answer"]
+        
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
 
     if st.session_state[ANSWER] is not None:
@@ -359,10 +342,7 @@ def main():
                 border: 0 !important;
         </style>
         """
-
         st.markdown(hide, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
-
-
