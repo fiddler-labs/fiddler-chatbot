@@ -5,6 +5,7 @@ import json
 import uuid as uuid_g
 import fiddler as fdl
 import time
+import pandas as pd
 from typing import Any, Dict, List, Optional
 
 import cassandra
