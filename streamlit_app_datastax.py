@@ -232,13 +232,17 @@ def publish_and_store(
         [row_id, run_id, session_id, prompt, source_doc0, source_doc1, source_doc2, response, model_name, duration, prompt_tokens, completion_tokens, total_tokens]
     )
     
+    trace_df = pd.DataFrame.from_dict(trace_dict)
+    
     #Publish the trace/event to Fiddler
     fdl_client = get_fiddler_client()
-    fdl_client.publish_event(
+        
+    #Temporarily use publish event batch until publish event is fixed for low frequency publication
+    fdl_client.publish_events_batch(
         project_id=FIDDLER_CHATBOT_PROJECT_NAME,
         model_id=FIDDLER_CHATBOT_MODEL_NAME,
-        event=trace_dict,
-        event_id='row_id',
+        batch_source=trace_df,
+        id_field='row_id',
     )
     
     return
