@@ -346,7 +346,7 @@ def main():
         hide = """
         <style>
             ul.streamlit-expander {
-                border: 0 !important;
+                border: 10 !important;
         </style>
         """
         st.markdown(hide, unsafe_allow_html=True)
