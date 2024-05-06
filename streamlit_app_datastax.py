@@ -321,7 +321,7 @@ def main():
             
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
         st.session_state[ANSWER] = full_response["answer"]
-        st.image('images/poweredby.jpg', width=100)
+       
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
 
     if st.session_state[ANSWER] is not None:
@@ -343,7 +343,7 @@ def main():
         with st.expander("Click here to leave your feedback on the chatbot response"):
             st.text_input("Leave your comments here.", key="comment", on_change=store_comment, kwargs={'uuid': st.session_state[UUID]}, value="")
             
-
+    st.image('images/poweredby.jpg', width=100)
 
         hide = """
         
