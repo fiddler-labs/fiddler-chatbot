@@ -343,18 +343,22 @@ def main():
         with st.expander("Click here to leave your feedback on the chatbot response"):
             st.text_input("Leave your comments here.", key="comment", on_change=store_comment, kwargs={'uuid': st.session_state[UUID]}, value="")
             
+
+
+        hide = """
         
-        st.markdown(
-            f'''
-            <style>
-                .reportview-container .sidebar-content {{
+        <style>
+            ul.streamlit-expander {
+                border: 10 !important;}
+                
+            .reportview-container .main .block-container {{
                     padding-bottom: {20}rem;
-                }}
-                .reportview-container .main .block-container {{
-                    padding-bottom: {20}rem;
-                }}
-            </style>
-            ''',unsafe_allow_html=True)
+                }}  
+                
+        </style>
+        """
+        st.markdown(hide, unsafe_allow_html=True)     
+        
         
 
 if __name__ == "__main__":
