@@ -288,7 +288,7 @@ def erase_history():
     
 def main():
     text=''
-    
+
     st.title("Fiddler Chatbot")
     if not st.session_state[UUID] or st.session_state[UUID] is None:
         st.session_state[UUID] = uuid_g.uuid4()
@@ -321,7 +321,7 @@ def main():
             
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
         st.session_state[ANSWER] = full_response["answer"]
-       
+        
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
 
     if st.session_state[ANSWER] is not None:
@@ -343,19 +343,14 @@ def main():
         with st.expander("Click here to leave your feedback on the chatbot response"):
             st.text_input("Leave your comments here.", key="comment", on_change=store_comment, kwargs={'uuid': st.session_state[UUID]}, value="")
             
-    st.image('images/poweredby.jpg', width=100)
-
         hide = """
-        
         <style>
             ul.streamlit-expander {
-                border: 10 !important;}
-                
+                border: 10 !important;
         </style>
         """
-        st.markdown(hide, unsafe_allow_html=True)     
-        
-        
-
+        st.markdown(hide, unsafe_allow_html=True)
+    st.image('images/poweredby.jpg', width=550)
+  
 if __name__ == "__main__":
     main()
