@@ -349,8 +349,8 @@ def main():
                 border: 10 !important;}
             
             .block-container {
-                    padding-top: 5rem;
-                    padding-bottom: 5rem;
+                    padding-top: 100rem;
+                    padding-bottom: 20rem;
                     padding-left: 5rem;
                     padding-right: 5rem;
                 }    
