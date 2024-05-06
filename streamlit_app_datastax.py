@@ -288,7 +288,7 @@ def erase_history():
     
 def main():
     text=''
-    # st.image('images/poweredby.jpg', width=550)
+    st.image('images/poweredby.jpg', width=550)
     st.title("Fiddler Chatbot")
     if not st.session_state[UUID] or st.session_state[UUID] is None:
         st.session_state[UUID] = uuid_g.uuid4()
@@ -351,8 +351,8 @@ def main():
             ul.streamlit-expander {
                 border: 10 !important;}
                 
-            .reportview-container .main .block-container {{
-                    padding-bottom: {20}rem;
+            .container .main .block-container {{
+                    padding-bottom: {40}rem;
                 }}  
                 
         </style>
