@@ -353,7 +353,7 @@ def main():
         st.markdown(hide, unsafe_allow_html=True)
       
     st.image('images/poweredby.jpg', width=200, caption='Fiddler AI')
-    _bottom.button('None')
+    _bottom.button('')
   
 if __name__ == "__main__":
     main()
