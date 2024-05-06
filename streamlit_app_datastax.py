@@ -348,10 +348,10 @@ def main():
             f'''
             <style>
                 .reportview-container .sidebar-content {{
-                    padding-top: {10}rem;
+                    padding-bottom: {20}rem;
                 }}
                 .reportview-container .main .block-container {{
-                    padding-top: {10}rem;
+                    padding-bottom: {20}rem;
                 }}
             </style>
             ''',unsafe_allow_html=True)
