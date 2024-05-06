@@ -346,7 +346,15 @@ def main():
         hide = """
         <style>
             ul.streamlit-expander {
-                border: 10 !important;
+                border: 10 !important;}
+            
+            .block-container {
+                    padding-top: 5rem;
+                    padding-bottom: 5rem;
+                    padding-left: 5rem;
+                    padding-right: 5rem;
+                }    
+                
         </style>
         """
         st.markdown(hide, unsafe_allow_html=True)
