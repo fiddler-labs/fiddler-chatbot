@@ -323,7 +323,7 @@ def main():
         st.session_state[ANSWER] = full_response["answer"]
         
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
-    st.image('images/poweredby.jpg', width=100)
+
     if st.session_state[ANSWER] is not None:
         
         # Display thumbs up and thumbs down buttons
@@ -350,7 +350,8 @@ def main():
         </style>
         """
         st.markdown(hide, unsafe_allow_html=True)
-    
+      
+    st.image('images/poweredby.jpg', width=200, caption='Fiddler AI')    
   
 if __name__ == "__main__":
     main()
