@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit import _bottom
 import os
 from openai import OpenAI
 import json
@@ -351,7 +352,8 @@ def main():
         """
         st.markdown(hide, unsafe_allow_html=True)
       
-    st.image('images/poweredby.jpg', width=200, caption='Fiddler AI')    
+    st.image('images/poweredby.jpg', width=200, caption='Fiddler AI')
+    _bottom.button('tap here')
   
 if __name__ == "__main__":
     main()
