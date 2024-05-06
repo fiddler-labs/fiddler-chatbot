@@ -305,7 +305,7 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
-
+            st.image('images/poweredby.jpg', width=550)
         with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
             llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
@@ -350,7 +350,7 @@ def main():
         </style>
         """
         st.markdown(hide, unsafe_allow_html=True)
-    st.image('images/poweredby.jpg', width=550)
+    
   
 if __name__ == "__main__":
     main()
