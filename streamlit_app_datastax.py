@@ -347,13 +347,9 @@ def main():
         <style>
             ul.streamlit-expander {
                 border: 10 !important;}
-            
-            .block-container {
-                    padding-top: 100rem;
-                    padding-bottom: 20rem;
-                    padding-left: 5rem;
-                    padding-right: 5rem;
-                }    
+                
+            .appview-container .main .block-container{{
+                padding-bottom: {20}rem;    }}  
                 
         </style>
         """
