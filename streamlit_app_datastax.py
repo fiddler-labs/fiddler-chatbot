@@ -302,8 +302,8 @@ def main():
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
               
-    with st.container():
-      if prompt := st.text_input("Ask your questions about Fiddler platform here."):
+    with st.container(border=True):
+      if prompt := st.chat_input("Ask your questions about Fiddler platform here."):
           st.session_state.messages.append({"role": "user", "content": prompt})
           with st.chat_message("user"):
               st.markdown(prompt)
