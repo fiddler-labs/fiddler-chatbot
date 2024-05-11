@@ -302,7 +302,7 @@ def main():
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
-    if prompt := st.chat_input("Ask your questions about Fiddler platform here."):
+    if prompt := st.text_input("Ask your questions about Fiddler platform here."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -352,8 +352,7 @@ def main():
         """
         st.markdown(hide, unsafe_allow_html=True)
       
-    #st.image('images/poweredby.jpg', width=200, caption='Fiddler AI')
-    _bottom.button('')
+    st.image('images/poweredby.jpg', width=200, caption='Fiddler AI')
   
 if __name__ == "__main__":
     main()
