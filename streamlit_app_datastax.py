@@ -329,7 +329,7 @@ def main():
         """
         st.markdown(hide, unsafe_allow_html=True)
 
-      with st.container(border=True):
+    with st.container(border=True):
       if prompt := st.chat_input("Ask your questions about Fiddler platform here."):
           st.session_state.messages.append({"role": "user", "content": prompt})
           with st.chat_message("user"):
