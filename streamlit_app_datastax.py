@@ -289,7 +289,7 @@ def erase_history():
     
 def main():
     text=''
-
+    # st.image('images/poweredby.jpg', width=550)
     st.title("Fiddler Chatbot")
     if not st.session_state[UUID] or st.session_state[UUID] is None:
         st.session_state[UUID] = uuid_g.uuid4()
@@ -301,7 +301,27 @@ def main():
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
-              
+    if prompt := st.chat_input("Ask your questions about Fiddler platform here."):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        with st.chat_message("assistant", avatar="images/logo.png"):
+            callback = StreamHandler(st.empty())
+            llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
+            doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
+            
+            start_time = time.time()
+            qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
+                                              question_generator=question_generator,
+                                              retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
+                                              memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
+            full_response = qa(prompt)
+            end_time = time.time()
+            
+        st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
+        st.session_state[ANSWER] = full_response["answer"]
+        
+        publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
     if st.session_state[ANSWER] is not None:
         
         # Display thumbs up and thumbs down buttons
@@ -324,37 +344,9 @@ def main():
         hide = """
         <style>
             ul.streamlit-expander {
-                border: 10 !important;
+                border: 0 !important;
         </style>
         """
         st.markdown(hide, unsafe_allow_html=True)
-
-  
-    if prompt := st.chat_input("Ask your questions about Fiddler platform here."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-            
-        with st.chat_message("assistant", avatar="images/logo.png"):
-            callback = StreamHandler(st.empty())
-            llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
-            doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
-            
-            start_time = time.time()
-            qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
-                                              question_generator=question_generator,
-                                              retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
-                                              memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
-            full_response = qa(prompt)
-            end_time = time.time()
-            
-        st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
-        st.session_state[ANSWER] = full_response["answer"]
-        
-        publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
-
-  
-    #st.image('images/poweredby.jpg', width=150,)
-  
 if __name__ == "__main__":
     main()
