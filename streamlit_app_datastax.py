@@ -30,7 +30,7 @@ from langchain_core.outputs import LLMResult
 
 client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
-FIDDLER_CHATBOT_PROJECT_NAME = "fiddler_chatbot2"
+FIDDLER_CHATBOT_PROJECT_NAME = "fiddler_chatbot_v3"
 FIDDLER_CHATBOT_MODEL_NAME = "fiddler_rag_chatbot"
 FIDDLER_URL = 'https://demo.fiddler.ai'
 FIDDLER_ORG_NAME = 'demo'
@@ -158,11 +158,6 @@ class StreamHandler(BaseCallbackHandler):
         self.text += token
         self.container.markdown(self.text)
 
-@st.cache_resource(show_spinner=False)
-def get_fiddler_client():
-    fdl_client = fdl.FiddlerApi(url=FIDDLER_URL, org_id=FIDDLER_ORG_NAME, auth_token=FIDDLER_API_TOKEN)
-    return fdl_client
-
 docsearch_preexisting = Cassandra(
     embedding=embeddings,
     session=st.session_state[DB_CONN],
@@ -237,17 +232,16 @@ def publish_and_store(
     )
     
     trace_df = pd.DataFrame([trace_dict])
-    
+
+    #get Fiddler client
+    fdl.init(url=FIDDLER_URL,token=FIDDLER_API_TOKEN)
+          
     #Publish the trace/event to Fiddler
-    fdl_client = get_fiddler_client()
-        
-    #Temporarily use publish event batch until publish event is fixed for low frequency publication
-    fdl_client.publish_events_batch(
-        project_id=FIDDLER_CHATBOT_PROJECT_NAME,
-        model_id=FIDDLER_CHATBOT_MODEL_NAME,
-        batch_source=trace_df,
-        id_field='row_id',
-    )
+    PROJECT = fdl.Project.from_name(name=PROJECT_NAME)
+    MODEL = fdl.Model.from_name(name=MODEL_NAME, project_id=PROJECT.id)
+          
+    MODEL.publish(trace_df)       
+
     
     return
     
