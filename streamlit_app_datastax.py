@@ -239,6 +239,9 @@ def publish_and_store(
     #Publish the trace/event to Fiddler
     PROJECT = fdl.Project.from_name(name=FIDDLER_CHATBOT_PROJECT_NAME)
     MODEL = fdl.Model.from_name(name=FIDDLER_CHATBOT_MODEL_NAME, project_id=PROJECT.id)
+
+    MODEL.event_ts_col = 'ts'
+    MODEL.event_id_col = 'row_id'      
           
     MODEL.publish(trace_df)       
 
