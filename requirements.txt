@@ -2,4 +2,4 @@ openai
 ragstack-ai==0.7.0
 tiktoken
 protobuf~=3.19.0
-fiddler-client==2.5.0
+fiddler-client
