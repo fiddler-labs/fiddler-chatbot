@@ -232,6 +232,7 @@ def publish_and_store(
     )
     
     trace_df = pd.DataFrame([trace_dict])
+    trace_df['ts'] = pd.Timestamp.today()
 
     #get Fiddler client
     fdl.init(url=FIDDLER_URL,token=FIDDLER_API_TOKEN)
