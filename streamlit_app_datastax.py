@@ -237,8 +237,8 @@ def publish_and_store(
     fdl.init(url=FIDDLER_URL,token=FIDDLER_API_TOKEN)
           
     #Publish the trace/event to Fiddler
-    PROJECT = fdl.Project.from_name(name=PROJECT_NAME)
-    MODEL = fdl.Model.from_name(name=MODEL_NAME, project_id=PROJECT.id)
+    PROJECT = fdl.Project.from_name(name=FIDDLER_CHATBOT_PROJECT_NAME)
+    MODEL = fdl.Model.from_name(name=FIDDLER_CHATBOT_MODEL_NAME, project_id=PROJECT.id)
           
     MODEL.publish(trace_df)       
 
