@@ -196,11 +196,11 @@ def get_gaurdrail_results(query: str,
     'Authorization': f'Bearer {token}'
   }
   
-  response = requests.request("POST", url, headers=headers, data=payload)
+  gaurdrail_response = requests.request("POST", url, headers=headers, data=payload)
   
-  response_dict = json.loads(response.text)
+  response_dict = json.loads(gaurdrail_response.text)
   
-  print(response_dict)
+  print(response, source_docs[0], response_dict)
 
 
 
