@@ -91,6 +91,8 @@ Note that if a user asks about uploading events or data, it means the same as pu
 If the answer cannot be found in the documentation, write "I could not find an answer.
 Join our [Slack community](https://www.fiddler.ai/slackinvite) for further clarifications." Do not make up an answer
 or give an answer that does not exist in the provided context.
+Remove ".md" from any URLs.
+Check if URLs are valid and do not provide any invalid URLs.
 
 {context}
 Question: {question}
@@ -176,6 +178,30 @@ def get_embeddings(text: str):
     
     response = client.embeddings.create(input=[text], model=EMBEDDING_MODEL)
     return response.data[0].embedding
+
+def get_gaurdrail_results(query: str,
+                          response: str,
+                          source_docs: list, ):
+  url = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
+  token = FIDDLER_API_TOKEN
+  
+  payload = json.dumps({
+    "data": {
+      "response": [response],
+      "context": [source_docs[0]]
+    }
+  })
+  headers = {
+    'Content-Type': 'application/json',
+    'Authorization': f'Bearer {token}'
+  }
+  
+  response = requests.request("POST", url, headers=headers, data=payload)
+  
+  response_dict = json.loads(response.text)
+  
+  print(response_dict)
+
 
 
 def publish_and_store(
@@ -318,7 +344,7 @@ def main():
             
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
         st.session_state[ANSWER] = full_response["answer"]
-        
+        get_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
     if st.session_state[ANSWER] is not None:
         
