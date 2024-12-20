@@ -185,22 +185,22 @@ def get_gaurdrail_results(query: str,
   url = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
   token = FIDDLER_API_TOKEN
   
-  payload = json.dumps({
-    "data": {
-      "response": [response],
-      "context": [source_docs[0]]
-    }
-  })
-  headers = {
-    'Content-Type': 'application/json',
-    'Authorization': f'Bearer {token}'
-  }
+  # payload = json.dumps({
+  #   "data": {
+  #     "response": [response],
+  #     "context": [source_docs[0]]
+  #   }
+  # })
+  # headers = {
+  #   'Content-Type': 'application/json',
+  #   'Authorization': f'Bearer {token}'
+  # }
   
-  gaurdrail_response = requests.request("POST", url, headers=headers, data=payload)
+  # gaurdrail_response = requests.request("POST", url, headers=headers, data=payload)
   
-  response_dict = json.loads(gaurdrail_response.text)
+  # response_dict = json.loads(gaurdrail_response.text)
   
-  print(response, source_docs[0], response_dict)
+  print(response, source_docs[0])
 
 
 
