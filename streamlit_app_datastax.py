@@ -351,10 +351,7 @@ def main():
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
         st.session_state[ANSWER] = full_response["answer"]
       
-        logger.info(full_response["question"])
-        logger.info(full_response["answer"])
-        logger.info(full_response["source_documents"])
-        logger.info(type(full_response["source_documents"]))
+        logger.info(type(full_response["source_documents"][0]))
       
         get_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
