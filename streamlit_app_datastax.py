@@ -387,9 +387,9 @@ def main():
         with col5:
             output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(faithfulness_score)))
             if faithfulness_score<0.5:
-              st.markdown(f''':red[{output_str}]''')
+              st.markdown(f''':red-background[{output_str}]''')
             else:
-              st.markdown(f''':green[{output_str}]''')
+              st.markdown(f''':green-background[{output_str}]''')
             
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
