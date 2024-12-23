@@ -10,6 +10,7 @@ import pandas as pd
 from typing import Any, Dict, List, Optional
 
 from streamlit.logger import get_logger
+import requests
 
 import cassandra
 from cassandra.cluster import Cluster
@@ -185,27 +186,37 @@ def get_embeddings(text: str):
 
 def get_gaurdrail_results(query: str,
                           response: str,
-                          source_docs: list, ):
+                          source_docs: list
+                         ):
+                            
   url = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
   token = FIDDLER_API_TOKEN
-  #logger.info(response)
-  #logger.info((source_docs[0])
-  # payload = json.dumps({
-  #   "data": {
-  #     "response": [response],
-  #     "context": [source_docs[0]]
-  #   }
-  # })
-  # headers = {
-  #   'Content-Type': 'application/json',
-  #   'Authorization': f'Bearer {token}'
-  # }
   
-  # gaurdrail_response = requests.request("POST", url, headers=headers, data=payload)
+  source_docs_list = []
+    for document in source_docs:
+        source_docs_list.append(document.page_content)
+      
+  prompt = query.replace("'","''")
+  response = response.replace("'","''")
+  source_doc0 = source_docs_list[0].replace("'","''")
+    
+
+  payload = json.dumps({
+    "data": {
+      "response": [response],
+      "context": [source_doc0]
+    }
+  })
+  headers = {
+    'Content-Type': 'application/json',
+    'Authorization': f'Bearer {token}'
+  }
   
-  # response_dict = json.loads(gaurdrail_response.text)
+  gaurdrail_response = requests.request("POST", url, headers=headers, data=payload)
   
-  #print(response, source_docs[0], response_dict)
+  response_dict = json.loads(gaurdrail_response.text)
+  
+  print(response, source_docs[0], response_dict)
   return 
 
 
