@@ -189,35 +189,35 @@ def get_gaurdrail_results(query: str,
                           source_docs: list
                          ):
                             
-  url = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
-  token = FIDDLER_API_TOKEN
+    url = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
+    token = FIDDLER_API_TOKEN
   
-  source_docs_list = []
+    source_docs_list = []
     for document in source_docs:
         source_docs_list.append(document.page_content)
       
-  prompt = query.replace("'","''")
-  response = response.replace("'","''")
-  source_doc0 = source_docs_list[0].replace("'","''")
+    prompt = query.replace("'","''")
+    response = response.replace("'","''")
+    source_doc0 = source_docs_list[0].replace("'","''")
     
 
-  payload = json.dumps({
-    "data": {
-      "response": [response],
-      "context": [source_doc0]
-    }
-  })
-  headers = {
+    payload = json.dumps({
+      "data": {
+        "response": [response],
+        "context": [source_doc0]
+        }
+      })
+    headers = {
     'Content-Type': 'application/json',
     'Authorization': f'Bearer {token}'
-  }
+      }
   
-  gaurdrail_response = requests.request("POST", url, headers=headers, data=payload)
+    gaurdrail_response = requests.request("POST", url, headers=headers, data=payload)
   
-  response_dict = json.loads(gaurdrail_response.text)
+    response_dict = json.loads(gaurdrail_response.text)
   
-  logger.info(response_dict)
-  return 
+    logger.info(response_dict)
+    return 
 
 
 
