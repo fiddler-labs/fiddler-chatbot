@@ -189,22 +189,23 @@ def get_gaurdrail_results(query: str,
                           source_docs: list
                          ):
                             
-    url = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
+    url_faithfulness = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
+    url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl_prompt_safety"
     token = FIDDLER_API_TOKEN
   
-    source_docs_list = []
+    source_docs = " "
     for document in source_docs:
-        source_docs_list.append(document.page_content)
+        source_docs = source_docs + document.page_content
       
     prompt = query.replace("'","''")
     response = response.replace("'","''")
-    source_doc0 = source_docs_list[0].replace("'","''")
+    source_docs = source_docs.replace("'","''")
     
 
     payload = json.dumps({
       "data": {
         "response": [response],
-        "context": [source_doc0]
+        "context": [source_docs]
         }
       })
     headers = {
@@ -212,9 +213,9 @@ def get_gaurdrail_results(query: str,
     'Authorization': f'Bearer {token}'
       }
   
-    gaurdrail_response = requests.request("POST", url, headers=headers, data=payload)
+    gaurdrail_response_faithfulness = requests.request("POST", url_faithfulness, headers=headers, data=payload)
   
-    response_dict = json.loads(gaurdrail_response.text)
+    response_dict = json.loads(gaurdrail_response_faithfulness.text)
   
     logger.info(response_dict)
     return response_dict[0]['faithful_score']
@@ -382,7 +383,7 @@ def main():
         with col4:
             st.button("Reset Chat History", on_click=erase_history)
         with col5:
-            output_str = f'Answer Failthfulness:' + str(float("{:.2f}".format(faithfulness_score)))
+            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(faithfulness_score)))
             st.markdown(output_str)
             
         
