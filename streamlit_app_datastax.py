@@ -386,7 +386,10 @@ def main():
             st.button("Reset Chat History", on_click=erase_history)
         with col5:
             output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(faithfulness_score)))
-            st.markdown(output_str)
+            if faithfulness_score<0.5:
+              st.markdown(''':red[{output_str}]''')
+            else:
+              st.markdown(''':green[{output_str}]''')
             
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
