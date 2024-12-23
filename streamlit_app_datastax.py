@@ -193,19 +193,21 @@ def get_gaurdrail_results(query: str,
     url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl_prompt_safety"
     token = FIDDLER_API_TOKEN
   
-    source_docs = " "
+    source_docs_list = []
     for document in source_docs:
-        source_docs = source_docs + str(document.page_content)
+        source_docs_list.append(document.page_content)
       
     prompt = query.replace("'","''")
     response = response.replace("'","''")
-    source_docs = source_docs.replace("'","''")
+    source_doc0 = source_docs_list[0].replace("'","''")
+    source_doc1 = source_docs_list[1].replace("'","''")
+    source_doc2 = source_docs_list[2].replace("'","''")
     
 
     payload = json.dumps({
       "data": {
         "response": [response],
-        "context": [source_docs]
+        "context": [source_doc0+source_doc1+source_doc2]
         }
       })
     headers = {
