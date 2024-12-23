@@ -205,7 +205,8 @@ def get_gaurdrail_results(query: str,
   
   # response_dict = json.loads(gaurdrail_response.text)
   
-  print(response, source_docs[0], response_dict)
+  #print(response, source_docs[0], response_dict)
+  return 
 
 
 
