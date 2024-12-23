@@ -9,6 +9,8 @@ import time
 import pandas as pd
 from typing import Any, Dict, List, Optional
 
+from streamlit.logger import get_logger
+
 import cassandra
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
@@ -29,6 +31,8 @@ from langchain_core.outputs import LLMResult
 #from langchain_community.callbacks.utils import import_pandas
 
 client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+
+logger = get_logger(__name__)
 
 FIDDLER_CHATBOT_PROJECT_NAME = "fiddler_chatbot_v3"
 FIDDLER_CHATBOT_MODEL_NAME = "fiddler_rag_chatbot"
@@ -184,8 +188,8 @@ def get_gaurdrail_results(query: str,
                           source_docs: list, ):
   url = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
   token = FIDDLER_API_TOKEN
-  print(response)
-  print(source_docs[0])
+  logger.info(response)
+  logger.info((source_docs[0])
   # payload = json.dumps({
   #   "data": {
   #     "response": [response],
