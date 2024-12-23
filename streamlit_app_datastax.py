@@ -184,7 +184,8 @@ def get_gaurdrail_results(query: str,
                           source_docs: list, ):
   url = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
   token = FIDDLER_API_TOKEN
-  
+  print(response)
+  print(source_docs[0])
   # payload = json.dumps({
   #   "data": {
   #     "response": [response],
@@ -200,7 +201,7 @@ def get_gaurdrail_results(query: str,
   
   # response_dict = json.loads(gaurdrail_response.text)
   
-  print(response, source_docs[0])
+  #print(response, source_docs[0], response_dict)
 
 
 
@@ -344,6 +345,7 @@ def main():
             
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
         st.session_state[ANSWER] = full_response["answer"]
+        print(full_response["answer"])
         get_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
     if st.session_state[ANSWER] is not None:
