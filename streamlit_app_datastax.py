@@ -195,7 +195,7 @@ def get_gaurdrail_results(query: str,
   
     source_docs = " "
     for document in source_docs:
-        source_docs = source_docs + document.page_content
+        source_docs = source_docs + str(document.page_content)
       
     prompt = query.replace("'","''")
     response = response.replace("'","''")
