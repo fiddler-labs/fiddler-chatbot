@@ -386,13 +386,13 @@ def main():
         with col4:
             st.button("Reset Chat History", on_click=erase_history)
         with col5:
-            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(gaurdrail_end_time-gaurdrail_start_time)))
+            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(faithfulness_score)))
             if faithfulness_score<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')
         with col6:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.3f}".format(faithfulness_score)))           
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.3f}".format(gaurdrail_end_time-gaurdrail_start_time)))           
             
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
