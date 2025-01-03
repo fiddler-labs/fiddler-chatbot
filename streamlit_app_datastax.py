@@ -397,7 +397,13 @@ def main():
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
             st.text_input("Leave your comments here.", key="comment", on_change=store_comment, kwargs={'uuid': st.session_state[UUID]}, value="")
-
+        hide = """
+        <style>
+            ul.streamlit-expander {
+                border: 0 !important;
+        </style>
+        """
+        st.markdown(hide, unsafe_allow_html=True)
   
     if st.session_state[ANSWER] is not None:
         
