@@ -392,7 +392,7 @@ def main():
             else:
               st.markdown(f''':green-background[{output_str}]''')
         with col6:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.3f}".format(gaurdrail_latency))) + f' s'           
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.2f}".format(gaurdrail_latency))) + f' s'           
             
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
