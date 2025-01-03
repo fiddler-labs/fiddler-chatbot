@@ -366,13 +366,14 @@ def main():
         st.session_state[ANSWER] = full_response["answer"]
       
         logger.info(type(full_response["source_documents"][0]))
-      
+        gaurdrail_start_time = time.time()
         faithfulness_score = get_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
+        gaurdrail_end_time = time.time()
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
     if st.session_state[ANSWER] is not None:
         
         # Display thumbs up and thumbs down buttons
-        col1, col2, col3, col4, col5 = st.columns([0.5, 0.5, 0.5, 4.0, 3.5])
+        col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 0.5, 4.0, 3.5, 1.5])
         with col1:
             if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
                 st.button("👍", key="thumbs_up_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 1})
@@ -385,11 +386,13 @@ def main():
         with col4:
             st.button("Reset Chat History", on_click=erase_history)
         with col5:
-            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(faithfulness_score)))
+            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(gaurdrail_end_time-gaurdrail_start_time)))
             if faithfulness_score<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')
+        with col6:
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.3f}".format(faithfulness_score)))           
             
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
