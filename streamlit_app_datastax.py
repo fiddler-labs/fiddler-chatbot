@@ -214,13 +214,15 @@ def get_gaurdrail_results(query: str,
     'Content-Type': 'application/json',
     'Authorization': f'Bearer {token}'
       }
-  
+    gaurdrail_start_time = time.time()
     gaurdrail_response_faithfulness = requests.request("POST", url_faithfulness, headers=headers, data=payload)
-  
+    gaurdrail_end_time = time.time()
+    gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
+                           
     response_dict = json.loads(gaurdrail_response_faithfulness.text)
   
     logger.info(response_dict)
-    return response_dict[0]['faithful_score']
+    return response_dict[0]['faithful_score'], gaurdrail_latency
 
 
 
@@ -366,14 +368,12 @@ def main():
         st.session_state[ANSWER] = full_response["answer"]
       
         logger.info(type(full_response["source_documents"][0]))
-        gaurdrail_start_time = time.time()
-        faithfulness_score = get_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
-        gaurdrail_end_time = time.time()
+        faithfulness_score, gaurdrail_latency = get_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
     if st.session_state[ANSWER] is not None:
         
         # Display thumbs up and thumbs down buttons
-        col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 0.5, 4.0, 3.5, 4.5])
+        col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 0.5, 3.0, 3.5, 3.5])
         with col1:
             if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
                 st.button("👍", key="thumbs_up_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 1})
@@ -392,7 +392,7 @@ def main():
             else:
               st.markdown(f''':green-background[{output_str}]''')
         with col6:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.3f}".format(gaurdrail_end_time-gaurdrail_start_time))) + f' s'           
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.3f}".format(gaurdrail_latency))) + f' s'           
             
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
