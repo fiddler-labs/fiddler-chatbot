@@ -392,11 +392,25 @@ def main():
             else:
               st.markdown(f''':green-background[{output_str}]''')
         with col6:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.2f}".format(gaurdrail_latency))) + f' s'           
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.2f}".format(gaurdrail_latency))) + f' s'   
             
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
             st.text_input("Leave your comments here.", key="comment", on_change=store_comment, kwargs={'uuid': st.session_state[UUID]}, value="")
+
+  
+    if st.session_state[ANSWER] is not None:
+        
+        # Guardrailing Results
+        col1, col2 = st.columns([4.5, 4.5])
+        with col1:
+            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(faithfulness_score)))
+            if faithfulness_score<0.5:
+              st.markdown(f''':red-background[{output_str}]''')
+            else:
+              st.markdown(f''':green-background[{output_str}]''')
+        with col2:
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.2f}".format(gaurdrail_latency))) + f' s'         
             
         hide = """
         <style>
