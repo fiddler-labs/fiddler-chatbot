@@ -425,7 +425,7 @@ def main():
               st.markdown(f''':green-background[{output_str}]''')
         with col5:
             output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(st.session_state[JAILBREAK_SCORE])))
-            if st.session_state[JAILBREAK_SCORE])<0.5:
+            if st.session_state[JAILBREAK_SCORE]<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')              
