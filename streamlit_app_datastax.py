@@ -58,7 +58,7 @@ ANSWER = 'answer'
 COL_RANGE = 'A:F'
 THUMB_UP = "thumbs_up_button"
 THUMB_DOWN = "thumbs_down_button"
-WHATEVER = "neutral"
+
 COMMENT = "comment"
 UUID = 'uuid'
 SESSION_ID = 'session_id'
@@ -120,9 +120,6 @@ if THUMB_DOWN not in st.session_state:
 
 if THUMB_UP not in st.session_state:
     st.session_state[THUMB_UP] = None
-
-if WHATEVER not in st.session_state:
-    st.session_state[WHATEVER] = None
 
 if MEMORY not in st.session_state:
     st.session_state[MEMORY] = memory
@@ -419,7 +416,7 @@ def main():
             else:
               st.markdown(f''':green-background[{output_str}]''')              
         with col6:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.2f}".format(safety_gaurdrail_latency))) + f' s'
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.1f}".format(safety_gaurdrail_latency*1000))) + f' ms'
             st.markdown(f''':green-background[{output_str}]''')
             
         
