@@ -115,12 +115,12 @@ non_stream_llm = ChatOpenAI(model_name=LLM_MODEL, temperature=0)
 memory = ConversationSummaryBufferMemory(llm=non_stream_llm, memory_key="chat_history", return_messages=True, max_tokens_limit=50, output_key='answer')
 question_generator = LLMChain(llm=non_stream_llm, prompt=CONDENSE_QUESTION_PROMPT)
 
-if faithfulness_score not in st.session_state:
-    st.session_state[faithfulness_score] = 0.0
-if jailbreak_score not in st.session_state:
-    st.session_state[jailbreak_score] = 0.0
-if safety_gaurdrail_latency not in st.session_state:
-    st.session_state[safety_gaurdrail_latency] = 0.0
+if FAITHFULNESS_SCORE not in st.session_state:
+    st.session_state[FAITHFULNESS_SCORE] = 0.0
+if JAILBREAK_SCORE not in st.session_state:
+    st.session_state[JAILBREAK_SCORE] = 0.0
+if SAFETY_GAURDRAIL_LATENCY not in st.session_state:
+    st.session_state[SAFETY_GAURDRAIL_LATENCY] = 0.0
 
 if THUMB_DOWN not in st.session_state:
     st.session_state[THUMB_DOWN] = None
@@ -395,8 +395,8 @@ def main():
         st.session_state[ANSWER] = full_response["answer"]
       
         logger.info(type(full_response["source_documents"][0]))
-        faithfulness_score, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
-        jailbreak_score, safety_gaurdrail_latency = get_safety_gaurdrail_results(full_response["question"])
+        FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
+        JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(full_response["question"])
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
     if st.session_state[ANSWER] is not None:
         
@@ -411,19 +411,19 @@ def main():
         with col3:
             st.button("Reset Chat History", on_click=erase_history)
         with col4:
-            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(faithfulness_score)))
+            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(FAITHFULNESS_SCORE)))
             if faithfulness_score<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')
         with col5:
-            output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(jailbreak_score)))
+            output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(JAILBREAK_SCORE)))
             if faithfulness_score<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')              
         with col6:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.1f}".format(safety_gaurdrail_latency*1000))) + f' ms'
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.1f}".format(SAFETY_GAURDRAIL_LATENCY*1000))) + f' ms'
             st.markdown(f''':green-background[{output_str}]''')
             
         
