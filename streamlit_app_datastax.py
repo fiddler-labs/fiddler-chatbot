@@ -397,7 +397,7 @@ def main():
     if st.session_state[ANSWER] is not None:
         
         # Display thumbs up and thumbs down buttons
-        col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 3.0, 3.0, 3.0])
+        col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 3.0, 3.0, 3.0, 3.0])
         with col1:
             if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
                 st.button("👍", key="thumbs_up_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 1})
