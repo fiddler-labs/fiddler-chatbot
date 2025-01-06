@@ -407,13 +407,13 @@ def main():
             st.button("Reset Chat History", on_click=erase_history)
         with col4:
             output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(FAITHFULNESS_SCORE)))
-            if faithfulness_score<0.5:
+            if FAITHFULNESS_SCORE<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')
         with col5:
             output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(JAILBREAK_SCORE)))
-            if faithfulness_score<0.5:
+            if JAILBREAK_SCORE<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')              
