@@ -115,6 +115,10 @@ non_stream_llm = ChatOpenAI(model_name=LLM_MODEL, temperature=0)
 memory = ConversationSummaryBufferMemory(llm=non_stream_llm, memory_key="chat_history", return_messages=True, max_tokens_limit=50, output_key='answer')
 question_generator = LLMChain(llm=non_stream_llm, prompt=CONDENSE_QUESTION_PROMPT)
 
+faithfulness_score = 0.0
+jailbreak_score = 0.0
+safety_gaurdrail_latency = 0.0
+
 if THUMB_DOWN not in st.session_state:
     st.session_state[THUMB_DOWN] = None
 
