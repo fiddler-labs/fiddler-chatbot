@@ -184,13 +184,12 @@ def get_embeddings(text: str):
     response = client.embeddings.create(input=[text], model=EMBEDDING_MODEL)
     return response.data[0].embedding
 
-def get_gaurdrail_results(query: str,
+def get_faithfulness_gaurdrail_results(query: str,
                           response: str,
                           source_docs: list
                          ):
                             
     url_faithfulness = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
-    url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl_prompt_safety"
     token = FIDDLER_API_TOKEN
   
     source_docs_list = []
@@ -224,7 +223,31 @@ def get_gaurdrail_results(query: str,
     logger.info(response_dict)
     return response_dict[0]['faithful_score'], gaurdrail_latency
 
+def get_safety_gaurdrail_results(query: str):
+  
+    url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl_prompt_safety"
+    token = FIDDLER_API_TOKEN
+      
+    prompt = query.replace("'","''")
 
+    payload = json.dumps({
+      "data": {
+        "prompt": [prompt]
+      }
+    })
+    headers = {
+    'Content-Type': 'application/json',
+    'Authorization': f'Bearer {token}'
+      }
+    gaurdrail_start_time = time.time()
+    gaurdrail_response_safety = requests.request("POST", url_safety, headers=headers, data=payload)
+    gaurdrail_end_time = time.time()
+    gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
+                           
+    response_dict = json.loads(gaurdrail_response_safety.text)
+  
+    logger.info(response_dict)
+    return response_dict[0]['jailbreaking_score'], gaurdrail_latency
 
 def publish_and_store(
         query: str,
@@ -368,12 +391,13 @@ def main():
         st.session_state[ANSWER] = full_response["answer"]
       
         logger.info(type(full_response["source_documents"][0]))
-        faithfulness_score, gaurdrail_latency = get_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
+        faithfulness_score, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
+        jailbreak_score, safety_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"])
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
     if st.session_state[ANSWER] is not None:
         
         # Display thumbs up and thumbs down buttons
-        col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 0.5, 3.0, 3.5, 3.5])
+        col1, col2, col3, col4, col5, col6, col7 = st.columns([0.5, 0.5, 0.5, 3.0, 3.0, 3.0, 3.0])
         with col1:
             if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
                 st.button("👍", key="thumbs_up_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 1})
@@ -392,7 +416,13 @@ def main():
             else:
               st.markdown(f''':green-background[{output_str}]''')
         with col6:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.2f}".format(gaurdrail_latency))) + f' s'
+            output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(jailbreak_score)))
+            if faithfulness_score<0.5:
+              st.markdown(f''':red-background[{output_str}]''')
+            else:
+              st.markdown(f''':green-background[{output_str}]''')              
+        with col7:
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.2f}".format(safety_gaurdrail_latency))) + f' s'
             st.markdown(f''':green-background[{output_str}]''')
             
         
