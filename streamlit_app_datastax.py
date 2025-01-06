@@ -392,7 +392,7 @@ def main():
       
         logger.info(type(full_response["source_documents"][0]))
         faithfulness_score, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
-        jailbreak_score, safety_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"])
+        jailbreak_score, safety_gaurdrail_latency = get_safety_gaurdrail_results(full_response["question"])
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
     if st.session_state[ANSWER] is not None:
         
