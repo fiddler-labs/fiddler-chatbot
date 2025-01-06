@@ -397,7 +397,7 @@ def main():
     if st.session_state[ANSWER] is not None:
         
         # Display thumbs up and thumbs down buttons
-        col1, col2, col3, col4, col5, col6, col7 = st.columns([0.5, 0.5, 0.5, 3.0, 3.0, 3.0, 3.0])
+        col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 3.0, 3.0, 3.0])
         with col1:
             if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
                 st.button("👍", key="thumbs_up_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 1})
@@ -405,23 +405,20 @@ def main():
             if not st.session_state[THUMB_DOWN] or st.session_state[THUMB_DOWN] is None:
                 st.button("👎", key="thumbs_down_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 0})
         with col3:
-            if not st.session_state[WHATEVER] or st.session_state[WHATEVER] is None:
-                st.button("🤷", key="neutral", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID]})
-        with col4:
             st.button("Reset Chat History", on_click=erase_history)
-        with col5:
+        with col4:
             output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(faithfulness_score)))
             if faithfulness_score<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')
-        with col6:
+        with col5:
             output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(jailbreak_score)))
             if faithfulness_score<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')              
-        with col7:
+        with col6:
             output_str = f'Gaurdrail Latency:  ' + str(float("{:.2f}".format(safety_gaurdrail_latency))) + f' s'
             st.markdown(f''':green-background[{output_str}]''')
             
