@@ -412,7 +412,8 @@ def main():
         
         # Display thumbs up and thumbs down buttons
 
-        col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 3.0, 3.0, 3.0, 3.0])
+        #col1, col2, col3, col4, col5, col6 = st.columns([0.5, 0.5, 3.0, 3.0, 3.0, 3.0])
+        col1, col2, col3 = st.columns([0.5, 0.5, 3.0])
         with col1:
             if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
                 st.button("👍", key="thumbs_up_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 1})
@@ -421,21 +422,21 @@ def main():
                 st.button("👎", key="thumbs_down_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 0})
         with col3:
             st.button("Reset Chat History", on_click=erase_history)
-        with col4:
-            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(st.session_state[FAITHFULNESS_SCORE])))
-            if st.session_state[FAITHFULNESS_SCORE]<0.5:
-              st.markdown(f''':red-background[{output_str}]''')
-            else:
-              st.markdown(f''':green-background[{output_str}]''')
-        with col5:
-            output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(st.session_state[JAILBREAK_SCORE])))
-            if st.session_state[JAILBREAK_SCORE]<0.5:
-              st.markdown(f''':red-background[{output_str}]''')
-            else:
-              st.markdown(f''':green-background[{output_str}]''')              
-        with col6:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.1f}".format(st.session_state[SAFETY_GAURDRAIL_LATENCY]*1000))) + f' ms'
-            st.markdown(f''':green-background[{output_str}]''')
+        # with col4:
+        #     output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(st.session_state[FAITHFULNESS_SCORE])))
+        #     if st.session_state[FAITHFULNESS_SCORE]<0.5:
+        #       st.markdown(f''':red-background[{output_str}]''')
+        #     else:
+        #       st.markdown(f''':green-background[{output_str}]''')
+        # with col5:
+        #     output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(st.session_state[JAILBREAK_SCORE])))
+        #     if st.session_state[JAILBREAK_SCORE]<0.5:
+        #       st.markdown(f''':red-background[{output_str}]''')
+        #     else:
+        #       st.markdown(f''':green-background[{output_str}]''')              
+        # with col6:
+        #     output_str = f'Gaurdrail Latency:  ' + str(float("{:.1f}".format(st.session_state[SAFETY_GAURDRAIL_LATENCY]*1000))) + f' ms'
+        #     st.markdown(f''':green-background[{output_str}]''')
             
         
         with st.expander("Click here to leave your feedback on the chatbot response"):
@@ -447,6 +448,35 @@ def main():
         </style>
         """
         st.markdown(hide, unsafe_allow_html=True)
+   
+  if st.session_state[ANSWER] is not None:
+        
+        # Display thumbs up and thumbs down buttons
+
+        col1, col2, col3 = st.columns([3.5, 3.5, 3.5])
+        with col1:
+            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(st.session_state[FAITHFULNESS_SCORE])))
+            if st.session_state[FAITHFULNESS_SCORE]<0.5:
+              st.markdown(f''':red-background[{output_str}]''')
+            else:
+              st.markdown(f''':green-background[{output_str}]''')
+        with col2:
+            output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(st.session_state[JAILBREAK_SCORE])))
+            if st.session_state[JAILBREAK_SCORE]<0.5:
+              st.markdown(f''':red-background[{output_str}]''')
+            else:
+              st.markdown(f''':green-background[{output_str}]''')  
+        with col3:
+            output_str = f'Gaurdrail Latency:  ' + str(float("{:.1f}".format(st.session_state[SAFETY_GAURDRAIL_LATENCY]*1000))) + f' ms'
+            st.markdown(f''':green-background[{output_str}]''')
+            
+        hide = """
+        <style>
+            ul.streamlit-expander {
+                border: 0 !important;
+        </style>
+        """
+        st.markdown(hide, unsafe_allow_html=True)      
 
 if __name__ == "__main__":
     main()
