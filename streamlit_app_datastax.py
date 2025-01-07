@@ -64,6 +64,10 @@ UUID = 'uuid'
 SESSION_ID = 'session_id'
 DB_CONN = 'db_conn'
 
+FAITHFULNESS_SCORE=0.0
+JAILBREAK_SCORE =0.0
+SAFETY_GAURDRAIL_LATENCY =0.0
+
 FDL_PROMPT = 'prompt'
 FDL_RESPONSE = 'response'
 FDL_SESSION_ID = 'session_id'
