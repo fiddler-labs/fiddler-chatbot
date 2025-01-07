@@ -449,7 +449,7 @@ def main():
         """
         st.markdown(hide, unsafe_allow_html=True)
    
-  if st.session_state[ANSWER] is not None:
+    if st.session_state[ANSWER] is not None:
         
         # Display thumbs up and thumbs down buttons
 
