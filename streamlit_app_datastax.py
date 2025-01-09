@@ -398,13 +398,13 @@ def main():
             full_response = qa(prompt)
             end_time = time.time()
         
-          if JAILBREAK_SCORE>0.5:    
-            defualt_error_message=f'Your prompt was rejected. Please try again.'
-            st.session_state.messages.append({"role": "assistant", "content": defualt_error_message})
-            st.session_state[ANSWER] = defualt_error_message
-          else:
-            st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
-            st.session_state[ANSWER] = full_response["answer"]
+            if JAILBREAK_SCORE>0.5:    
+              defualt_error_message=f'Your prompt was rejected. Please try again.'
+              st.session_state.messages.append({"role": "assistant", "content": defualt_error_message})
+              st.session_state[ANSWER] = defualt_error_message
+            else:
+              st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
+              st.session_state[ANSWER] = full_response["answer"]
           
         FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
         
