@@ -384,25 +384,32 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
-        with st.chat_message("assistant", avatar="images/logo.png"):
-            callback = StreamHandler(st.empty())
-            llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
-            doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
-            
-            start_time = time.time()
-            qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
-                                              question_generator=question_generator,
-                                              retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
-                                              memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
-            full_response = qa(prompt)
-            end_time = time.time()
-            
-        st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
-        st.session_state[ANSWER] = full_response["answer"]
-      
+        JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(prompt)
+        if JAILBREAK_SCORE<0.5:
+          
+          with st.chat_message("assistant", avatar="images/logo.png"):
+              callback = StreamHandler(st.empty())
+              llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
+              doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
+              
+              start_time = time.time()
+              qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
+                                                question_generator=question_generator,
+                                                retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
+                                                memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
+              full_response = qa(prompt)
+              end_time = time.time()
+              
+          st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
+          st.session_state[ANSWER] = full_response["answer"]
+        else:
+          defualt_error_message=f'Your prompt was rejected. Please try again.'
+          st.session_state.messages.append({"role": "assistant", "content": defualt_error_message})
+          st.session_state[ANSWER] = defualt_error_message]
+          
         logger.info(type(full_response["source_documents"][0]))
         FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
-        JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(full_response["question"])
+        
         # st.session_state[FAITHFULNESS_SCORE] = FAITHFULNESS_SCORE
         # st.session_state[JAILBREAK_SCORE] = JAILBREAK_SCORE
         # st.session_state[SAFETY_GAURDRAIL_LATENCY] = SAFETY_GAURDRAIL_LATENCY
