@@ -96,6 +96,9 @@ use its value to create a URL by adding "https://docs.fiddler.ai/docs/" before t
 For reference URLs about release notes add "https://docs.fiddler.ai/changelog/" before the "slug" value of the document. 
 For any URLs found immediately after "BlogLink:" just provide that URL in the output.
 Do not use page titles to create URLs. 
+
+If the prompt is Rejected then say "Your prompt was rejected. Please try again."
+
 Note that if a user asks about uploading events or data, it means the same as publishing events.
 If the answer cannot be found in the documentation, write "I could not find an answer.
 Join our [Slack community](https://www.fiddler.ai/slackinvite) for further clarifications." Do not make up an answer
@@ -381,6 +384,8 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
         JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(prompt)
+        if JAILBREAK_SCORE>0.5:  
+            prompt = f'Rejected'  
           
         with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
@@ -394,9 +399,6 @@ def main():
                                               memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
             full_response = qa(prompt)
             end_time = time.time()
-        
-        if JAILBREAK_SCORE>0.5:  
-            full_response["answer"] = f'Your prompt was rejected. Please try again.'
   
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
         st.session_state[ANSWER] = full_response["answer"]
