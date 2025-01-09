@@ -406,6 +406,7 @@ def main():
 
         else:
           with st.chat_message("assistant", avatar="images/logo.png"):
+            callback = StreamHandler(st.empty())
             defualt_error_message=f'Your prompt was rejected. Please try again.'
           
           st.session_state.messages.append({"role": "assistant", "content": defualt_error_message})
