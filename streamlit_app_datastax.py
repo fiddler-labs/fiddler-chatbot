@@ -381,38 +381,31 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
         JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(prompt)
-        if JAILBREAK_SCORE<0.5:
           
-          with st.chat_message("assistant", avatar="images/logo.png"):
-              callback = StreamHandler(st.empty())
-              llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
-              doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
-              
-              start_time = time.time()
-              qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
-                                                question_generator=question_generator,
-                                                retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
-                                                memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
-              full_response = qa(prompt)
-              end_time = time.time()
-      
-    
-          st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
-          st.session_state[ANSWER] = full_response["answer"]
-          logger.info(st.session_state[ANSWER])
-          
-          FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
-          publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
-
-        else:
-          with st.chat_message("assistant", avatar="images/logo.png"):
+        with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
-            defualt_error_message=f'Your prompt was rejected. Please try again.'
-          
-          st.session_state.messages.append({"role": "assistant", "content": defualt_error_message})
-          st.session_state[ANSWER] = defualt_error_message
-          logger.info(st.session_state[ANSWER])
-          FAITHFULNESS_SCORE = 0.0
+            llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
+            doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
+            
+            start_time = time.time()
+            qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
+                                              question_generator=question_generator,
+                                              retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
+                                              memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
+            full_response = qa(prompt)
+            end_time = time.time()
+        
+        if JAILBREAK_SCORE>0.5:  
+            full_response["answer"] = f'Your prompt was rejected. Please try again.'
+  
+        st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
+        st.session_state[ANSWER] = full_response["answer"]
+        logger.info(st.session_state[ANSWER])
+        
+        FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
+        
+        publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
+
 
         
     if st.session_state[ANSWER] is not None and st.session_state[THUMB_UP] is None and st.session_state[THUMB_DOWN] is None:
