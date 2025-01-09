@@ -229,8 +229,6 @@ def get_faithfulness_gaurdrail_results(query: str,
     gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
                            
     response_dict = json.loads(gaurdrail_response_faithfulness.text)
-  
-    logger.info(response_dict)
     return response_dict[0]['faithful_score'], gaurdrail_latency
 
 def get_safety_gaurdrail_results(query: str):
@@ -255,8 +253,6 @@ def get_safety_gaurdrail_results(query: str):
     gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
                            
     response_dict = json.loads(gaurdrail_response_safety.text)
-  
-    logger.info(response_dict)
     return response_dict[0]['jailbreaking_score'], gaurdrail_latency
 
 def publish_and_store(
@@ -397,14 +393,16 @@ def main():
                                               memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
             full_response = qa(prompt)
             end_time = time.time()
-        
-            if JAILBREAK_SCORE>0.5:    
-              defualt_error_message=f'Your prompt was rejected. Please try again.'
-              st.session_state.messages.append({"role": "assistant", "content": defualt_error_message})
-              st.session_state[ANSWER] = defualt_error_message
-            else:
-              st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
-              st.session_state[ANSWER] = full_response["answer"]
+    
+        if JAILBREAK_SCORE>0.5:    
+          defualt_error_message=f'Your prompt was rejected. Please try again.'
+          st.session_state.messages.append({"role": "assistant", "content": defualt_error_message})
+          st.session_state[ANSWER] = defualt_error_message
+          logger.info(st.session_state[ANSWER])
+        else:
+          st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
+          st.session_state[ANSWER] = full_response["answer"]
+          logger.info(st.session_state[ANSWER])
           
         FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
         
