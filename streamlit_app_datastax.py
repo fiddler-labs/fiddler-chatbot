@@ -98,12 +98,13 @@ For any URLs found immediately after "BlogLink:" just provide that URL in the ou
 Do not use page titles to create URLs. 
 
 Note that if a user asks about uploading events or data, it means the same as publishing events.
-If the answer cannot be found in the documentation, write "I could not find an answer.
-Join our [Slack community](https://www.fiddler.ai/slackinvite) for further clarifications." Do not make up an answer
+Do not make up an answer
 or give an answer that does not exist in the provided context.
 Remove ".md" from any URLs.
 Check if URLs are valid and do not provide any invalid URLs.
 
+If the answer cannot be found in the documentation, write "I could not find an answer.
+Join our [Slack community](https://www.fiddler.ai/slackinvite) for further clarifications."
 If user input has the words "rejected" then say "Your prompt was rejected. Please try again."
 
 {context}
@@ -121,15 +122,7 @@ embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
 non_stream_llm = ChatOpenAI(model_name=LLM_MODEL, temperature=0)
 memory = ConversationSummaryBufferMemory(llm=non_stream_llm, memory_key="chat_history", return_messages=True, max_tokens_limit=50, output_key='answer')
 question_generator = LLMChain(llm=non_stream_llm, prompt=CONDENSE_QUESTION_PROMPT)
-
-# if FAITHFULNESS_SCORE not in st.session_state:
-#     st.session_state[FAITHFULNESS_SCORE] = 0.0
-  
-# if JAILBREAK_SCORE not in st.session_state:
-#     st.session_state[JAILBREAK_SCORE] = 0.0 
-
-# if SAFETY_GAURDRAIL_LATENCY not in st.session_state:
-#     st.session_state[SAFETY_GAURDRAIL_LATENCY] = 0.0  
+ 
 
 if THUMB_DOWN not in st.session_state:
     st.session_state[THUMB_DOWN] = None
@@ -162,12 +155,6 @@ if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
     auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
     cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
     st.session_state[DB_CONN] = cluster.connect()
-
-# @st.cache_resource(show_spinner=False)
-# def get_fiddler_callback_handler():
-#     fiddler_callback_handler = FiddlerCallbackHandler(url=URL, org=ORG_NAME,  project=PROJECT_NAME, model = MODEL_NAME, api_key=FIDDLER_API_TOKEN)
-#     return fiddler_callback_handler
-
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container, initial_text=""):
@@ -325,8 +312,6 @@ def publish_and_store(
     MODEL.event_id_col = 'row_id'      
           
     MODEL.publish(trace_df)       
-
-    
     return
     
     
@@ -423,7 +408,7 @@ def main():
               st.markdown(f''':green-background[{output_str}]''')
         with col2:
             output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(JAILBREAK_SCORE)))
-            if JAILBREAK_SCORE<0.5:
+            if JAILBREAK_SCORE>0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')  
