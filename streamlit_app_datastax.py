@@ -385,21 +385,21 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
         JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(prompt)
-        if JAILBREAK_SCORE<0.5:
           
-          with st.chat_message("assistant", avatar="images/logo.png"):
-              callback = StreamHandler(st.empty())
-              llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
-              doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
-              
-              start_time = time.time()
-              qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
-                                                question_generator=question_generator,
-                                                retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
-                                                memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
-              full_response = qa(prompt)
-              end_time = time.time()
-              
+        with st.chat_message("assistant", avatar="images/logo.png"):
+            callback = StreamHandler(st.empty())
+            llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
+            doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
+            
+            start_time = time.time()
+            qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
+                                              question_generator=question_generator,
+                                              retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
+                                              memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
+            full_response = qa(prompt)
+            end_time = time.time()
+        
+        if JAILBREAK_SCORE<0.5:    
           st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
           st.session_state[ANSWER] = full_response["answer"]
         else:
