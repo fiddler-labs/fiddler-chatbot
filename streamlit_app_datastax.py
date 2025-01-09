@@ -388,8 +388,10 @@ def main():
         st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
         st.session_state[ANSWER] = full_response["answer"]
         logger.info(st.session_state[ANSWER])
-        
-        FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
+        if JAILBREAK_SCORE>0.5:  
+            FAITHFULNESS_SCORE = 0.0
+        else:  
+            FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
         
         publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
 
