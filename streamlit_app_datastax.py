@@ -405,7 +405,7 @@ def main():
         else:
           defualt_error_message=f'Your prompt was rejected. Please try again.'
           st.session_state.messages.append({"role": "assistant", "content": defualt_error_message})
-          st.session_state[ANSWER] = defualt_error_message]
+          st.session_state[ANSWER] = defualt_error_message
           
         logger.info(type(full_response["source_documents"][0]))
         FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
