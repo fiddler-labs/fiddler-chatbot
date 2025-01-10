@@ -403,19 +403,19 @@ def main():
 
         col1, col2, col3 = st.columns([3.5, 3.5, 3.5])
         with col1:
-            output_str = f'Answer Failthfulness:  ' + str(float("{:.3f}".format(FAITHFULNESS_SCORE)))
+            output_str = f'Answer Faithfulness:  ' + str(float("{:.3f}".format(FAITHFULNESS_SCORE)))
             if FAITHFULNESS_SCORE<0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')
         with col2:
-            output_str = f'Jailbreak Likelyhood:  ' + str(float("{:.3f}".format(JAILBREAK_SCORE)))
+            output_str = f'Jailbreak Likelihood:  ' + str(float("{:.3f}".format(JAILBREAK_SCORE)))
             if JAILBREAK_SCORE>0.5:
               st.markdown(f''':red-background[{output_str}]''')
             else:
               st.markdown(f''':green-background[{output_str}]''')  
         with col3:
-            output_str = f'Gaurdrail Latency:  ' + str(float("{:.1f}".format(SAFETY_GAURDRAIL_LATENCY*1000))) + f' ms'
+            output_str = f'Guardrails Latency:  ' + str(float("{:.1f}".format(SAFETY_GAURDRAIL_LATENCY*1000))) + f' ms'
             st.markdown(f''':green-background[{output_str}]''')
             
         hide = """
