@@ -370,9 +370,7 @@ def main():
             st.markdown(prompt)
         JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(prompt)
         if JAILBREAK_SCORE>0.5:
-            response = f'Your prompt was rejected. Please try again.' 
-            source_docs = [" "," "," "]
-            publish_and_store(prompt,response, source_docs, 0.0)
+            old_prompt = prompt
             prompt = f'Rejected'
           
         with st.chat_message("assistant", avatar="images/logo.png"):
@@ -393,6 +391,7 @@ def main():
         logger.info(st.session_state[ANSWER])
         if JAILBREAK_SCORE>0.5:  
             FAITHFULNESS_SCORE = 0.0
+            publish_and_store(old_prompt, full_response["answer"], full_response["source_documents"], (end_time - start_time))
         else:  
             FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
             publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
