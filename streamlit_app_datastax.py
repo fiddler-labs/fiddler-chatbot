@@ -369,8 +369,11 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
         JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(prompt)
-        if JAILBREAK_SCORE>0.5:  
-            prompt = f'Rejected'  
+        if JAILBREAK_SCORE>0.5:
+            response = f'Your prompt was rejected. Please try again.' 
+            source_docs = [" "," "," "]
+            publish_and_store(prompt,response, source_docs, 0.0)
+            prompt = f'Rejected'
           
         with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
@@ -392,8 +395,8 @@ def main():
             FAITHFULNESS_SCORE = 0.0
         else:  
             FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
+            publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
         
-        publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
 
 
         
