@@ -189,7 +189,7 @@ def get_faithfulness_gaurdrail_results(query: str,
                           source_docs: list
                          ):
                             
-    url_faithfulness = "https://demo.fiddler.ai/v3/guardrails/ftl_response_faithfulness"
+    url_faithfulness = "https://demo.fiddler.ai/v3/guardrails/ftl-response-faithfulness"
     token = FIDDLER_API_TOKEN
   
     source_docs_list = []
@@ -223,7 +223,7 @@ def get_faithfulness_gaurdrail_results(query: str,
 
 def get_safety_gaurdrail_results(query: str):
   
-    url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl_prompt_safety"
+    url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl-safety"
     token = FIDDLER_API_TOKEN
       
     prompt = query.replace("'","''")
