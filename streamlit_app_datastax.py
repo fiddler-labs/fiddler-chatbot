@@ -218,8 +218,8 @@ def get_faithfulness_gaurdrail_results(query: str,
     gaurdrail_end_time = time.time()
     gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
                            
-    response_dict = json.loads(gaurdrail_response_faithfulness.text)
-    return response_dict[0]['fdl_faithful_score'], gaurdrail_latency
+    response_dict = gaurdrail_response_faithfulness.json()
+    return response_dict['fdl_faithful_score'], gaurdrail_latency
 
 def get_safety_gaurdrail_results(query: str):
   
@@ -242,8 +242,8 @@ def get_safety_gaurdrail_results(query: str):
     gaurdrail_end_time = time.time()
     gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
                            
-    response_dict = json.loads(gaurdrail_response_safety.text)
-    return response_dict[0]['fdl_jailbreaking'], gaurdrail_latency
+    response_dict = gaurdrail_response_safety.jsons()
+    return response_dict['fdl_jailbreaking'], gaurdrail_latency
 
 def publish_and_store(
         query: str,
