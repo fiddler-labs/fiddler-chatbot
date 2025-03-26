@@ -242,7 +242,7 @@ def get_safety_gaurdrail_results(query: str):
     gaurdrail_end_time = time.time()
     gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
                            
-    response_dict = gaurdrail_response_safety.jsons()
+    response_dict = gaurdrail_response_safety.json()
     return response_dict['fdl_jailbreaking'], gaurdrail_latency
 
 def publish_and_store(
