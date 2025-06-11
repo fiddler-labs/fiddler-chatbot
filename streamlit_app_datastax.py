@@ -1,101 +1,96 @@
-import streamlit as st
-from streamlit import _bottom
-import os
-from openai import OpenAI
+"""Fiddler Chatbot - A Streamlit app for RAG-based Q&A using Fiddler documentation."""
+
+# Standard library imports
 import json
-import uuid as uuid_g
-import fiddler as fdl
+import os
 import time
-import pandas as pd
-from typing import Any, Dict, List, Optional
+import uuid as uuid_g
 
-from streamlit.logger import get_logger
-import requests
-
-import cassandra
-from cassandra.cluster import Cluster
-from cassandra.auth import PlainTextAuthProvider
-
-from langchain.vectorstores.cassandra import Cassandra
-from langchain.indexes.vectorstore import VectorStoreIndexWrapper
-from langchain.llms import OpenAI
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.prompts import PromptTemplate
-from langchain.chains import ConversationalRetrievalChain
-from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationSummaryBufferMemory
-from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT, QA_PROMPT
-from langchain.chains.question_answering import load_qa_chain
-from langchain.chains.llm import LLMChain
+# Third-party imports
+import fiddler as fdl  # type: ignore
+import pandas as pd  # type: ignore
+import requests  # type: ignore
+import streamlit as st
+from cassandra.auth import PlainTextAuthProvider  # type: ignore
+from cassandra.cluster import Cluster  # type: ignore
 from langchain.callbacks.base import BaseCallbackHandler
-from langchain_core.outputs import LLMResult
-#from langchain_community.callbacks.utils import import_pandas
+from langchain.chains import ConversationalRetrievalChain
+from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
+from langchain.chains.llm import LLMChain
+from langchain.chains.question_answering import load_qa_chain
+from langchain.memory import ConversationSummaryBufferMemory
+from langchain.prompts import PromptTemplate
+from langchain.vectorstores.cassandra import Cassandra
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from openai import OpenAI
+from streamlit.logger import get_logger
 
-client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 logger = get_logger(__name__)
 
 FIDDLER_CHATBOT_PROJECT_NAME = "fiddler_chatbot_v3"
 FIDDLER_CHATBOT_MODEL_NAME = "fiddler_rag_chatbot"
-FIDDLER_URL = 'https://demo.fiddler.ai'
-FIDDLER_ORG_NAME = 'demo'
-FIDDLER_API_TOKEN = os.environ.get('FIDDLER_API_TOKEN')
+FIDDLER_URL = "https://demo.fiddler.ai"
+FIDDLER_ORG_NAME = "demo"
+FIDDLER_API_TOKEN = os.environ.get("FIDDLER_API_TOKEN")
 
-ASTRA_DB_SECURE_BUNDLE_PATH = 'datastax_auth/secure-connect-fiddlerai.zip'
-ASTRA_DB_KEYSPACE = 'fiddlerai'
-ASTRA_DB_TABLE_NAME = 'fiddler_doc_snippets_openai'
-ASTRA_DB_LEDGER_TABLE_NAME = 'fiddler_chatbot_ledger'
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-ASTRA_DB_APPLICATION_TOKEN = os.environ.get('ASTRA_DB_APPLICATION_TOKEN')
+ASTRA_DB_SECURE_BUNDLE_PATH = "datastax_auth/secure-connect-fiddlerai.zip"
+ASTRA_DB_KEYSPACE = "fiddlerai"
+ASTRA_DB_TABLE_NAME = "fiddler_doc_snippets_openai"
+ASTRA_DB_LEDGER_TABLE_NAME = "fiddler_chatbot_ledger"
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+ASTRA_DB_APPLICATION_TOKEN = os.environ.get("ASTRA_DB_APPLICATION_TOKEN")
 
 # models
 EMBEDDING_MODEL = "text-embedding-ada-002"
 LLM_MODEL = "gpt-3.5-turbo"
 
-MEMORY = 'memory'
+MEMORY = "memory"
 QA = "qa"
-ANSWER = 'answer'
-COL_RANGE = 'A:F'
+ANSWER = "answer"
+COL_RANGE = "A:F"
 THUMB_UP = "thumbs_up_button"
 THUMB_DOWN = "thumbs_down_button"
 
 COMMENT = "comment"
-UUID = 'uuid'
-SESSION_ID = 'session_id'
-DB_CONN = 'db_conn'
+UUID = "uuid"
+SESSION_ID = "session_id"
+DB_CONN = "db_conn"
 
-FAITHFULNESS_SCORE=0.0
-JAILBREAK_SCORE =0.0
-SAFETY_GAURDRAIL_LATENCY =0.0
+FAITHFULNESS_SCORE = 0.0
+JAILBREAK_SCORE = 0.0
+SAFETY_GUARDRAIL_LATENCY = 0.0
+REQUESTS_TIMEOUT = 30
 
-FDL_PROMPT = 'prompt'
-FDL_RESPONSE = 'response'
-FDL_SESSION_ID = 'session_id'
-FDL_ROW_ID = 'row_id'
-FDL_RUN_ID = 'run_id'
-FDL_SOURCE_DOC0 = 'source_doc0'
-FDL_SOURCE_DOC1 = 'source_doc1'
-FDL_SOURCE_DOC2 = 'source_doc2'
-FDL_COMMENT = 'comment'
-FDL_FEEDBACK = 'feedback'
-FDL_FEEDBACK2 = 'feedback2'
-FDL_PROMPT_TOKENS = 'prompt_tokens'
-FDL_TOTAL_TOKENS = 'total_tokens'
-FDL_COMPLETION_TOKENS = 'completion_tokens'
-FDL_DURATION = 'duration'
-FDL_MODEL_NAME = 'model_name'
+FDL_PROMPT = "prompt"
+FDL_RESPONSE = "response"
+FDL_SESSION_ID = "session_id"
+FDL_ROW_ID = "row_id"
+FDL_RUN_ID = "run_id"
+FDL_SOURCE_DOC0 = "source_doc0"
+FDL_SOURCE_DOC1 = "source_doc1"
+FDL_SOURCE_DOC2 = "source_doc2"
+FDL_COMMENT = "comment"
+FDL_FEEDBACK = "feedback"
+FDL_FEEDBACK2 = "feedback2"
+FDL_PROMPT_TOKENS = "prompt_tokens"
+FDL_TOTAL_TOKENS = "total_tokens"
+FDL_COMPLETION_TOKENS = "completion_tokens"
+FDL_DURATION = "duration"
+FDL_MODEL_NAME = "model_name"
 
-template = """You are a tool called Fiddler Chatbot. 
+TEMPLATE = """You are a tool called Fiddler Chatbot. 
 Your purpose is to use the documentation from the Fiddler AI to answer the subsequent documentation questions.
-Also, if possible, give the reference URLs according to the following instructions. 
+Also, if possible, give the reference URLs according to the following instructions.
 Provide detailed answers for a $200 tip. Answers should be at least 800 characters long. 
 If possible provide at least two or five maximum code samples from the provided documentation.
-The way to create the URLs is: add "https://docs.fiddler.ai/docs/" before the "slug" value of the document. 
-For any URL references that start with "doc:" or "ref:" 
-use its value to create a URL by adding "https://docs.fiddler.ai/docs/" before that value.
-For reference URLs about release notes add "https://docs.fiddler.ai/changelog/" before the "slug" value of the document. 
+The way to create the URLs is: add "https://docs.fiddler.ai/" before the "slug" value of the document.
+For any URL references that start with "doc:" or "ref:"
+use its value to create a URL by adding "https://docs.fiddler.ai/" before that value.
+For reference URLs about release notes add "https://docs.fiddler.ai/history/" before the "slug" value of the document.
 For any URLs found immediately after "BlogLink:" just provide that URL in the output.
-Do not use page titles to create URLs. 
+Do not use page titles to create URLs.
 
 Note that if a user asks about uploading events or data, it means the same as publishing events.
 Do not make up an answer
@@ -110,19 +105,24 @@ If user input has the words "rejected" then say "Your prompt was rejected. Pleas
 {context}
 Question: {question}
 Helpful Answer:"""
-QA_CHAIN_PROMPT = PromptTemplate.from_template(template)
 
-#Connect to DataStax Cassandra
-cloud_config= {
-  "secure_connect_bundle": ASTRA_DB_SECURE_BUNDLE_PATH
-}
+QA_CHAIN_PROMPT = PromptTemplate.from_template(TEMPLATE)
+
+# Connect to DataStax Cassandra
+cloud_config = {"secure_connect_bundle": ASTRA_DB_SECURE_BUNDLE_PATH}
 
 embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
 
-non_stream_llm = ChatOpenAI(model_name=LLM_MODEL, temperature=0)
-memory = ConversationSummaryBufferMemory(llm=non_stream_llm, memory_key="chat_history", return_messages=True, max_tokens_limit=50, output_key='answer')
+non_stream_llm = ChatOpenAI(model=LLM_MODEL, temperature=0)
+memory = ConversationSummaryBufferMemory(
+    llm=non_stream_llm,
+    memory_key="chat_history",
+    return_messages=True,
+    max_token_limit=50,
+    output_key="answer",
+)
 question_generator = LLMChain(llm=non_stream_llm, prompt=CONDENSE_QUESTION_PROMPT)
- 
+
 
 if THUMB_DOWN not in st.session_state:
     st.session_state[THUMB_DOWN] = None
@@ -138,25 +138,28 @@ if COMMENT not in st.session_state:
 
 if ANSWER not in st.session_state:
     st.session_state[ANSWER] = None
-    
+
 if UUID not in st.session_state:
     st.session_state[UUID] = None
-    
+
 if SESSION_ID not in st.session_state:
     st.session_state[SESSION_ID] = None
-    
+
 if DB_CONN not in st.session_state:
-     st.session_state[DB_CONN] = None
+    st.session_state[DB_CONN] = None
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
-    
+
 if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
-    auth_provider=PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
+    auth_provider = PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
     cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
     st.session_state[DB_CONN] = cluster.connect()
 
+
 class StreamHandler(BaseCallbackHandler):
+    """Callback handler for streaming LLM responses."""
+
     def __init__(self, container, initial_text=""):
         self.container = container
         self.text = initial_text
@@ -165,183 +168,199 @@ class StreamHandler(BaseCallbackHandler):
         self.text += token
         self.container.markdown(self.text)
 
+
 docsearch_preexisting = Cassandra(
     embedding=embeddings,
     session=st.session_state[DB_CONN],
     keyspace=ASTRA_DB_KEYSPACE,
     table_name=ASTRA_DB_TABLE_NAME,
 )
-    
+
+
 def get_embeddings(text: str):
-    
+    """Generates embeddings for a given text using OpenAI."""
     # Define the maximum length you want
     max_length = 8192  # This is the longest length of text that OpenAI can produce embeddings for.
 
     # Truncate the string
     if len(text) > max_length:
         text = text[:max_length]
-    
+
     response = client.embeddings.create(input=[text], model=EMBEDDING_MODEL)
     return response.data[0].embedding
 
-def get_faithfulness_gaurdrail_results(query: str,
-                          response: str,
-                          source_docs: list
-                         ):
-                            
+
+def get_faithfulness_guardrail_results(query: str, response: str, source_docs: list):
+    """Calculates the faithfulness score for a response given a query and source documents."""
     url_faithfulness = "https://demo.fiddler.ai/v3/guardrails/ftl-response-faithfulness"
     token = FIDDLER_API_TOKEN
-  
+
     source_docs_list = []
     for document in source_docs:
         source_docs_list.append(document.page_content)
-      
-    prompt = query.replace("'","''")
-    response = response.replace("'","''")
-    source_doc0 = source_docs_list[0].replace("'","''")
-    source_doc1 = source_docs_list[1].replace("'","''")
-    source_doc2 = source_docs_list[2].replace("'","''")
-    
 
-    payload = json.dumps({
-      "data": {
-        "response": response,
-        "context": source_doc0+source_doc1+source_doc2
+    prompt = query.replace("'", "''")
+    response = response.replace("'", "''")
+    source_doc0 = source_docs_list[0].replace("'", "''")
+    source_doc1 = source_docs_list[1].replace("'", "''")
+    source_doc2 = source_docs_list[2].replace("'", "''")
+
+    payload = json.dumps(
+        {
+            "data": {
+                "response": response,
+                "context": source_doc0 + source_doc1 + source_doc2,
+            }
         }
-      })
-    headers = {
-    'Content-Type': 'application/json',
-    'Authorization': f'Bearer {token}'
-      }
-    gaurdrail_start_time = time.time()
-    gaurdrail_response_faithfulness = requests.request("POST", url_faithfulness, headers=headers, data=payload)
-    gaurdrail_end_time = time.time()
-    gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
-                           
-    response_dict = gaurdrail_response_faithfulness.json()
-    return response_dict['fdl_faithful_score'], gaurdrail_latency
+    )
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+    guardrail_start_time = time.time()
+    guardrail_response_faithfulness = requests.request(
+        "POST", url_faithfulness, headers=headers, data=payload, timeout=REQUESTS_TIMEOUT
+    )
+    guardrail_end_time = time.time()
+    guardrail_latency = guardrail_end_time - guardrail_start_time
 
-def get_safety_gaurdrail_results(query: str):
-  
+    response_dict = guardrail_response_faithfulness.json()
+    return response_dict["fdl_faithful_score"], guardrail_latency
+
+
+def get_safety_guardrail_results(query: str):
+    """Calculates the safety score for a given query."""
     url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl-safety"
     token = FIDDLER_API_TOKEN
-      
-    prompt = query.replace("'","''")
 
-    payload = json.dumps({
-      "data": {
-        "input": prompt
-      }
-    })
-    headers = {
-    'Content-Type': 'application/json',
-    'Authorization': f'Bearer {token}'
-      }
-    gaurdrail_start_time = time.time()
-    gaurdrail_response_safety = requests.request("POST", url_safety, headers=headers, data=payload)
-    gaurdrail_end_time = time.time()
-    gaurdrail_latency = gaurdrail_end_time - gaurdrail_start_time
-                           
-    response_dict = gaurdrail_response_safety.json()
-    return response_dict['fdl_jailbreaking'], gaurdrail_latency
+    prompt = query.replace("'", "''")
+
+    payload = json.dumps({"data": {"input": prompt}})
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+    guardrail_start_time = time.time()
+    guardrail_response_safety = requests.request(
+        "POST", url_safety, headers=headers, data=payload, timeout=REQUESTS_TIMEOUT
+    )
+    guardrail_end_time = time.time()
+    guardrail_latency = guardrail_end_time - guardrail_start_time
+
+    response_dict = guardrail_response_safety.json()
+    return response_dict["fdl_jailbreaking"], guardrail_latency
+
 
 def publish_and_store(
-        query: str,
-        response: str,
-        source_docs: list, 
-        duration: float,
-        ):
-    
-    #Break out the source docs into a list
+    query: str,
+    response: str,
+    source_docs: list,
+    duration: float,
+):
+    """Publishes the RAG trace to Fiddler and stores it in the database."""
+    # Break out the source docs into a list
     source_docs_list = []
     for document in source_docs:
         source_docs_list.append(document.page_content)
-    
-    #Capture the values for storage and publication
+
+    # Capture the values for storage and publication
     st.session_state[UUID] = uuid_g.uuid4()
     row_id = str(st.session_state[UUID])
     run_id = str(st.session_state[UUID])
     session_id = str(st.session_state[SESSION_ID])
     model_name = LLM_MODEL
-    prompt = query.replace("'","''")
-    response = response.replace("'","''")
-    source_doc0 = source_docs_list[0].replace("'","''")
-    source_doc1 = source_docs_list[1].replace("'","''")
-    source_doc2 = source_docs_list[2].replace("'","''")
+    prompt = query.replace("'", "''")
+    response = response.replace("'", "''")
+    source_doc0 = source_docs_list[0].replace("'", "''")
+    source_doc1 = source_docs_list[1].replace("'", "''")
+    source_doc2 = source_docs_list[2].replace("'", "''")
     prompt_tokens = len(prompt.split())
     completion_tokens = len(response.split())
     total_tokens = prompt_tokens + completion_tokens
-    
-    #Create the trace/event dict
+
+    # Create the trace/event dict
     trace_dict = {
-        FDL_PROMPT : prompt,
-        FDL_RESPONSE : response,
-        FDL_SESSION_ID : session_id,
-        FDL_ROW_ID : row_id,
-        FDL_RUN_ID : run_id,
-        FDL_SOURCE_DOC0 : source_doc0,
-        FDL_SOURCE_DOC1 : source_doc1,
-        FDL_SOURCE_DOC2 : source_doc2,
-        FDL_PROMPT_TOKENS : prompt_tokens,
-        FDL_TOTAL_TOKENS : total_tokens,
-        FDL_COMPLETION_TOKENS : completion_tokens,
-        FDL_DURATION : duration,
-        FDL_MODEL_NAME : model_name
+        FDL_PROMPT: prompt,
+        FDL_RESPONSE: response,
+        FDL_SESSION_ID: session_id,
+        FDL_ROW_ID: row_id,
+        FDL_RUN_ID: run_id,
+        FDL_SOURCE_DOC0: source_doc0,
+        FDL_SOURCE_DOC1: source_doc1,
+        FDL_SOURCE_DOC2: source_doc2,
+        FDL_PROMPT_TOKENS: prompt_tokens,
+        FDL_TOTAL_TOKENS: total_tokens,
+        FDL_COMPLETION_TOKENS: completion_tokens,
+        FDL_DURATION: duration,
+        FDL_MODEL_NAME: model_name,
     }
-    
-    #Sore the trace/event to DataStax
-    astraSession = st.session_state[DB_CONN]
-    astraSession.execute(
+
+    # Sore the trace/event to DataStax
+    astra_session = st.session_state[DB_CONN]
+    astra_session.execute(
         "INSERT INTO fiddlerai.fiddler_chatbot_ledger \
         (row_id, run_id, session_id, prompt, source_doc0, source_doc1, source_doc2, response, model_name, duration, prompt_tokens, completion_tokens, total_tokens, ts) \
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,toTimestamp(now())) " ,
-        [row_id, run_id, session_id, prompt, source_doc0, source_doc1, source_doc2, response, model_name, duration, prompt_tokens, completion_tokens, total_tokens]
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,toTimestamp(now())) ",
+        [
+            row_id,
+            run_id,
+            session_id,
+            prompt,
+            source_doc0,
+            source_doc1,
+            source_doc2,
+            response,
+            model_name,
+            duration,
+            prompt_tokens,
+            completion_tokens,
+            total_tokens,
+        ],
     )
-    
+
     trace_df = pd.DataFrame([trace_dict])
-    trace_df['ts'] = pd.Timestamp.today()
+    trace_df["ts"] = pd.Timestamp.today()
 
-    #get Fiddler client
-    fdl.init(url=FIDDLER_URL,token=FIDDLER_API_TOKEN)
-          
-    #Publish the trace/event to Fiddler
-    PROJECT = fdl.Project.from_name(name=FIDDLER_CHATBOT_PROJECT_NAME)
-    MODEL = fdl.Model.from_name(name=FIDDLER_CHATBOT_MODEL_NAME, project_id=PROJECT.id)
+    # get Fiddler client
+    fdl.init(url=FIDDLER_URL, token=FIDDLER_API_TOKEN)
 
-    MODEL.event_ts_col = 'ts'
-    MODEL.event_id_col = 'row_id'      
-          
-    MODEL.publish(trace_df)       
+    # Publish the trace/event to Fiddler
+    project = fdl.Project.from_name(name=FIDDLER_CHATBOT_PROJECT_NAME)
+    model = fdl.Model.from_name(name=FIDDLER_CHATBOT_MODEL_NAME, project_id=project.id)
+
+    model.event_ts_col = "ts"
+    model.event_id_col = "row_id"
+
+    model.publish(trace_df)
     return
-    
-    
+
+
 def store_feedback(uuid, feedback=-1):
-    
-    feedback2 = ''
+    """Stores user feedback (like/dislike) in the database."""
+    feedback2 = ""
     if feedback == 1:
-        feedback2 = 'like'
+        feedback2 = "like"
     elif feedback == 0:
-        feedback2 = 'dislike'
-        
-    astraSession = st.session_state[DB_CONN]
-    astraSession.execute(
-                f"UPDATE fiddlerai.fiddler_chatbot_ledger SET feedback = {feedback}, feedback2 = '{feedback2}' WHERE row_id = '{uuid}'"
+        feedback2 = "dislike"
+
+    astra_session = st.session_state[DB_CONN]
+    astra_session.execute(
+        "UPDATE fiddlerai.fiddler_chatbot_ledger "
+        f"SET feedback = {feedback}, feedback2 = '{feedback2}' "
+        f"WHERE row_id = '{uuid}'"
     )
     return
 
 
 def store_comment(uuid):
-
-    comment = str(st.session_state[COMMENT]).replace("'","''")
-    astraSession = st.session_state[DB_CONN]
-    astraSession.execute(
-                f"UPDATE fiddlerai.fiddler_chatbot_ledger SET comment = '{comment}' WHERE row_id = '{uuid}'"
+    """Stores user comments in the database."""
+    comment = str(st.session_state[COMMENT]).replace("'", "''")
+    astra_session = st.session_state[DB_CONN]
+    astra_session.execute(
+        "UPDATE fiddlerai.fiddler_chatbot_ledger "
+        f"SET comment = '{comment}' "
+        f"WHERE row_id = '{uuid}'"
     )
     st.session_state[COMMENT] = ""
     return
 
 
 def erase_history():
+    """Clears the chat history and resets the session."""
     st.session_state[MEMORY].clear()
     st.session_state.messages = []
     st.session_state[ANSWER] = None
@@ -349,17 +368,18 @@ def erase_history():
     st.session_state[UUID] = None
     st.session_state[SESSION_ID] = None
 
-    
+
 def main():
-    text=''
+    """Main function to run the Streamlit chatbot application."""
+    text = ""
     # st.image('images/poweredby.jpg', width=550)
     st.title("Fiddler Chatbot")
     if not st.session_state[UUID] or st.session_state[UUID] is None:
         st.session_state[UUID] = uuid_g.uuid4()
-    
+
     if not st.session_state[SESSION_ID] or st.session_state[SESSION_ID] is None:
         st.session_state[SESSION_ID] = uuid_g.uuid4()
-    
+
     if st.session_state.messages:
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
@@ -368,81 +388,82 @@ def main():
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
-        JAILBREAK_SCORE, SAFETY_GAURDRAIL_LATENCY = get_safety_gaurdrail_results(prompt)
-        if JAILBREAK_SCORE>0.5:
+        JAILBREAK_SCORE, SAFETY_GUARDRAIL_LATENCY = get_safety_guardrail_results(prompt)
+        if JAILBREAK_SCORE > 0.5:
             old_prompt = prompt
-            prompt = f'Rejected'
-          
+            prompt = "Rejected"
+
         with st.chat_message("assistant", avatar="images/logo.png"):
             callback = StreamHandler(st.empty())
-            llm = ChatOpenAI(model_name=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0)
+            llm = ChatOpenAI(
+                model=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0
+            )
             doc_chain = load_qa_chain(llm, chain_type="stuff", prompt=QA_CHAIN_PROMPT)
-            
+
             start_time = time.time()
-            qa = ConversationalRetrievalChain(combine_docs_chain=doc_chain,
-                                              question_generator=question_generator,
-                                              retriever=docsearch_preexisting.as_retriever(search_kwargs={'k': 3}),
-                                              memory=st.session_state[MEMORY], max_tokens_limit=8000,return_source_documents=True)
+            qa = ConversationalRetrievalChain(
+                combine_docs_chain=doc_chain,
+                question_generator=question_generator,
+                retriever=docsearch_preexisting.as_retriever(search_kwargs={"k": 3}),
+                memory=st.session_state[MEMORY],
+                max_tokens_limit=8000,
+                return_source_documents=True,
+            )
             full_response = qa(prompt)
             end_time = time.time()
-  
-        st.session_state.messages.append({"role": "assistant", "content": full_response["answer"]})
+
+        st.session_state.messages.append(
+            {"role": "assistant", "content": full_response["answer"]}
+        )
         st.session_state[ANSWER] = full_response["answer"]
         logger.info(st.session_state[ANSWER])
-        if JAILBREAK_SCORE>0.5:  
+        if JAILBREAK_SCORE > 0.5:
             FAITHFULNESS_SCORE = 0.0
-            publish_and_store(old_prompt, full_response["answer"], full_response["source_documents"], (end_time - start_time))
-        else:  
-            FAITHFULNESS_SCORE, faithfulness_gaurdrail_latency = get_faithfulness_gaurdrail_results(full_response["question"], full_response["answer"], full_response["source_documents"])
-            publish_and_store(full_response["question"], full_response["answer"], full_response["source_documents"], (end_time - start_time))
-        
+            publish_and_store(
+                old_prompt,
+                full_response["answer"],
+                full_response["source_documents"],
+                (end_time - start_time),
+            )
+        else:
+            FAITHFULNESS_SCORE, faithfulness_guardrail_latency = (
+                get_faithfulness_guardrail_results(
+                    full_response["question"],
+                    full_response["answer"],
+                    full_response["source_documents"],
+                )
+            )
+            publish_and_store(
+                full_response["question"],
+                full_response["answer"],
+                full_response["source_documents"],
+                (end_time - start_time),
+            )
 
-
-        
-    if st.session_state[ANSWER] is not None and st.session_state[THUMB_UP] is None and st.session_state[THUMB_DOWN] is None:
-        
+    if (
+        st.session_state[ANSWER] is not None
+        and st.session_state[THUMB_UP] is None
+        and st.session_state[THUMB_DOWN] is None
+    ):
         # Display thumbs up and thumbs down buttons
 
         col1, col2, col3 = st.columns([3.5, 3.5, 3.5])
         with col1:
-            output_str = f'Answer Faithfulness:  ' + str(float("{:.3f}".format(FAITHFULNESS_SCORE)))
-            if FAITHFULNESS_SCORE<0.5:
-              st.markdown(f''':red-background[{output_str}]''')
+            output_str = f"Answer Faithfulness:  {FAITHFULNESS_SCORE:.3f}"
+            if FAITHFULNESS_SCORE < 0.5:
+                st.markdown(f""":red-background[{output_str}]""")
             else:
-              st.markdown(f''':green-background[{output_str}]''')
+                st.markdown(f""":green-background[{output_str}]""")
         with col2:
-            output_str = f'Jailbreak Likelihood:  ' + str(float("{:.3f}".format(JAILBREAK_SCORE)))
-            if JAILBREAK_SCORE>0.5:
-              st.markdown(f''':red-background[{output_str}]''')
+            output_str = f"Jailbreak Likelihood:  {JAILBREAK_SCORE:.3f}"
+            if JAILBREAK_SCORE > 0.5:
+                st.markdown(f""":red-background[{output_str}]""")
             else:
-              st.markdown(f''':green-background[{output_str}]''')  
+                st.markdown(f""":green-background[{output_str}]""")
         with col3:
-            output_str = f'Guardrails Latency:  ' + str(float("{:.1f}".format(SAFETY_GAURDRAIL_LATENCY*1000))) + f' ms'
-            st.markdown(f''':green-background[{output_str}]''')
-            
-        hide = """
-        <style>
-            ul.streamlit-expander {
-                border: 0 !important;
-        </style>
-        """
-        st.markdown(hide, unsafe_allow_html=True)
-  
-    if st.session_state[ANSWER] is not None:
-        
-        # Display thumbs up and thumbs down buttons
-        col1, col2, col3 = st.columns([0.5, 0.5, 3.0])
-        with col1:
-            if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
-                st.button("👍", key="thumbs_up_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 1})
-        with col2:
-            if not st.session_state[THUMB_DOWN] or st.session_state[THUMB_DOWN] is None:
-                st.button("👎", key="thumbs_down_button", on_click=store_feedback, kwargs={'uuid': st.session_state[UUID], 'feedback': 0})
-        with col3:
-            st.button("Reset Chat History", on_click=erase_history)
-        
-        with st.expander("Click here to leave your feedback on the chatbot response"):
-            st.text_input("Leave your comments here.", key="comment", on_change=store_comment, kwargs={'uuid': st.session_state[UUID]}, value="")
+            output_str = f"Guardrails Latency:  {SAFETY_GUARDRAIL_LATENCY * 1000:.1f} ms"
+            st.markdown(f""":green-background[{output_str}]""")
+
         hide = """
         <style>
             ul.streamlit-expander {
@@ -451,5 +472,44 @@ def main():
         """
         st.markdown(hide, unsafe_allow_html=True)
 
+    if st.session_state[ANSWER] is not None:
+        # Display thumbs up and thumbs down buttons
+        col1, col2, col3 = st.columns([0.5, 0.5, 3.0])
+        with col1:
+            if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
+                st.button(
+                    "👍",
+                    key="thumbs_up_button",
+                    on_click=store_feedback,
+                    kwargs={"uuid": st.session_state[UUID], "feedback": 1},
+                )
+        with col2:
+            if not st.session_state[THUMB_DOWN] or st.session_state[THUMB_DOWN] is None:
+                st.button(
+                    "👎",
+                    key="thumbs_down_button",
+                    on_click=store_feedback,
+                    kwargs={"uuid": st.session_state[UUID], "feedback": 0},
+                )
+        with col3:
+            st.button("Reset Chat History", on_click=erase_history)
+
+        with st.expander("Click here to leave your feedback on the chatbot response"):
+            st.text_input(
+                "Leave your comments here.",
+                key="comment",
+                on_change=store_comment,
+                kwargs={"uuid": st.session_state[UUID]},
+                value="",
+            )
+        hide = """
+        <style>
+            ul.streamlit-expander {
+                border: 0 !important;
+        </style>
+        """
+        st.markdown(hide, unsafe_allow_html=True)
+
+
 if __name__ == "__main__":
-    main()     
+    main()
