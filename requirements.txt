@@ -3,3 +3,12 @@ ragstack-ai==0.7.0
 tiktoken
 protobuf~=3.19.0
 fiddler-client
+streamlit
+pandas
+requests
+cassandra-driver
+langchain
+langchain-openai
+langchain-community
+langchain-core
+python-dotenv
