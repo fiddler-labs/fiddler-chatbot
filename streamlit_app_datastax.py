@@ -43,8 +43,8 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 ASTRA_DB_APPLICATION_TOKEN = os.environ.get("ASTRA_DB_APPLICATION_TOKEN")
 
 # models
-EMBEDDING_MODEL = "text-embedding-ada-002"
-LLM_MODEL = "gpt-3.5-turbo"
+EMBEDDING_MODEL = "text-embedding-3-large"
+LLM_MODEL = "gpt-4-turbo"
 
 MEMORY = "memory"
 QA = "qa"
@@ -80,29 +80,41 @@ FDL_COMPLETION_TOKENS = "completion_tokens"
 FDL_DURATION = "duration"
 FDL_MODEL_NAME = "model_name"
 
-TEMPLATE = """You are a tool called Fiddler Chatbot. 
-Your purpose is to use the documentation from the Fiddler AI to answer the subsequent documentation questions.
-Also, if possible, give the reference URLs according to the following instructions.
-Provide detailed answers for a $200 tip. Answers should be at least 800 characters long. 
-If possible provide at least two or five maximum code samples from the provided documentation.
-The way to create the URLs is: add "https://docs.fiddler.ai/" before the "slug" value of the document.
-For any URL references that start with "doc:" or "ref:"
-use its value to create a URL by adding "https://docs.fiddler.ai/" before that value.
-For reference URLs about release notes add "https://docs.fiddler.ai/history/" before the "slug" value of the document.
-For any URLs found immediately after "BlogLink:" just provide that URL in the output.
-Do not use page titles to create URLs.
+TEMPLATE = """You are Fiddler Chatbot, an expert assistant for Fiddler AI's product documentation.
+Your task is to provide a detailed, accurate answer to the user's question based ONLY on the provided "Context" documents.
+After your answer, you MUST list the sources you used in a "Sources:" section.
 
-Note that if a user asks about uploading events or data, it means the same as publishing events.
-Do not make up an answer
-or give an answer that does not exist in the provided context.
-Remove ".md" from any URLs.
-Check if URLs are valid and do not provide any invalid URLs.
+**Answer Generation Rules:**
+1.  Synthesize a comprehensive answer from the provided "Context". Your answer should be at least 800 characters long.
+2.  If the context includes code examples, integrate at least two  and up to five relevant examples into your answer.
+3.  If the user asks about "uploading events" or "uploading data," understand they mean "publishing events."
+4.  If the provided context does not contain an answer, you MUST respond with: "I could not find an answer in the documentation. For more help, please join our [Slack community](https://www.fiddler.ai/slackinvite)." Do not make up information.
+5.  Combine related information from multiple sources into coherent answers
+6.  Use section headers and bullet points for complex answers
+7.  If context suggests there's more information elsewhere, mention it
+8.  Do not include any information mentioning third party products or services unless the user asks about them. For example, do not mention or use context that references Databricks or Snowflake if the user did not include them in their question.
+9.  Prefer Python client code examples over REST API examples unless the user asks for REST API examples.
 
-If the answer cannot be found in the documentation, write "I could not find an answer.
-Join our [Slack community](https://www.fiddler.ai/slackinvite) for further clarifications."
-If user input has the words "rejected" then say "Your prompt was rejected. Please try again."
+**Source & URL Formatting Rules:**
+-   Include reference URLs according to the following rules
+-   For each document in the "Context" that you used, include the URL in the answer.
+-   If the source document does not contain a DOC_URL value, attempt to find the related document chunk that does contain a DOC_URL value.
+-   To create a source document URL, find the "DOC_URL:" string at the very top of the original source document contents and extract the value
+    -   Construct the URL by removing the initial DOC_URL path "documentation_data/fiddler-docs/" andappending the remainder of the remainder of the DOC_URL" value to "https://docs.fiddler.ai/".
+    -   If the DOC_URL value ends with "/README.md", remove the "/README.md" from the URL
+    -   Remove the ".md" extension if present.
+    -   *Example Context:* "DOC_URL:documentation_data/fiddler-docs/product-guide/monitoring.md"
+    -   *Example Output:* "https://docs.fiddler.ai/product-guide/monitoring"
+    -   *Example Context:* "DOC_URL:documentation_data/fiddler-docs/technical-reference/python-client-guides/model-onboarding/README.md"
+    -   *Example Output:* "https://docs.fiddler.ai/technical-reference/python-client-guides/model-onboarding"
+-   If a document begins with "BlogLink:", use the URL that follows.
+    -   *Example Context:* "BlogLink: https://www.fiddler.ai/blog/my-post Content: ..."
+    -   *Example Output:* "https://www.fiddler.ai/blog/my-post"
 
+---
+Context:
 {context}
+
 Question: {question}
 Helpful Answer:"""
 
@@ -111,7 +123,7 @@ QA_CHAIN_PROMPT = PromptTemplate.from_template(TEMPLATE)
 # Connect to DataStax Cassandra
 cloud_config = {"secure_connect_bundle": ASTRA_DB_SECURE_BUNDLE_PATH}
 
-embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL, model_kwargs={"dimensions": 1536})
 
 non_stream_llm = ChatOpenAI(model=LLM_MODEL, temperature=0)
 memory = ConversationSummaryBufferMemory(
@@ -177,20 +189,7 @@ docsearch_preexisting = Cassandra(
 )
 
 
-def get_embeddings(text: str):
-    """Generates embeddings for a given text using OpenAI."""
-    # Define the maximum length you want
-    max_length = 8192  # This is the longest length of text that OpenAI can produce embeddings for.
-
-    # Truncate the string
-    if len(text) > max_length:
-        text = text[:max_length]
-
-    response = client.embeddings.create(input=[text], model=EMBEDDING_MODEL)
-    return response.data[0].embedding
-
-
-def get_faithfulness_guardrail_results(query: str, response: str, source_docs: list):
+def get_faithfulness_guardrail_results(response: str, source_docs: list):
     """Calculates the faithfulness score for a response given a query and source documents."""
     url_faithfulness = "https://demo.fiddler.ai/v3/guardrails/ftl-response-faithfulness"
     token = FIDDLER_API_TOKEN
@@ -199,7 +198,6 @@ def get_faithfulness_guardrail_results(query: str, response: str, source_docs: l
     for document in source_docs:
         source_docs_list.append(document.page_content)
 
-    prompt = query.replace("'", "''")
     response = response.replace("'", "''")
     source_doc0 = source_docs_list[0].replace("'", "''")
     source_doc1 = source_docs_list[1].replace("'", "''")
@@ -230,9 +228,7 @@ def get_safety_guardrail_results(query: str):
     url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl-safety"
     token = FIDDLER_API_TOKEN
 
-    prompt = query.replace("'", "''")
-
-    payload = json.dumps({"data": {"input": prompt}})
+    payload = json.dumps({"data": {"input": query}})
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
     guardrail_start_time = time.time()
     guardrail_response_safety = requests.request(
@@ -371,7 +367,6 @@ def erase_history():
 
 def main():
     """Main function to run the Streamlit chatbot application."""
-    text = ""
     # st.image('images/poweredby.jpg', width=550)
     st.title("Fiddler Chatbot")
     if not st.session_state[UUID] or st.session_state[UUID] is None:
@@ -428,7 +423,6 @@ def main():
         else:
             FAITHFULNESS_SCORE, faithfulness_guardrail_latency = (
                 get_faithfulness_guardrail_results(
-                    full_response["question"],
                     full_response["answer"],
                     full_response["source_documents"],
                 )
