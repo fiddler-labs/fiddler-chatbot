@@ -1,7 +1,7 @@
 openai
 ragstack-ai==0.7.0
 tiktoken
-protobuf~=3.19.0
+protobuf
 fiddler-client
 streamlit>=1.24.0
 pandas
