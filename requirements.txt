@@ -3,7 +3,7 @@ ragstack-ai==0.7.0
 tiktoken
 protobuf~=3.19.0
 fiddler-client
-streamlit
+streamlit>=1.24.0
 pandas
 requests
 cassandra-driver
