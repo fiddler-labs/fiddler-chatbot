@@ -10,8 +10,5 @@ uv.lock
 
 .vscode/
 .idea/
-.cursor/
-.cursor/rules/
-.cursorrules/
 
 docs/todo.md
