@@ -18,6 +18,8 @@ dependencies = [
     "pandas>=2.3.0",
     "openai>=1.92.1",
     "protobuf>=6.31.1",
+    "bs4>=0.0.2",
+    "feedparser>=6.0.11",
 ]
 authors = [
     {name = "Fiddler AI Team"},
