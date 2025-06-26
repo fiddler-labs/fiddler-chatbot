@@ -1,0 +1,27 @@
+[project]
+name = "fiddler-chatbot"
+version = "0.1.0"
+description = "Fiddler AI Model Monitoring Chatbot"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fiddler-client>=3.9.2",
+    "langchain>=0.3.26",
+    "langchain-community>=0.3.26",
+    "langchain-core>=0.3.66",
+    "langchain-openai>=0.3.26",
+    "tiktoken>=0.9.0",
+    "python-dotenv>=1.1.1",
+    "cassandra-driver>=3.29.2",
+    "requests>=2.32.4",
+    "streamlit>=1.46.1",
+    "pandas>=2.3.0",
+    "openai>=1.92.1",
+    "protobuf>=6.31.1",
+]
+authors = [
+    {name = "Fiddler AI Team"},
+]
+maintainers = [
+    {name = "Fiddler AI Team"},
+]
