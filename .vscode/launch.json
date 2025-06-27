@@ -1,0 +1,32 @@
+{
+  "configurations": [
+    {
+      "name": "Run Fiddler-Chatbot : local streamlit app",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/app.py",
+      // "args": [],
+      // "console": "integratedTerminal",
+      "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run Data-Generation-Workflow",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/data_generation.py",
+      // "args": [],
+      // "console": "integratedTerminal",
+      "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    }
+  ]
+}
