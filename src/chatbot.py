@@ -7,12 +7,12 @@ import time
 import uuid as uuid_g
 
 # Third-party imports
-import fiddler as fdl  # type: ignore
-import pandas as pd  # type: ignore
-import requests  # type: ignore
+import fiddler as fdl
+import pandas as pd
+import requests
 import streamlit as st
-from cassandra.auth import PlainTextAuthProvider  # type: ignore
-from cassandra.cluster import Cluster  # type: ignore
+from cassandra.auth import PlainTextAuthProvider
+from cassandra.cluster import Cluster
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
