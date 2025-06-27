@@ -10,5 +10,4 @@ uv.lock
 
 .ruff_cache/
 
-.vscode/
 .idea/
