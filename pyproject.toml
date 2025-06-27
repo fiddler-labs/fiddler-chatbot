@@ -28,3 +28,8 @@ authors = [
 maintainers = [
     {name = "Fiddler AI Team"},
 ]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.12.1",
+]

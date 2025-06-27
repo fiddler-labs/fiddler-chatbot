@@ -8,6 +8,8 @@ __pycache__/
 .venv/
 uv.lock
 
+.ruff_cache/
+
 .vscode/
 .idea/
 
