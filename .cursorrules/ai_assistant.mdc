@@ -1,0 +1,159 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Rapid Development AI Assistant
+
+## Project Priority
+**Time to market is the primary concern** - working code now is better than perfect code later.
+- Help ship working code ASAP
+- Prioritize solutions that work NOW over theoretically better approaches
+- Focus on the 80/20 rule - get the core functionality working first
+- Be a pragmatic coding partner, not a best-practices enforcer
+
+### Code Generation
+- Favor working solutions over perfectly structured ones
+- Focus on rapid iteration and immediate functionality
+- Skip boilerplate when obvious
+- Reuse existing patterns from the codebase
+- Write code that's good enough to ship today
+
+### Problem Solving Approach
+- Suggest the quickest viable solution first
+- Handle critical failure paths, defer edge cases
+- Fix errors directly rather than discussing multiple options
+- Provide concrete solutions rather than theoretical advice
+- Focus on core integration points and functionality
+
+### Code Modifications
+- Make targeted changes with minimal impact
+- Focus on making things work, not making them perfect
+- Refactor only when it solves an immediate problem
+- Fix bugs directly without unnecessary explanations
+- Preserve working code whenever possible
+
+### Technology Choices
+- Use what's already in the codebase
+- Suggest simple, proven approaches over clever ones
+- Minimize external dependencies
+- Leverage libraries that speed up development
+- Avoid overengineering
+
+### Practical Development
+- Embrace pragmatic coding patterns
+- Accept reasonable technical debt for faster delivery
+- Focus on readability over simple structure
+- Write testable code but don't overdo testing
+- Value working functionality over theoretical correctness
+
+### Debugging and Fixing
+- Focus on finding root causes quickly
+- Provide direct fixes rather than multiple options
+- Look for obvious errors first
+- Suggest practical debugging steps
+- Fix bugs completely, not just symptomatically 
+
+### Architecture Documentation
+- Keep architecture diagrams updated when making significant changes
+- Update the following Mermaid diagrams when relevant:
+  - System architecture diagram (docs/diagram-system_architecture.md)
+  - Integration sequence diagram (docs/diagram-integration_sequence.md)
+  - Data model entity-relationship diagram (docs/diagram-data_model_entity_rels.md)
+- mermaid daigrams are usually in ```mermaid ...``` blocks in .md files
+
+## Pragmatic Coding Standards
+
+### Focus Areas
+- Write **working code first**, optimize later if needed
+- Focus on **core functionality** over edge cases initially
+- Use simple, proven patterns over complex architectures
+- Get the integration working end-to-end before polishing
+- Use existing libraries/tools wherever possible to save time
+
+### Practical Python Approach
+- Simple is better than complex
+- Readability counts
+- Use types where they clarify intent, but don't waste time on exhaustive typing
+- Basic docstrings are sufficient - focus on "what" not "why"
+- Copy-paste is acceptable for rapid iteration (DRY comes later)
+
+### Error Handling Priorities
+- Handle critical errors that prevent core functionality
+- Log errors sufficiently to diagnose issues
+- Fail fast and visibly - silent failures waste debugging time
+- Prioritize recovering from errors over perfect handling
+
+### Testing Essentials
+- Test core functionality and integration points
+- Manual testing is acceptable for initial delivery
+- Unit test critical business logic only
+- Focus on integration testing over unit testing
+
+### Practical Data Models
+- Simple Pydantic models for validation
+- Accept flexible inputs where possible
+- Default values for optional fields
+- Keep models focused on immediate needs
+
+### Code Structure
+- Keep it flat and readable
+- Group related functionality
+- Single file implementations are fine for simple features
+- Refactor only when complexity justifies it
+
+### Shipping Mentality
+- Done is better than perfect
+- Build the minimum viable solution first
+- Get feedback on working features early
+- Iterate quickly based on actual usage
+
+### Documentation Standards
+- Maintain accurate architecture diagrams alongside code changes
+- Update the three main Mermaid diagrams when making significant changes:
+  - System Architecture (docs/diagram-system_architecture.md)
+  - Integration Sequence (docs/diagram-integration_sequence.md)
+  - Data Model Relationships (docs/diagram-data_model_entity_rels.md)
+- Keep documentation focused on what's implemented, not theoretical design
+- Prioritize diagram updates for changes to component interfaces or data models
+
+### Python Conventions
+- Use type hints for all function parameters and return values
+- Document all classes and functions with docstrings
+- Prefer composition over inheritance where possible
+- Use Pydantic models for data validation
+
+### Error Handling
+- Use specific exception types
+- Log all errors with appropriate context
+- Provide clear error messages
+- Handle edge cases explicitly
+
+### Testing
+- Write unit tests for all core functionality
+- Use pytest for testing
+- Use mock objects when testing external dependencies
+- Test edge cases and error conditions
+
+### Data Models
+- Use Pydantic BaseModel for all data models
+- Define validation rules using Fields
+- Include descriptive docstrings for all models
+- Use appropriate type annotations (including Literal for enumerated values)
+
+### Naming
+- Use snake_case for variables, functions, methods, and modules
+- Use PascalCase for classes
+- Use UPPER_CASE for constants
+- Use descriptive names that indicate purpose or intent
+
+### Comments and Documentation
+- Add docstrings to all modules, classes, and functions
+- Use type hints consistently
+- Include examples in docstrings when helpful
+- Keep comments current with code changes
+
+### Project Structure
+- Keep modules focused on a single responsibility
+- Organize related functionality into packages
+- Separate interface from implementation 

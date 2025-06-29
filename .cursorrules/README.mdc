@@ -1,0 +1,67 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Pragmatic Cursor Rules for Rapid Development
+
+This directory contains customized Cursor rules that guide AI-assisted coding with a focus on **rapid delivery** and **pragmatic solutions**. These rules emphasize shipping working code quickly rather than perfect adherence to theoretical best practices.
+
+## Rules Philosophy
+
+Our approach is:
+- **Fast over perfect**: Working code now beats perfect code later
+- **Pragmatic over theoretical**: Practical solutions win over textbook solutions
+- **Focus on core functionality**: Get the essential features working first
+- **Simplicity over complexity**: Choose the simplest approach that works
+- **Reuse what exists**: Leverage existing patterns in the codebase
+- **Ship faster**: Get the integration working end-to-end quickly
+- **Iterate based on reality**: Get feedback on actual code in production
+- **Avoid analysis paralysis**: Move forward without overengineering
+- **Focus on value**: Deliver what matters most to the business first
+- **Practical solutions**: Implement what works, not what's theoretically best
+
+## Rules Files
+
+- **project.mdc**: Pragmatic coding standards focused on rapid delivery
+- **ai_assistant.mdc**: Guidelines for AI to prioritize working solutions
+
+## How Rules Work
+
+- Rules are MDC (Markdown with Configuration) files that are applied by Cursor's AI
+- Rules with `alwaysApply: true` are included in every interaction
+- Rules with glob patterns are applied to matching files
+- Rules provide persistent context to the AI about project standards
+
+## Updating Rules
+
+When updating these rules:
+1. Keep changes focused and specific
+2. Avoid contradictory guidelines
+3. Test the effectiveness of rules after changes
+4. Document new patterns in appropriate rule files
+
+## Maintainer Notes
+
+When updating these rules:
+1. Keep them focused on rapid delivery
+2. Prioritize working functionality over perfect structure
+3. Make changes only when they speed up development
+4. Remember: done is better than perfect! 
+
+## Architecture Diagrams
+
+The project maintains three key Mermaid diagrams that document the architecture:
+- **System Architecture Diagram** (docs/diagram-system_architecture.md): Shows components, modules, and their relationships
+- **Integration Sequence Diagram** (docs/diagram-integration_sequence.md): Illustrates the interaction flow between components
+- **Data Model ER Diagram** (docs/diagram-data_model_entity_rels.md): Represents data models and their relationships
+When making significant changes to the codebase, ensure these diagrams are updated to reflect the current architecture.
+
+## Benefits of This Approach
+
+- Consistent coding style across the project
+- Improved AI understanding of project context
+- Reduced need to repeat instructions
+- More relevant and accurate AI suggestions 
+- Maintained alignment between code and architecture documentation
+
