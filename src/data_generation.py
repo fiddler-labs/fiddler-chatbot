@@ -126,7 +126,7 @@ def clone_or_pull_repo(repo_url: str, repo_location: str) -> None:
     def _is_valid_git_repo(path: str) -> bool:
         """Check if a directory contains a valid git repository."""
         try:
-            result = subprocess.run([
+            subprocess.run([
                 "git", "-C", path, "rev-parse", "--git-dir"
             ], check=True, capture_output=True, text=True)
             return True
@@ -266,6 +266,7 @@ def process_docs() -> None:
     """
     Process the documentation files from the cloned repository.
     """
+    # WIP
     logger.info("Processing documentation files...")
 
 def process_notebooks() -> None:
