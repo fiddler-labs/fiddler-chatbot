@@ -1,88 +1,241 @@
+"""
+Markdown File Flattening Utilities
+
+This module provides utilities to flatten markdown files from nested directory structures
+into a single destination directory using two different approaches:
+
+1. Individual File Flattening: Each markdown file is copied individually with a flattened 
+   filename that preserves the directory structure in the filename.
+   
+2. Concatenated File Flattening: Markdown files within each subdirectory are concatenated
+   into single files, creating one combined file per directory branch.
+
+Both approaches preserve the original file structure information in different ways.
+"""
+
 import os
 import shutil
-
-# Set the root directory containing your markdown files
-root_dir = '/Users/saifraja/Github/Docs Export Experiments/v25.0/docs'
-
-# Set the destination directory where you want to store the flattened files
-dest_dir = '/Users/saifraja/Github/Docs Export Experiments/v25.0/docs_flattened'
-
-# Ensure the destination directory exists
-os.makedirs(dest_dir, exist_ok=True)
-
-# Walk through the directory tree
-for dirpath, dirnames, filenames in os.walk(root_dir):
-    for filename in filenames:
-        # Process only markdown files
-        if filename.endswith('.md'):
-            # Get the relative path from the root directory
-            rel_dir = os.path.relpath(dirpath, root_dir)
-            # Skip if we're at the root directory
-            if rel_dir == '.':
-                prefix = ''
-            else:
-                # Replace directory separators with hyphens
-                prefix = rel_dir.replace(os.sep, '-')
-                prefix += '-'
-            # Construct the new filename
-            new_filename = f"{prefix}{filename}"
-            # Define the full source and destination file paths
-            src_file = os.path.join(dirpath, filename)
-            dest_file = os.path.join(dest_dir, new_filename)
-            # Copy the file to the destination directory
-            shutil.copy2(src_file, dest_file)
-            print(new_filename)
+from typing import List
 
 
+def flatten_all_files_individually(
+    source_dir: str, 
+    dest_dir: str, 
+    file_extension: str = '.md',
+    verbose: bool = True
+    ) -> List[str]:
+    """
+    Flatten markdown files by copying each file individually with flattened names.
+    
+    This approach creates one output file for each input file. The directory structure
+    is preserved in the filename by replacing directory separators with hyphens.
+    
+    Example:
+        docs/api/authentication.md -> api-authentication.md
+        docs/guides/getting-started.md -> guides-getting-started.md
+    
+    Args:
+        source_dir: Root directory containing the files to flatten
+        dest_dir: Destination directory for flattened files
+        file_extension: File extension to process (default: '.md')
+        verbose: Whether to print progress information
+        
+    Returns:
+        List of created filenames
+        
+    Raises:
+        OSError: If source directory doesn't exist or destination cannot be created
+    """
+    if not os.path.exists(source_dir):
+        raise OSError(f"Source directory does not exist: {source_dir}")
+    
+    # Ensure the destination directory exists
+    os.makedirs(dest_dir, exist_ok=True)
+    
+    created_files = []
+    
+    # Walk through the directory tree
+    for dirpath, dirnames, filenames in os.walk(source_dir):
+        for filename in filenames:
+            # Process only files with the specified extension
+            if filename.endswith(file_extension):
+                # Get the relative path from the root directory
+                rel_dir = os.path.relpath(dirpath, source_dir)
+                
+                # Skip if we're at the root directory
+                if rel_dir == '.':
+                    prefix = ''
+                else:
+                    # Replace directory separators with hyphens
+                    prefix = rel_dir.replace(os.sep, '-')
+                    prefix += '-'
+                
+                # Construct the new filename
+                new_filename = f"{prefix}{filename}"
+                
+                # Define the full source and destination file paths
+                src_file = os.path.join(dirpath, filename)
+                dest_file = os.path.join(dest_dir, new_filename)
+                
+                # Copy the file to the destination directory
+                shutil.copy2(src_file, dest_file)
+                created_files.append(new_filename)
+                
+                if verbose:
+                    print(f"Created: {new_filename}")
+    
+    return created_files
 
-# # Function to get all markdown files within a directory and its subdirectories
-# def get_all_md_files(directory):
-#     md_files = []
-#     for dirpath, dirnames, filenames in os.walk(directory):
-#         for filename in filenames:
-#             if filename.endswith('.md'):
-#                 md_files.append(os.path.join(dirpath, filename))
-#     return md_files
 
-# # List to keep track of directories already processed
-# processed_dirs = set()
+def concatenate_files_in_leaf_folders(
+    source_dir: str, 
+    dest_dir: str, 
+    file_extension: str = '.md',
+    verbose: bool = True
+    ) -> List[str]:
+    """
+    Flatten markdown files by concatenating files within each directory branch.
+    
+    This approach creates fewer output files by combining all files within each
+    subdirectory (and its subdirectories) into a single concatenated file.
+    Root-level files are copied individually.
+    
+    Example:
+        docs/api/authentication.md + docs/api/authorization.md -> api_concat.md
+        docs/guides/getting-started.md + docs/guides/advanced.md -> guides_concat.md
+        docs/readme.md -> readme.md (root level, copied individually)
+    
+    Args:
+        source_dir: Root directory containing the files to flatten
+        dest_dir: Destination directory for flattened files
+        file_extension: File extension to process (default: '.md')
+        verbose: Whether to print progress information
+        
+    Returns:
+        List of created filenames
+        
+    Raises:
+        OSError: If source directory doesn't exist or destination cannot be created
+    """
 
-# # First, process markdown files at the root level
-# for item in os.listdir(root_dir):
-#     item_path = os.path.join(root_dir, item)
-#     if os.path.isfile(item_path) and item.endswith('.md'):
-#         # Copy the root-level markdown file to the destination directory
-#         dest_file = os.path.join(dest_dir, item)
-#         shutil.copy2(item_path, dest_file)
+    def _get_all_files_with_extension(directory: str, extension: str = '.md') -> List[str]:
+        """
+        Get all files with a specific extension within a directory and its subdirectories.
+        
+        Args:
+            directory: Directory to search
+            extension: File extension to look for
+            
+        Returns:
+            List of file paths
+        """
+        files = []
+        for dirpath, dirnames, filenames in os.walk(directory):
+            for filename in filenames:
+                if filename.endswith(extension):
+                    files.append(os.path.join(dirpath, filename))
+        return files
 
-# # Now, process each subdirectory
-# for dirpath, dirnames, filenames in os.walk(root_dir):
-#     # Skip the root directory itself
-#     if dirpath == root_dir:
-#         continue
-#     # Get the relative path of the directory from the root directory
-#     rel_dir = os.path.relpath(dirpath, root_dir)
-#     # Avoid processing the same directory multiple times
-#     if rel_dir in processed_dirs:
-#         continue
-#     # Get all markdown files within this directory and its subdirectories
-#     md_files = get_all_md_files(dirpath)
-#     # If there are markdown files, concatenate them
-#     if md_files:
-#         # Use the relative directory path to name the concatenated file
-#         # Replace directory separators with hyphens
-#         concatenated_filename = rel_dir.replace(os.sep, '-') + '_concat.md'
-#         concatenated_file_path = os.path.join(dest_dir, concatenated_filename)
-#         # Open the concatenated file for writing
-#         with open(concatenated_file_path, 'w', encoding='utf-8') as outfile:
-#             for md_file in md_files:
-#                 with open(md_file, 'r', encoding='utf-8') as infile:
-#                     # Optionally write a header to indicate the original file path
-#                     relative_md_file = os.path.relpath(md_file, dirpath)
-#                     outfile.write(f"# {relative_md_file}\n\n")
-#                     # Write the content of the markdown file
-#                     outfile.write(infile.read())
-#                     # Optionally add a separator between files
-#                     outfile.write("\n\n---\n\n")
-#         # Mark this directory as processed
-#         processed_dirs.add(rel_dir)
+
+    if not os.path.exists(source_dir):
+        raise OSError(f"Source directory does not exist: {source_dir}")
+    
+    # Ensure the destination directory exists
+    os.makedirs(dest_dir, exist_ok=True)
+    
+    created_files = []
+    processed_dirs = set()
+    
+    # First, process files at the root level
+    for item in os.listdir(source_dir):
+        item_path = os.path.join(source_dir, item)
+        if os.path.isfile(item_path) and item.endswith(file_extension):
+            # Copy the root-level file to the destination directory
+            dest_file = os.path.join(dest_dir, item)
+            shutil.copy2(item_path, dest_file)
+            created_files.append(item)
+            
+            if verbose:
+                print(f"Copied root file: {item}")
+    
+    # Now, process each subdirectory
+    for dirpath, dirnames, filenames in os.walk(source_dir):
+        # Skip the root directory itself
+        if dirpath == source_dir:
+            continue
+            
+        # Get the relative path of the directory from the root directory
+        rel_dir = os.path.relpath(dirpath, source_dir)
+        
+        # Avoid processing the same directory multiple times
+        if rel_dir in processed_dirs:
+            continue
+            
+        # Get all files with the specified extension within this directory and its subdirectories
+        files = _get_all_files_with_extension(dirpath, file_extension)
+        
+        # If there are files, concatenate them
+        if files:
+            # Use the relative directory path to name the concatenated file
+            # Replace directory separators with hyphens
+            concatenated_filename = rel_dir.replace(os.sep, '-') + '_concat' + file_extension
+            concatenated_file_path = os.path.join(dest_dir, concatenated_filename)
+            
+            # Open the concatenated file for writing
+            with open(concatenated_file_path, 'w', encoding='utf-8') as outfile:
+                for file_path in files:
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as infile:
+                            # Write a header to indicate the original file path
+                            relative_file_path = os.path.relpath(file_path, dirpath)
+                            outfile.write(f"# {relative_file_path}\n\n")
+                            
+                            # Write the content of the file
+                            outfile.write(infile.read())
+                            
+                            # Add a separator between files
+                            outfile.write("\n\n---\n\n")
+                    except UnicodeDecodeError:
+                        if verbose:
+                            print(f"Warning: Could not read file {file_path} (encoding issue)")
+                        continue
+            
+            created_files.append(concatenated_filename)
+            
+            if verbose:
+                print(f"Created concatenated file: {concatenated_filename} ({len(files)} files)")
+            
+            # Mark this directory as processed
+            processed_dirs.add(rel_dir)
+    
+    return created_files
+
+
+def main():
+    """
+    Example usage of the flattening utilities.
+    
+    Modify the paths below to match your use case.
+    """
+    # Example paths - modify these for your use case
+    source_directory = '/Users/saifraja/Github/Docs Export Experiments/v25.0/docs'
+    individual_dest = '/Users/saifraja/Github/Docs Export Experiments/v25.0/docs_flattened_individual'
+    concat_dest = '/Users/saifraja/Github/Docs Export Experiments/v25.0/docs_flattened_concat'
+    
+    print("=== Individual File Flattening ===")
+    try:
+        individual_files = flatten_all_files_individually(source_directory, individual_dest)
+        print(f"Created {len(individual_files)} individual files")
+    except OSError as e:
+        print(f"Error in individual flattening: {e}")
+    
+    print("\n=== Concatenated File Flattening ===")
+    try:
+        concat_files = concatenate_files_in_leaf_folders(source_directory, concat_dest)
+        print(f"Created {len(concat_files)} concatenated files")
+    except OSError as e:
+        print(f"Error in concatenated flattening: {e}")
+
+
+if __name__ == "__main__":
+    main()
