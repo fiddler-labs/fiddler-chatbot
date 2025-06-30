@@ -31,9 +31,10 @@ import feedparser
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Tuple, Optional
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pathlib import Path
+from packaging import version
 
 # Import native notebook conversion function
 from utils.notebook_to_md import convert_notebooks_jupyter_nbconvert, convert_notebooks_native_regex
@@ -196,6 +197,41 @@ def checkout_latest_release_branch(repo_path: str, branch_override: str | None =
         branch_override: Optional specific branch name to checkout instead of finding the latest release
     Returns: Name of the branch that was checked out
     """
+
+    def _parse_version_from_branch(branch_name: str) -> Tuple[Optional[version.Version], str]:
+        """
+        Parse semantic version from branch name.
+        
+        Args:
+            branch_name: Branch name like 'release/v1.10.0' or 'release/1.2.0'
+        
+        Returns:
+            Tuple of (parsed_version, original_branch_name)
+            parsed_version is None if parsing fails
+        """
+        # Common patterns for release branches
+        patterns = [
+            r'release/v(\d+\.\d+\.\d+)',      # release/v1.10.0
+            r'release/(\d+\.\d+\.\d+)',       # release/1.10.0
+            r'release/v(\d+\.\d+)',           # release/v1.10
+            r'release/(\d+\.\d+)',            # release/1.10
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, branch_name)
+            if match:
+                version_str = match.group(1)
+                try:
+                    # Handle 2-part versions by appending .0
+                    if version_str.count('.') == 1:
+                        version_str += '.0'
+                    parsed_version = version.parse(version_str)
+                    return parsed_version, branch_name
+                except version.InvalidVersion:
+                    continue
+        
+        return None, branch_name
+    
     if branch_override:
         logger.info(f"Using branch override: {branch_override}")
         try:
@@ -230,10 +266,27 @@ def checkout_latest_release_branch(repo_path: str, branch_override: str | None =
             logger.warning("No release branches found, using main branch")
             latest_branch = "main"
         else:
-            # Sort release branches to get the latest (assuming semantic versioning)
-            release_branches.sort(reverse=True)
-            latest_branch = release_branches[0]
-            logger.info(f"Latest release branch found: {latest_branch}")
+            # Parse versions and sort properly using semantic versioning
+            versioned_branches = []
+            unversioned_branches = []
+            
+            for branch in release_branches:
+                parsed_version, original_branch = _parse_version_from_branch(branch)
+                if parsed_version:
+                    versioned_branches.append((parsed_version, original_branch))
+                else:
+                    unversioned_branches.append(original_branch)
+            
+            # Sort versioned branches by semantic version (highest first)
+            if versioned_branches:
+                versioned_branches.sort(key=lambda x: x[0], reverse=True)
+                latest_branch = versioned_branches[0][1]
+                logger.info(f"Latest release branch found: {latest_branch} (version: {versioned_branches[0][0]})")
+            else:
+                # Fallback to lexicographic sorting for non-semantic versions
+                unversioned_branches.sort(reverse=True)
+                latest_branch = unversioned_branches[0]
+                logger.warning(f"No semantic versions found, using lexicographic sort: {latest_branch}")
         
         # Checkout the branch
         logger.info(f"Checking out branch {latest_branch}...")
@@ -257,134 +310,73 @@ def checkout_latest_release_branch(repo_path: str, branch_override: str | None =
             logger.error(f"Failed to checkout main branch: {e2.stderr}")
             raise
 
-def process_docs() -> None:
+def process_docs() -> None: # WIP
     """
-    Process the documentation files from the cloned repository using a robust fallback strategy.
-    
-    Processing Strategy (in order of preference):
-    1. Primary method: Use configured MARKDOWN_FLATTENING_METHOD
-    2. Fallback method: Use alternative flattening method
-    3. Final fallback: Simple copy of docs folder
-    
-    Each method is attempted with proper cleanup between attempts.
+    Process the documentation files from the cloned repository.
     """
     
     docs_source = os.path.join(FIDDLER_MAIN_REPO_DIR, "docs")
+
+    def _simple_copy_docs_folder() -> None:
+        """
+        Copy the docs folder from the cloned repository to local_assets/fiddler-docs.
+        Args: repo_path: Path to the cloned Fiddler repository
+        """
+        logger.info("Copying docs folder...")
+        
+        docs_destination = FIDDLER_MD_DOCS_DIR
+        
+        if not os.path.exists(docs_source):
+            raise FileNotFoundError(f"Docs folder not found at {docs_source}")
+        
+        # Create destination directory
+        os.makedirs(os.path.dirname(docs_destination), exist_ok=True)
+        
+        # Remove destination if it exists
+        if os.path.exists(docs_destination):
+            shutil.rmtree(docs_destination)
+            logger.info(f"Removed existing docs folder at {docs_destination}")
+        
+        # Copy the docs folder
+        shutil.copytree(docs_source, docs_destination)
+        logger.info(f"Successfully copied docs folder to {docs_destination}")
+
+    logger.info("Processing documentation files...")
     
-    # Validate source directory exists
-    if not os.path.exists(docs_source):
-        raise FileNotFoundError(f"Source docs folder not found at {docs_source}")
-    
-    # Validate configuration
+    # implement markdown flattening
     if MARKDOWN_FLATTENING_METHOD not in ['individual', 'concatenated']:
         logger.error(f"Invalid markdown flattening method: {MARKDOWN_FLATTENING_METHOD}")
         logger.error("Valid options are: 'individual' or 'concatenated'")
         raise RuntimeError("Invalid markdown flattening method")
-    
-    logger.info("Processing documentation files...")
-    logger.info(f"Source directory: {docs_source}")
-    logger.info(f"Destination directory: {FIDDLER_MD_DOCS_DIR}")
-    logger.info(f"Primary method: {MARKDOWN_FLATTENING_METHOD}")
-    
-    def _cleanup_destination() -> None:
-        """Clean up destination directory before attempting processing."""
-        if os.path.exists(FIDDLER_MD_DOCS_DIR):
-            logger.info(f"Cleaning up existing destination: {FIDDLER_MD_DOCS_DIR}")
-            shutil.rmtree(FIDDLER_MD_DOCS_DIR)
-    
-    def _create_destination() -> None:
-        """Ensure destination directory exists."""
-        os.makedirs(FIDDLER_MD_DOCS_DIR, exist_ok=True)
-    
-    def _simple_copy_docs_folder() -> None:
-        """
-        Copy the docs folder from the cloned repository to destination.
-        This is the final fallback method when all flattening approaches fail.
-        """
-        logger.info("Using simple copy method (final fallback)...")
-        _cleanup_destination()
-        _create_destination()
-        shutil.copytree(docs_source, FIDDLER_MD_DOCS_DIR, dirs_exist_ok=True)
-        logger.info("Successfully copied docs folder using simple copy method")
-    
-    # Define processing strategies in order of preference
-    processing_strategies = []
-    
-    # Add primary method
-    if MARKDOWN_FLATTENING_METHOD == 'individual':
-        processing_strategies.append({
-            'name': 'individual_flattening',
-            'description': 'Individual file flattening (primary)',
-            'method': lambda: flatten_all_files_individually(
-                source_dir=Path(docs_source), 
-                dest_dir=Path(FIDDLER_MD_DOCS_DIR)
-            )
-        })
-        # Add alternative method as fallback
-        processing_strategies.append({
-            'name': 'concatenated_flattening',
-            'description': 'Concatenated flattening (fallback)',
-            'method': lambda: concatenate_files_in_leaf_folders(
-                source_dir=Path(docs_source), 
-                dest_dir=Path(FIDDLER_MD_DOCS_DIR)
-            )
-        })
-    else:  # concatenated
-        processing_strategies.append({
-            'name': 'concatenated_flattening',
-            'description': 'Concatenated flattening (primary)',
-            'method': lambda: concatenate_files_in_leaf_folders(
-                source_dir=Path(docs_source), 
-                dest_dir=Path(FIDDLER_MD_DOCS_DIR)
-            )
-        })
-        # Add alternative method as fallback
-        processing_strategies.append({
-            'name': 'individual_flattening',
-            'description': 'Individual file flattening (fallback)',
-            'method': lambda: flatten_all_files_individually(
-                source_dir=Path(docs_source), 
-                dest_dir=Path(FIDDLER_MD_DOCS_DIR)
-            )
-        })
-    
-    # Add final fallback method
-    processing_strategies.append({
-        'name': 'simple_copy',
-        'description': 'Simple copy (final fallback)',
-        'method': _simple_copy_docs_folder
-    })
-    
-    # Attempt each processing strategy
-    last_error = None
-    for i, strategy in enumerate(processing_strategies, 1):
+
+    try:
+        if   MARKDOWN_FLATTENING_METHOD == 'individual':
+            flatten_all_files_individually    (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
+        elif MARKDOWN_FLATTENING_METHOD == 'concatenated':
+            concatenate_files_in_leaf_folders (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
+        logger.info("Markdown flattening completed successfully")
+ 
+    # try the alternative method if the first method fails
+    except Exception as e:
+        logger.error(f"Error flattening markdown: {e} via {MARKDOWN_FLATTENING_METHOD} method , using alternative fallback conversion method")
         try:
-            logger.info(f"Attempting strategy {i}/{len(processing_strategies)}: {strategy['description']}")
-            
-            # Clean up destination before each attempt (except simple copy which handles its own cleanup)
-            if strategy['name'] != 'simple_copy':
-                _cleanup_destination()
-                _create_destination()
-            
-            # Execute the processing method
-            strategy['method']()
-            
-            logger.info(f"✅ Successfully processed docs using {strategy['description']}")
-            return
-            
-        except Exception as e:
-            last_error = e
-            logger.warning(f"❌ Strategy {i} failed ({strategy['description']}): {str(e)}")
-            
-            # If this isn't the last strategy, continue to next
-            if i < len(processing_strategies):
-                logger.info(f"Trying next strategy...")
-                continue
-    
-    # If we reach here, all strategies failed
-    logger.error("🚨 All processing strategies failed!")
-    logger.error(f"Last error: {str(last_error)}")
-    raise RuntimeError(f"All documentation processing methods failed. Last error: {str(last_error)}")
+            if   MARKDOWN_FLATTENING_METHOD == 'individual':
+                concatenate_files_in_leaf_folders (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
+            elif MARKDOWN_FLATTENING_METHOD == 'concatenated':
+                flatten_all_files_individually    (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
+            logger.info("Markdown flattening completed successfully")
+
+        # fall back to simple copy of docs folder
+        except Exception as e2:
+            logger.error(f"Error flattening markdown: {e2} via both methods , falling back to simple copy of docs folder")
+            try:
+                logger.info("Falling back to simple copy of docs folder")
+                _simple_copy_docs_folder()
+            except Exception as e3:
+                logger.error(f"Error copying docs folder: {e3} , cannot continue")
+                raise RuntimeError("Error copying docs folder")
+
+    return
 
 
 def process_notebooks() -> None:
