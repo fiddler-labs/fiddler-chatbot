@@ -1,3 +1,22 @@
+"""
+## Primary Objective
+
+Create a vector-ready corpus by:
+
+1. **Source Collection**: Clone Fiddler repositories and crawl RSS feeds
+2. **Content Processing**: Convert notebooks to markdown, process documentation
+3. **Corpus Generation**: Combine all sources and split into chunks for vector indexing
+
+## Responsibility Areas
+
+- **Repository Management**: Git operations, branch selection
+- **Content Transformation**: Notebook conversion, markdown processing
+- **Web Scraping**: RSS feed crawling and content extraction
+- **File System Operations**: Directory management, cleanup
+- **Data Pipeline Orchestration**: Coordinating the entire workflow
+
+"""
+
 import os
 import shutil
 import subprocess
@@ -23,8 +42,8 @@ FIDDLER_EXAMPLES_REPO_URL = "https://github.com/fiddler-labs/fiddler-examples.gi
 BLOG_RSS_URL      = 'https://www.fiddler.ai/blog/rss.xml'
 RESOURCES_RSS_URL = 'https://www.fiddler.ai/resources/rss.xml'
 
-# Local data assets directory
-LOCAL_DATA_ASSETS_DIR = os.path.join(os.getcwd(), "local_assets")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/data_generation.py to project root ./
+LOCAL_DATA_ASSETS_DIR = os.path.join(PROJECT_ROOT, "local_assets")
 CLONED_REPOS_DIR = os.path.join(LOCAL_DATA_ASSETS_DIR, "cloned_repos")
 
 FIDDLER_MAIN_REPO_DIR     = os.path.join(CLONED_REPOS_DIR, "fiddler")
@@ -48,7 +67,7 @@ def reset_local_data_assets(keep_repos: bool = True, keep_csv_files: bool = True
     
     Args: 
         keep_repos: If True, keep the cloned repos directory and its contents
-        keep_csv_files: If True, keep the generated CSV files (useful for historical catalogging and debugging)
+        keep_csv_files: If True, keep the generated CSV files (useful for historical cataloging and debugging)
     """
     logger.info("Clearing local_assets directory...")
     
@@ -91,45 +110,63 @@ def reset_local_data_assets(keep_repos: bool = True, keep_csv_files: bool = True
     
     logger.info("Documentation data directory cleared successfully")
 
-
 def clone_or_pull_repo(repo_url: str, repo_location: str) -> None:
     """
     Clone a repository to the repo directory if it doesn't exist. 
     If the repo already exists, pull the latest changes.
     If the pull fails, remove the repo and clone it again.    
-    
+    Handles all edge cases including corrupted repositories and missing directories.
+
     Args: repo_url: The Git repository URL to clone
           repo_location: Name for the local repository directory
         
     """
-    logger.info(f"Cloning repository {repo_url}...")
-      
-    try:
-        subprocess.run([
-            "git", "-C", repo_location, "pull"
-        ], check=True, capture_output=True, text=True)
-        logger.info(f"Successfully pulled latest changes from {repo_url}")
-        return
-    except subprocess.CalledProcessError as e:
-        logger.info(f"Failed to pull latest changes from {repo_url}: {e.stderr}")
 
-        logger.info(f"Removing existing repository at {repo_location}")
-        shutil.rmtree(repo_location)
-        logger.info(f"Successfully removed existing repository at {repo_location}")
 
-        logger.info(f"Creating repo directory at {repo_location}")
-        os.makedirs(repo_location, exist_ok=True)
-
-        logger.info(f"Cloning {repo_url} to {repo_location}")
+    def _is_valid_git_repo(path: str) -> bool:
+        """Check if a directory contains a valid git repository."""
         try:
-            subprocess.run([
-                "git", "clone", repo_url, repo_location
+            result = subprocess.run([
+                "git", "-C", path, "rev-parse", "--git-dir"
             ], check=True, capture_output=True, text=True)
-            logger.info(f"Successfully cloned {repo_url} to {repo_location}")
-            return
-        except subprocess.CalledProcessError as e:
-            logger.error(f"Failed to clone repository: {e.stderr}")
-            raise
+            return True
+        except subprocess.CalledProcessError:
+            return False
+        
+    logger.info(f"Setting up repository {repo_url} at {repo_location}")
+    
+    # Ensure parent directory exists
+    parent_dir = os.path.dirname(repo_location)
+    os.makedirs(parent_dir, exist_ok=True)
+    
+    # Check if target location exists and is a valid git repository
+    if os.path.exists(repo_location):
+        if _is_valid_git_repo(repo_location):
+            # Try to pull latest changes
+            try:
+                result = subprocess.run([
+                    "git", "-C", repo_location, "pull"
+                ], check=True, capture_output=True, text=True)
+                logger.info(f"Successfully pulled latest changes: {result.stdout.strip()}")
+                return
+            except subprocess.CalledProcessError as e:
+                logger.warning(f"Pull failed: {e.stderr}. Will re-clone repository.")
+                # Remove corrupted repository and proceed to clone
+                shutil.rmtree(repo_location)
+        else:
+            logger.info(f"Directory exists but is not a valid git repository. Removing: {repo_location}")
+            shutil.rmtree(repo_location)
+    
+    # Clone the repository (directory should not exist at this point)
+    logger.info(f"Cloning {repo_url} to {repo_location}")
+    try:
+        result = subprocess.run([
+            "git", "clone", repo_url, repo_location
+        ], check=True, capture_output=True, text=True)
+        logger.info(f"Successfully cloned repository: {result.stdout.strip()}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to clone repository {repo_url}: {e.stderr}")
+        raise RuntimeError(f"Repository cloning failed: {e.stderr}")
 
 def checkout_latest_release_branch(repo_path: str, branch_override: str | None = None):
     """
@@ -207,7 +244,7 @@ def copy_docs_folder() -> None:
     """
     logger.info("Copying docs folder...")
     
-    docs_source = FIDDLER_MAIN_REPO_DIR + "/docs"
+    docs_source = os.path.join(FIDDLER_MAIN_REPO_DIR, "docs")
     docs_destination = FIDDLER_MD_DOCS_DIR
     
     if not os.path.exists(docs_source):
@@ -233,64 +270,9 @@ def process_docs() -> None:
 
 def process_notebooks() -> None:
     """
-    Convert .ipynb files from the fiddler-examples repository to markdown and integrate
-    them with corresponding documentation files.
+    Convert .ipynb files from the fiddler-examples repository to markdown.
+    Both documentation and notebook files are kept separate for individual embedding.
     """
-
-    def _integrate_notebooks_with_docs() -> None:
-        """
-        Integrate converted notebook markdown content with corresponding documentation files.
-        This function finds documentation files that reference notebooks and appends the 
-        converted notebook content to make them self-contained.
-        """
-        logger.info("Integrating notebooks with documentation...")
-        
-        if not os.path.exists(FIDDLER_MD_DOCS_DIR):
-            logger.warning("Documentation directory not found, skipping integration")
-            return
-        
-        # Walk through all markdown files in the documentation directory
-        for root, dirs, files in os.walk(FIDDLER_MD_DOCS_DIR):
-            for filename in files:
-                if filename.endswith('.md'):
-                    doc_path = os.path.join(root, filename)
-                    
-                    try:
-                        with open(doc_path, 'r', encoding='utf-8') as f:
-                            file_content = f.read()
-                        
-                        # Look for notebook references (e.g., Fiddler_Quickstart_*)
-                        notebook_matches = re.findall(r'\bFiddler_Quickstart_\w+', file_content)
-                        
-                        if notebook_matches:
-                            logger.info(f"Found notebook references in {doc_path}: {notebook_matches}")
-                            
-                            for notebook_ref in notebook_matches:
-                                # Look for corresponding converted markdown file
-                                converted_notebook_path = os.path.join(FIDDLER_MD_NOTEBOOKS_DIR, f"{notebook_ref}.md")
-                                
-                                if os.path.exists(converted_notebook_path):
-                                    logger.info(f"Appending {notebook_ref} content to {doc_path}")
-                                    
-                                    try:
-                                        with open(converted_notebook_path, 'r', encoding='utf-8') as nb_file:
-                                            notebook_content = nb_file.read()
-                                        
-                                        # Append notebook content to documentation file
-                                        with open(doc_path, 'a', encoding='utf-8') as doc_file:
-                                            doc_file.write(f"\n\n## {notebook_ref} Notebook Content\n\n")
-                                            doc_file.write(notebook_content)
-                                        
-                                        logger.info(f"Successfully integrated {notebook_ref} with documentation")
-                                        
-                                    except Exception as e:
-                                        logger.error(f"Failed to integrate {notebook_ref}: {str(e)}")
-                                else:
-                                    logger.warning(f"Converted notebook not found: {converted_notebook_path}")
-                    
-                    except Exception as e:
-                        logger.error(f"Failed to process documentation file {doc_path}: {str(e)}")
-
     logger.info("Processing notebook files...")
     os.makedirs(FIDDLER_MD_NOTEBOOKS_DIR, exist_ok=True)
     
@@ -318,7 +300,7 @@ def process_notebooks() -> None:
         ] + notebook_files
         
         subprocess.run(cmd, check=True, capture_output=True, text=True)
-        logger.info("Successfully converted notebooks to markdown : \n success: {cmd.stdout} \n error: {cmd.stderr}")
+        logger.info("Successfully converted notebooks to markdown")
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to convert notebooks: {e.stderr}")
         logger.warning("Falling back to copying .ipynb files")
@@ -339,10 +321,6 @@ def process_notebooks() -> None:
             shutil.copy2(notebook_file, destination_file)
             logger.info(f"Copied {filename} to {destination_file}")
         return
-    
-    # Integrate converted notebook content with documentation files
-    logger.info("Integrating notebook content with documentation...")
-    _integrate_notebooks_with_docs()
     
     logger.info(f"Successfully processed {len(notebook_files)} notebook files")
 
@@ -441,26 +419,55 @@ def crawl_rss_feeds() -> None:
     os.makedirs(FIDDLER_MD_BLOGS_DIR, exist_ok=True)
     os.makedirs(FIDDLER_MD_RESOURCES_DIR, exist_ok=True)
     
-    # Crawl blog RSS feed
-    _crawl_single_rss_feed(
-        rss_url=BLOG_RSS_URL,
-        div_class='blog-post_content-wrapper',
-        output_dir=FIDDLER_MD_BLOGS_DIR,
-        content_type='blog'
-        )
+    # Track success/failure of each feed
+    feeds_processed = []
+    feeds_failed = []
     
-    # Crawl resources RSS feed
-    _crawl_single_rss_feed(
-        rss_url=RESOURCES_RSS_URL,
-        div_class='resources-copy',
-        output_dir=FIDDLER_MD_RESOURCES_DIR,
-        content_type='resources'
+    # Crawl blog RSS feed with error recovery
+    try:
+        logger.info("Attempting to crawl blog RSS feed...")
+        _crawl_single_rss_feed(
+            rss_url=BLOG_RSS_URL,
+            div_class='blog-post_content-wrapper',
+            output_dir=FIDDLER_MD_BLOGS_DIR,
+            content_type='blog'
         )
+        feeds_processed.append('blog')
+        logger.info("Blog RSS feed crawling completed successfully")
+    except Exception as e:
+        feeds_failed.append('blog')
+        logger.error(f"Blog RSS feed crawling failed: {str(e)}")
+        logger.warning("Continuing with other feeds despite blog feed failure")
     
-    logger.info("RSS feed crawling completed successfully")
+    # Crawl resources RSS feed with error recovery
+    try:
+        logger.info("Attempting to crawl resources RSS feed...")
+        _crawl_single_rss_feed(
+            rss_url=RESOURCES_RSS_URL,
+            div_class='resources-copy',
+            output_dir=FIDDLER_MD_RESOURCES_DIR,
+            content_type='resources'
+        )
+        feeds_processed.append('resources')
+        logger.info("Resources RSS feed crawling completed successfully")
+    except Exception as e:
+        feeds_failed.append('resources')
+        logger.error(f"Resources RSS feed crawling failed: {str(e)}")
+        logger.warning("Continuing despite resources feed failure")
+    
+    # Summary of RSS feed crawling results
+    if feeds_processed:
+        logger.info(f"RSS feed crawling completed. Successfully processed: {', '.join(feeds_processed)}")
+    
+    if feeds_failed:
+        logger.warning(f"RSS feed crawling had failures. Failed feeds: {', '.join(feeds_failed)}")
+        
+    if not feeds_processed:
+        logger.error("All RSS feeds failed to process")
+    else:
+        logger.info("RSS feed crawling phase completed (some feeds may have failed, but process continues)")
 
-
-def generate_corpus_from_sources() -> str:
+def generate_corpus_from_sources() -> str | None:
     """
     Generate a corpus by combining all markdown content and splitting it into chunks.
     Creates a DataFrame and saves it as a CSV file for vector indexing.
@@ -585,10 +592,10 @@ def generate_corpus_from_sources() -> str:
         return output_path
     except Exception as e:
         logger.error(f"Failed to save corpus CSV: {str(e)}")
-        return ""
+        return None
 
 
-def corpus_data_generation_process() -> str:
+def corpus_data_generation_process() -> str | None:
     """
     Main function to orchestrate the complete data management workflow.
     Returns: Path to the generated corpus CSV file
@@ -608,7 +615,13 @@ def corpus_data_generation_process() -> str:
         copy_docs_folder()
         process_docs() # todo
         process_notebooks()
-        crawl_rss_feeds()
+        
+        # RSS feed crawling with workflow-level error recovery
+        try:
+            crawl_rss_feeds()
+        except Exception as e:
+            logger.error(f"RSS feed crawling failed completely: {str(e)}")
+            logger.warning("Continuing corpus generation without RSS feed content")
         
         # Generate corpus with text splitting
         corpus_path = generate_corpus_from_sources()
@@ -616,8 +629,10 @@ def corpus_data_generation_process() -> str:
         if corpus_path:
             logger.info(f"Corpus CSV generated at: {corpus_path}")
             logger.info("Local markdown data management workflow completed successfully!")
-        
-        return corpus_path
+            return corpus_path
+        else:
+            logger.error("Corpus CSV generation failed")
+            return None
         
     except Exception as e:
         logger.error(f"Local data generation workflow failed: {str(e)}")
