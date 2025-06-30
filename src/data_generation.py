@@ -728,10 +728,10 @@ def corpus_data_generation_process() -> Path | None:
         reset_local_data_assets(keep_repos=KEEP_REPOS, keep_csv_files=KEEP_CSV_FILES)  # Keep repos for efficiency at start
         
         clone_or_pull_repo(FIDDLER_MAIN_REPO_URL, FIDDLER_MAIN_REPO_DIR)
-        checkout_latest_release_branch(FIDDLER_MAIN_REPO_DIR)
+        checkout_latest_release_branch(FIDDLER_MAIN_REPO_DIR , branch_override=None)
         
         clone_or_pull_repo(FIDDLER_EXAMPLES_REPO_URL,FIDDLER_EXAMPLES_REPO_DIR)
-        checkout_latest_release_branch(FIDDLER_EXAMPLES_REPO_DIR)
+        checkout_latest_release_branch(FIDDLER_EXAMPLES_REPO_DIR , branch_override=None)
         
         process_docs() # todo
         process_notebooks()
