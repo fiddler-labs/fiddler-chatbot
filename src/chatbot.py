@@ -84,9 +84,9 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 logger = get_logger(__name__)
 
-FIDDLER_API_TOKEN = os.environ.get("FIDDLER_API_TOKEN")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-ASTRA_DB_APPLICATION_TOKEN = os.environ.get("ASTRA_DB_APPLICATION_TOKEN")
+FIDDLER_API_TOKEN          = os.environ.get( "FIDDLER_API_TOKEN"          )
+OPENAI_API_KEY             = os.environ.get( "OPENAI_API_KEY"             )
+ASTRA_DB_APPLICATION_TOKEN = os.environ.get( "ASTRA_DB_APPLICATION_TOKEN" )
 
 QA_CHAIN_PROMPT = PromptTemplate.from_template(TEMPLATE)
 
