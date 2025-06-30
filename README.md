@@ -74,7 +74,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
 
 ```bash
 # Start the Streamlit application
-streamlit run streamlit_app_datastax.py
+streamlit run chatbot.py
 ```
 
 The application will be available at `http://localhost:8501`
@@ -117,12 +117,12 @@ The application integrates with Fiddler AI's platform for:
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### Common Issues **WIP**
 
-**WIP** - Comprehensive troubleshooting guide.
-    - Database Connection Issues ( WIP )
-    - OpenAI API Issues ( WIP )
-    - Vector Search Problems ( WIP )
+- Comprehensive troubleshooting guide.
+  - Database Connection Issues ( WIP )
+  - OpenAI API Issues ( WIP )
+  - Vector Search Problems ( WIP )
 
 ## 📄 License
 
