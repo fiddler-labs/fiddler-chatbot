@@ -16,11 +16,11 @@ Both approaches preserve the original file structure information in different wa
 import os
 import shutil
 from typing import List
-
+from pathlib import Path
 
 def flatten_all_files_individually(
-    source_dir: str, 
-    dest_dir: str, 
+    source_dir: Path, 
+    dest_dir: Path, 
     file_extension: str = '.md',
     verbose: bool = True
     ) -> List[str]:
@@ -86,10 +86,9 @@ def flatten_all_files_individually(
     
     return created_files
 
-
 def concatenate_files_in_leaf_folders(
-    source_dir: str, 
-    dest_dir: str, 
+    source_dir: Path, 
+    dest_dir: Path, 
     file_extension: str = '.md',
     verbose: bool = True
     ) -> List[str]:
@@ -118,16 +117,13 @@ def concatenate_files_in_leaf_folders(
         OSError: If source directory doesn't exist or destination cannot be created
     """
 
-    def _get_all_files_with_extension(directory: str, extension: str = '.md') -> List[str]:
+    def _get_all_files_with_extension(directory: Path, extension: str = '.md') -> List[str]:
         """
         Get all files with a specific extension within a directory and its subdirectories.
-        
         Args:
             directory: Directory to search
             extension: File extension to look for
-            
-        Returns:
-            List of file paths
+        Returns: List of file paths
         """
         files = []
         for dirpath, dirnames, filenames in os.walk(directory):
@@ -172,7 +168,7 @@ def concatenate_files_in_leaf_folders(
             continue
             
         # Get all files with the specified extension within this directory and its subdirectories
-        files = _get_all_files_with_extension(dirpath, file_extension)
+        files = _get_all_files_with_extension(Path(dirpath), file_extension)
         
         # If there are files, concatenate them
         if files:
@@ -209,33 +205,3 @@ def concatenate_files_in_leaf_folders(
             processed_dirs.add(rel_dir)
     
     return created_files
-
-
-def main():
-    """
-    Example usage of the flattening utilities.
-    
-    Modify the paths below to match your use case.
-    """
-    # Example paths - modify these for your use case
-    source_directory = '/Users/saifraja/Github/Docs Export Experiments/v25.0/docs'
-    individual_dest = '/Users/saifraja/Github/Docs Export Experiments/v25.0/docs_flattened_individual'
-    concat_dest = '/Users/saifraja/Github/Docs Export Experiments/v25.0/docs_flattened_concat'
-    
-    print("=== Individual File Flattening ===")
-    try:
-        individual_files = flatten_all_files_individually(source_directory, individual_dest)
-        print(f"Created {len(individual_files)} individual files")
-    except OSError as e:
-        print(f"Error in individual flattening: {e}")
-    
-    print("\n=== Concatenated File Flattening ===")
-    try:
-        concat_files = concatenate_files_in_leaf_folders(source_directory, concat_dest)
-        print(f"Created {len(concat_files)} concatenated files")
-    except OSError as e:
-        print(f"Error in concatenated flattening: {e}")
-
-
-if __name__ == "__main__":
-    main()
