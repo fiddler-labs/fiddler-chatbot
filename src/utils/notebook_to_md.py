@@ -1,18 +1,82 @@
-#!/usr/bin/env python3
-"""
-A simple script to convert Jupyter notebooks to Markdown files, with options to skip images.
-Usage: python notebook_to_md.py notebook.ipynb [--skip-images] [--skip-links] [-o output_dir]
-"""
-
-import sys
 import os
 import json
 from pathlib import Path
-import argparse
 import re
+from typing import Optional, List
+import subprocess
+import logging
 
-def convert_notebook(notebook_path: str, output_dir: str = None, skip_images: bool = False, 
-                    skip_links: bool = False) -> str:
+# Configure logging - todo - unify with other logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+
+def convert_notebooks_jupyter_nbconvert(notebook_files: List[str], output_dir: str) -> bool:
+    """
+    Convert notebooks using jupyter nbconvert command-line tool.
+    
+    Args:
+        notebook_files: List of notebook file paths to convert
+        output_dir: Directory where converted markdown files will be saved
+        
+    Returns:
+        True if conversion was successful, False otherwise
+    """
+    logger.info("Converting notebooks using jupyter nbconvert...")
+    try:
+        cmd = [
+            "jupyter", "nbconvert", 
+            "--output-dir", output_dir,
+            "--to", "markdown"
+        ] + notebook_files
+        
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+        logger.info("Successfully converted notebooks using jupyter nbconvert")
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to convert notebooks with jupyter nbconvert: {e.stderr}")
+        return False
+
+
+def convert_notebooks_native_regex(notebook_files: List[str], output_dir: str) -> bool:
+    """
+    Convert notebooks using the native regex-based conversion function.
+    
+    Args:
+        notebook_files: List of notebook file paths to convert
+        output_dir: Directory where converted markdown files will be saved
+        
+    Returns:
+        True if conversion was successful, False otherwise
+    """
+    logger.info("Converting notebooks using native regex-based converter...")
+    success_count = 0
+    
+    for notebook_file in notebook_files:
+        try:
+            # Convert using the native function
+            output_path = _convert_notebook__native(
+                notebook_path=Path(notebook_file),
+                output_dir=Path(output_dir),
+                skip_images=True,
+                skip_links=True
+            )
+            logger.info(f"Successfully converted {notebook_file} to {output_path}")
+            success_count += 1
+        except Exception as e:
+            logger.error(f"Failed to convert {notebook_file} using native method: {str(e)}")
+            continue
+    
+    if success_count > 0:
+        logger.info(f"Successfully converted {success_count}/{len(notebook_files)} notebooks using native method")
+        return True
+    else:
+        logger.error("Failed to convert any notebooks using native method")
+        return False
+
+
+def _convert_notebook__native(notebook_path: Path, output_dir: Optional[Path] = None, skip_images: bool = True, 
+                    skip_links: bool = True) -> Path:
     """
     Convert a single notebook to markdown.
     
@@ -94,29 +158,4 @@ def convert_notebook(notebook_path: str, output_dir: str = None, skip_images: bo
     with open(output_path, 'w', encoding='utf-8') as f:
         f.write(''.join(markdown_content))
     
-    return str(output_path)
-
-def main():
-    parser = argparse.ArgumentParser(description='Convert Jupyter notebooks to Markdown files')
-    parser.add_argument('notebook', help='Notebook file to convert')
-    parser.add_argument('-o', '--output-dir', help='Output directory for markdown files')
-    parser.add_argument('--skip-images', action='store_true', 
-                       help='Skip image tags in the markdown output')
-    parser.add_argument('--skip-links', action='store_true',
-                       help='Skip hyperlinks in the markdown output (keep link text)')
-    args = parser.parse_args()
-    
-    try:
-        output_file = convert_notebook(
-            args.notebook,
-            output_dir=args.output_dir,
-            skip_images=args.skip_images,
-            skip_links=args.skip_links
-        )
-        print(f"\nSuccessfully converted notebook to: {output_file}")
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
-
-if __name__ == '__main__':
-    main()
+    return output_path
