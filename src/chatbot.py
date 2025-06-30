@@ -25,9 +25,62 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from openai import OpenAI
 from streamlit.logger import get_logger
 
-from src.config import *
+FIDDLER_CHATBOT_PROJECT_NAME = "fiddler_chatbot_v3"
+FIDDLER_CHATBOT_MODEL_NAME = "fiddler_rag_chatbot"
+FIDDLER_URL = "https://demo.fiddler.ai"
+FIDDLER_ORG_NAME = "demo"
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+ASTRA_DB_SECURE_BUNDLE_PATH = "datastax_auth/secure-connect-fiddlerai.zip"
+ASTRA_DB_KEYSPACE = "fiddlerai"
+ASTRA_DB_TABLE_NAME = "fiddler_doc_snippets_openai"
+ASTRA_DB_LEDGER_TABLE_NAME = "fiddler_chatbot_ledger"
+
+EMBEDDING_MODEL = "text-embedding-3-large"
+LLM_MODEL = "gpt-4-turbo"
+
+MEMORY = "memory"
+QA = "qa"
+ANSWER = "answer"
+THUMB_UP = "thumbs_up_button"
+THUMB_DOWN = "thumbs_down_button"
+
+COMMENT = "comment"
+UUID = "uuid"
+SESSION_ID = "session_id"
+DB_CONN = "db_conn"
+
+FAITHFULNESS_SCORE = 0.0
+JAILBREAK_SCORE = 0.0
+SAFETY_GUARDRAIL_LATENCY = 0.0
+REQUESTS_TIMEOUT = 30
+
+FDL_PROMPT = "prompt"
+FDL_RESPONSE = "response"
+FDL_SESSION_ID = "session_id"
+FDL_ROW_ID = "row_id"
+FDL_RUN_ID = "run_id"
+FDL_SOURCE_DOC0 = "source_doc0"
+FDL_SOURCE_DOC1 = "source_doc1"
+FDL_SOURCE_DOC2 = "source_doc2"
+FDL_COMMENT = "comment"
+FDL_FEEDBACK = "feedback"
+FDL_FEEDBACK2 = "feedback2"
+FDL_PROMPT_TOKENS = "prompt_tokens"
+FDL_TOTAL_TOKENS = "total_tokens"
+FDL_COMPLETION_TOKENS = "completion_tokens"
+FDL_DURATION = "duration"
+FDL_MODEL_NAME = "model_name"
+
+
+# Read the system instructions template
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
+with open(os.path.join(PROJECT_ROOT, "src", "system_instructions.md"), "r") as f:
+    TEMPLATE = f.read().strip()
+
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+if OPENAI_API_KEY is None:
+    raise ValueError("OPENAI_API_KEY environment variable is required")
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 logger = get_logger(__name__)
 
@@ -81,6 +134,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
+    if ASTRA_DB_APPLICATION_TOKEN is None:
+        raise ValueError("ASTRA_DB_APPLICATION_TOKEN environment variable is required")
     auth_provider = PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
     cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
     st.session_state[DB_CONN] = cluster.connect()
@@ -229,10 +284,14 @@ def publish_and_store(
     trace_df["ts"] = pd.Timestamp.today()
 
     # get Fiddler client
+    if FIDDLER_API_TOKEN is None:
+        raise ValueError("FIDDLER_API_TOKEN environment variable is required")
     fdl.init(url=FIDDLER_URL, token=FIDDLER_API_TOKEN)
 
     # Publish the trace/event to Fiddler
     project = fdl.Project.from_name(name=FIDDLER_CHATBOT_PROJECT_NAME)
+    if project.id is None:
+        raise ValueError(f"Could not find project {FIDDLER_CHATBOT_PROJECT_NAME}")
     model = fdl.Model.from_name(name=FIDDLER_CHATBOT_MODEL_NAME, project_id=project.id)
 
     model.event_ts_col = "ts"
