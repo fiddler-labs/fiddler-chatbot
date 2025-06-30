@@ -19,16 +19,22 @@ Create a vector-ready corpus by:
 
 import os
 import shutil
-import subprocess
 import glob
 import logging
+import subprocess
 import pandas as pd
 import re
 import feedparser
 from bs4 import BeautifulSoup
 import requests
 from datetime import datetime, timezone
+from typing import List
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from pathlib import Path
+
+# Import native notebook conversion function
+from utils.notebook_to_md import convert_notebooks_jupyter_nbconvert, convert_notebooks_native_regex
+from utils.flatten_folders import flatten_all_files_individually, concatenate_files_in_leaf_folders
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -57,6 +63,14 @@ FIDDLER_MD_RESOURCES_DIR = os.path.join(LOCAL_DATA_ASSETS_DIR, "md-resources")
 # Text splitting configuration
 CHUNK_SIZE = 2000
 CHUNK_OVERLAP = 300
+
+# Notebook conversion method configuration
+# Options: 'jupyter_nbconvert' or 'native_regex'
+NOTEBOOK_CONVERSION_METHOD = 'native_regex'
+
+# Markdown flattening method configuration
+# Options: 'individual' or 'concatenated'
+MARKDOWN_FLATTENING_METHOD = 'individual'
 
 
 def reset_local_data_assets(keep_repos: bool = True, keep_csv_files: bool = True) -> None:
@@ -237,53 +251,106 @@ def checkout_latest_release_branch(repo_path: str, branch_override: str | None =
             logger.error(f"Failed to checkout main branch: {e2.stderr}")
             raise
 
-def copy_docs_folder() -> None:
-    """
-    Copy the docs folder from the cloned repository to local_assets/fiddler-docs.
-    Args: repo_path: Path to the cloned Fiddler repository
-    """
-    logger.info("Copying docs folder...")
-    
-    docs_source = os.path.join(FIDDLER_MAIN_REPO_DIR, "docs")
-    docs_destination = FIDDLER_MD_DOCS_DIR
-    
-    if not os.path.exists(docs_source):
-        raise FileNotFoundError(f"Docs folder not found at {docs_source}")
-    
-    # Create destination directory
-    os.makedirs(os.path.dirname(docs_destination), exist_ok=True)
-    
-    # Remove destination if it exists
-    if os.path.exists(docs_destination):
-        shutil.rmtree(docs_destination)
-        logger.info(f"Removed existing docs folder at {docs_destination}")
-    
-    # Copy the docs folder
-    shutil.copytree(docs_source, docs_destination)
-    logger.info(f"Successfully copied docs folder to {docs_destination}")
-
-def process_docs() -> None:
+def process_docs() -> None: # WIP
     """
     Process the documentation files from the cloned repository.
     """
-    # WIP
+    
+    docs_source = os.path.join(FIDDLER_MAIN_REPO_DIR, "docs")
+
+    def _simple_copy_docs_folder() -> None:
+        """
+        Copy the docs folder from the cloned repository to local_assets/fiddler-docs.
+        Args: repo_path: Path to the cloned Fiddler repository
+        """
+        logger.info("Copying docs folder...")
+        
+        docs_destination = FIDDLER_MD_DOCS_DIR
+        
+        if not os.path.exists(docs_source):
+            raise FileNotFoundError(f"Docs folder not found at {docs_source}")
+        
+        # Create destination directory
+        os.makedirs(os.path.dirname(docs_destination), exist_ok=True)
+        
+        # Remove destination if it exists
+        if os.path.exists(docs_destination):
+            shutil.rmtree(docs_destination)
+            logger.info(f"Removed existing docs folder at {docs_destination}")
+        
+        # Copy the docs folder
+        shutil.copytree(docs_source, docs_destination)
+        logger.info(f"Successfully copied docs folder to {docs_destination}")
+
     logger.info("Processing documentation files...")
+    
+    # implement markdown flattening
+    if MARKDOWN_FLATTENING_METHOD not in ['individual', 'concatenated']:
+        logger.error(f"Invalid markdown flattening method: {MARKDOWN_FLATTENING_METHOD}")
+        logger.error("Valid options are: 'individual' or 'concatenated'")
+        raise RuntimeError("Invalid markdown flattening method")
+
+    try:
+        if   MARKDOWN_FLATTENING_METHOD == 'individual':
+            flatten_all_files_individually    (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
+        elif MARKDOWN_FLATTENING_METHOD == 'concatenated':
+            concatenate_files_in_leaf_folders (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
+        logger.info("Markdown flattening completed successfully")
+ 
+    # try the alternative method if the first method fails
+    except Exception as e:
+        logger.error(f"Error flattening markdown: {e} via {MARKDOWN_FLATTENING_METHOD} method , using alternative fallback conversion method")
+        try:
+            if   MARKDOWN_FLATTENING_METHOD == 'individual':
+                concatenate_files_in_leaf_folders (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
+            elif MARKDOWN_FLATTENING_METHOD == 'concatenated':
+                flatten_all_files_individually    (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
+            logger.info("Markdown flattening completed successfully")
+
+        # fall back to simple copy of docs folder
+        except Exception as e2:
+            logger.error(f"Error flattening markdown: {e2} via both methods , falling back to simple copy of docs folder")
+            try:
+                logger.info("Falling back to simple copy of docs folder")
+                _simple_copy_docs_folder()
+            except Exception as e3:
+                logger.error(f"Error copying docs folder: {e3} , falling back to simple copy of docs folder")
+                raise RuntimeError("Error copying docs folder")
+
+
+
+
+    return
+
 
 def process_notebooks() -> None:
     """
     Convert .ipynb files from the fiddler-examples repository to markdown.
+    Uses the method specified by NOTEBOOK_CONVERSION_METHOD constant.
     Both documentation and notebook files are kept separate for individual embedding.
     """
-    logger.info("Processing notebook files...")
+
+    def _find_notebook_files(source_dir: str) -> List[str]:
+        """
+        Find all .ipynb files recursively in the source directory.
+        Skips checkpoint files and returns a list of notebook file paths.
+        
+        Args: source_dir: Directory to search for notebook files
+        Returns: List of notebook file paths
+        """
+        notebook_files = []
+        for root, dirs, files in os.walk(source_dir):
+            for file in files:
+                if file.endswith('.ipynb'):
+                    if '.ipynb_checkpoints' not in root:  # Skip checkpoint files
+                        notebook_files.append(os.path.join(root, file))
+        return notebook_files
+
+    logger.info(f"Processing notebook files using {NOTEBOOK_CONVERSION_METHOD} method...")
     os.makedirs(FIDDLER_MD_NOTEBOOKS_DIR, exist_ok=True)
     
-    # Find all .ipynb files recursively
-    notebook_files = []
-    for root, dirs, files in os.walk(FIDDLER_EXAMPLES_REPO_DIR):
-        for file in files:
-            if file.endswith('.ipynb'):
-                if '.ipynb_checkpoints' not in root:  # Skip checkpoint files
-                    notebook_files.append(os.path.join(root, file))
+    # Find all notebook files
+    notebook_files = _find_notebook_files(FIDDLER_EXAMPLES_REPO_DIR)
     
     if not notebook_files:
         logger.warning("No notebook files found in the repository")
@@ -291,37 +358,35 @@ def process_notebooks() -> None:
     
     logger.info(f"Found {len(notebook_files)} notebook files")
     
-    # Convert notebooks to markdown using jupyter nbconvert
-    logger.info("Converting notebooks to markdown...")
-    try:
-        cmd = [
-            "jupyter", "nbconvert", 
-            "--output-dir", FIDDLER_MD_NOTEBOOKS_DIR,
-            "--to", "markdown"
-        ] + notebook_files
+    # Choose conversion method based on configuration
+    conversion_success = False
+    
+    if NOTEBOOK_CONVERSION_METHOD == 'jupyter_nbconvert':
+        conversion_success = convert_notebooks_jupyter_nbconvert(notebook_files, FIDDLER_MD_NOTEBOOKS_DIR)
+    elif NOTEBOOK_CONVERSION_METHOD == 'native_regex':
+        conversion_success = convert_notebooks_native_regex(notebook_files, FIDDLER_MD_NOTEBOOKS_DIR)
+    else:
+        logger.error(f"Invalid notebook conversion method: {NOTEBOOK_CONVERSION_METHOD}")
+        logger.error("Valid options are: 'jupyter_nbconvert' or 'native_regex'")
+        conversion_success = False
+    
+    # If primary conversion method fails, try the fallback method
+    if not conversion_success:
+        logger.warning("Primary conversion method failed, trying fallback approach...")
         
-        subprocess.run(cmd, check=True, capture_output=True, text=True)
-        logger.info("Successfully converted notebooks to markdown")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Failed to convert notebooks: {e.stderr}")
-        logger.warning("Falling back to copying .ipynb files")
+        # Try the alternative method first before copying files
+        if NOTEBOOK_CONVERSION_METHOD == 'native_regex':
+            logger.info("Trying jupyter nbconvert as fallback...")
+            conversion_success = convert_notebooks_jupyter_nbconvert(notebook_files, FIDDLER_MD_NOTEBOOKS_DIR)
+        elif NOTEBOOK_CONVERSION_METHOD == 'jupyter_nbconvert':
+            logger.info("Trying native regex method as fallback...")
+            conversion_success = convert_notebooks_native_regex(notebook_files, FIDDLER_MD_NOTEBOOKS_DIR)
         
-        # Fallback: copy .ipynb files
-        for notebook_file in notebook_files:
-            filename = os.path.basename(notebook_file)
-            destination_file = os.path.join(FIDDLER_MD_NOTEBOOKS_DIR, filename)
-            
-            # Handle duplicate filenames by adding a suffix
-            counter = 1
-            original_destination = destination_file
-            while os.path.exists(destination_file):
-                name, ext = os.path.splitext(original_destination)
-                destination_file = f"{name}_{counter}{ext}"
-                counter += 1
-            
-            shutil.copy2(notebook_file, destination_file)
-            logger.info(f"Copied {filename} to {destination_file}")
-        return
+        if not conversion_success:
+            logger.error("All conversion methods failed")
+            raise RuntimeError("All conversion methods failed")
+        else:
+            logger.info("Fallback conversion method succeeded")
     
     logger.info(f"Successfully processed {len(notebook_files)} notebook files")
 
@@ -613,7 +678,6 @@ def corpus_data_generation_process() -> str | None:
         clone_or_pull_repo(FIDDLER_EXAMPLES_REPO_URL,FIDDLER_EXAMPLES_REPO_DIR)
         checkout_latest_release_branch(FIDDLER_EXAMPLES_REPO_DIR)
         
-        copy_docs_folder()
         process_docs() # todo
         process_notebooks()
         
