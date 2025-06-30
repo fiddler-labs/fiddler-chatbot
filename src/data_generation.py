@@ -15,6 +15,9 @@ Create a vector-ready corpus by:
 - **File System Operations**: Directory management, cleanup
 - **Data Pipeline Orchestration**: Coordinating the entire workflow
 
+The architecture follows a linear pipeline pattern with error recovery mechanisms at various stages.
+
+
 """
 
 import os
@@ -71,6 +74,9 @@ NOTEBOOK_CONVERSION_METHOD = 'native_regex'
 # Markdown flattening method configuration
 # Options: 'individual' or 'concatenated'
 MARKDOWN_FLATTENING_METHOD = 'individual'
+
+KEEP_REPOS = True
+KEEP_CSV_FILES = True
 
 
 def reset_local_data_assets(keep_repos: bool = True, keep_csv_files: bool = True) -> None:
@@ -251,76 +257,134 @@ def checkout_latest_release_branch(repo_path: str, branch_override: str | None =
             logger.error(f"Failed to checkout main branch: {e2.stderr}")
             raise
 
-def process_docs() -> None: # WIP
+def process_docs() -> None:
     """
-    Process the documentation files from the cloned repository.
+    Process the documentation files from the cloned repository using a robust fallback strategy.
+    
+    Processing Strategy (in order of preference):
+    1. Primary method: Use configured MARKDOWN_FLATTENING_METHOD
+    2. Fallback method: Use alternative flattening method
+    3. Final fallback: Simple copy of docs folder
+    
+    Each method is attempted with proper cleanup between attempts.
     """
     
     docs_source = os.path.join(FIDDLER_MAIN_REPO_DIR, "docs")
-
-    def _simple_copy_docs_folder() -> None:
-        """
-        Copy the docs folder from the cloned repository to local_assets/fiddler-docs.
-        Args: repo_path: Path to the cloned Fiddler repository
-        """
-        logger.info("Copying docs folder...")
-        
-        docs_destination = FIDDLER_MD_DOCS_DIR
-        
-        if not os.path.exists(docs_source):
-            raise FileNotFoundError(f"Docs folder not found at {docs_source}")
-        
-        # Create destination directory
-        os.makedirs(os.path.dirname(docs_destination), exist_ok=True)
-        
-        # Remove destination if it exists
-        if os.path.exists(docs_destination):
-            shutil.rmtree(docs_destination)
-            logger.info(f"Removed existing docs folder at {docs_destination}")
-        
-        # Copy the docs folder
-        shutil.copytree(docs_source, docs_destination)
-        logger.info(f"Successfully copied docs folder to {docs_destination}")
-
-    logger.info("Processing documentation files...")
     
-    # implement markdown flattening
+    # Validate source directory exists
+    if not os.path.exists(docs_source):
+        raise FileNotFoundError(f"Source docs folder not found at {docs_source}")
+    
+    # Validate configuration
     if MARKDOWN_FLATTENING_METHOD not in ['individual', 'concatenated']:
         logger.error(f"Invalid markdown flattening method: {MARKDOWN_FLATTENING_METHOD}")
         logger.error("Valid options are: 'individual' or 'concatenated'")
         raise RuntimeError("Invalid markdown flattening method")
-
-    try:
-        if   MARKDOWN_FLATTENING_METHOD == 'individual':
-            flatten_all_files_individually    (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
-        elif MARKDOWN_FLATTENING_METHOD == 'concatenated':
-            concatenate_files_in_leaf_folders (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
-        logger.info("Markdown flattening completed successfully")
- 
-    # try the alternative method if the first method fails
-    except Exception as e:
-        logger.error(f"Error flattening markdown: {e} via {MARKDOWN_FLATTENING_METHOD} method , using alternative fallback conversion method")
+    
+    logger.info("Processing documentation files...")
+    logger.info(f"Source directory: {docs_source}")
+    logger.info(f"Destination directory: {FIDDLER_MD_DOCS_DIR}")
+    logger.info(f"Primary method: {MARKDOWN_FLATTENING_METHOD}")
+    
+    def _cleanup_destination() -> None:
+        """Clean up destination directory before attempting processing."""
+        if os.path.exists(FIDDLER_MD_DOCS_DIR):
+            logger.info(f"Cleaning up existing destination: {FIDDLER_MD_DOCS_DIR}")
+            shutil.rmtree(FIDDLER_MD_DOCS_DIR)
+    
+    def _create_destination() -> None:
+        """Ensure destination directory exists."""
+        os.makedirs(FIDDLER_MD_DOCS_DIR, exist_ok=True)
+    
+    def _simple_copy_docs_folder() -> None:
+        """
+        Copy the docs folder from the cloned repository to destination.
+        This is the final fallback method when all flattening approaches fail.
+        """
+        logger.info("Using simple copy method (final fallback)...")
+        _cleanup_destination()
+        _create_destination()
+        shutil.copytree(docs_source, FIDDLER_MD_DOCS_DIR, dirs_exist_ok=True)
+        logger.info("Successfully copied docs folder using simple copy method")
+    
+    # Define processing strategies in order of preference
+    processing_strategies = []
+    
+    # Add primary method
+    if MARKDOWN_FLATTENING_METHOD == 'individual':
+        processing_strategies.append({
+            'name': 'individual_flattening',
+            'description': 'Individual file flattening (primary)',
+            'method': lambda: flatten_all_files_individually(
+                source_dir=Path(docs_source), 
+                dest_dir=Path(FIDDLER_MD_DOCS_DIR)
+            )
+        })
+        # Add alternative method as fallback
+        processing_strategies.append({
+            'name': 'concatenated_flattening',
+            'description': 'Concatenated flattening (fallback)',
+            'method': lambda: concatenate_files_in_leaf_folders(
+                source_dir=Path(docs_source), 
+                dest_dir=Path(FIDDLER_MD_DOCS_DIR)
+            )
+        })
+    else:  # concatenated
+        processing_strategies.append({
+            'name': 'concatenated_flattening',
+            'description': 'Concatenated flattening (primary)',
+            'method': lambda: concatenate_files_in_leaf_folders(
+                source_dir=Path(docs_source), 
+                dest_dir=Path(FIDDLER_MD_DOCS_DIR)
+            )
+        })
+        # Add alternative method as fallback
+        processing_strategies.append({
+            'name': 'individual_flattening',
+            'description': 'Individual file flattening (fallback)',
+            'method': lambda: flatten_all_files_individually(
+                source_dir=Path(docs_source), 
+                dest_dir=Path(FIDDLER_MD_DOCS_DIR)
+            )
+        })
+    
+    # Add final fallback method
+    processing_strategies.append({
+        'name': 'simple_copy',
+        'description': 'Simple copy (final fallback)',
+        'method': _simple_copy_docs_folder
+    })
+    
+    # Attempt each processing strategy
+    last_error = None
+    for i, strategy in enumerate(processing_strategies, 1):
         try:
-            if   MARKDOWN_FLATTENING_METHOD == 'individual':
-                concatenate_files_in_leaf_folders (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
-            elif MARKDOWN_FLATTENING_METHOD == 'concatenated':
-                flatten_all_files_individually    (source_dir=Path(docs_source), dest_dir=Path(FIDDLER_MD_DOCS_DIR))
-            logger.info("Markdown flattening completed successfully")
-
-        # fall back to simple copy of docs folder
-        except Exception as e2:
-            logger.error(f"Error flattening markdown: {e2} via both methods , falling back to simple copy of docs folder")
-            try:
-                logger.info("Falling back to simple copy of docs folder")
-                _simple_copy_docs_folder()
-            except Exception as e3:
-                logger.error(f"Error copying docs folder: {e3} , falling back to simple copy of docs folder")
-                raise RuntimeError("Error copying docs folder")
-
-
-
-
-    return
+            logger.info(f"Attempting strategy {i}/{len(processing_strategies)}: {strategy['description']}")
+            
+            # Clean up destination before each attempt (except simple copy which handles its own cleanup)
+            if strategy['name'] != 'simple_copy':
+                _cleanup_destination()
+                _create_destination()
+            
+            # Execute the processing method
+            strategy['method']()
+            
+            logger.info(f"✅ Successfully processed docs using {strategy['description']}")
+            return
+            
+        except Exception as e:
+            last_error = e
+            logger.warning(f"❌ Strategy {i} failed ({strategy['description']}): {str(e)}")
+            
+            # If this isn't the last strategy, continue to next
+            if i < len(processing_strategies):
+                logger.info(f"Trying next strategy...")
+                continue
+    
+    # If we reach here, all strategies failed
+    logger.error("🚨 All processing strategies failed!")
+    logger.error(f"Last error: {str(last_error)}")
+    raise RuntimeError(f"All documentation processing methods failed. Last error: {str(last_error)}")
 
 
 def process_notebooks() -> None:
@@ -533,22 +597,17 @@ def crawl_rss_feeds() -> None:
     else:
         logger.info("RSS feed crawling phase completed (some feeds may have failed, but process continues)")
 
-def generate_corpus_from_sources() -> str | None:
+def generate_corpus_from_sources() -> Path:
     """
     Generate a corpus by combining all markdown content and splitting it into chunks.
     Creates a DataFrame and saves it as a CSV file for vector indexing.
-    
-    Args:
-        release_num: Release version number for the output file naming
-    
-    Returns:
-        Path to the generated CSV file
+    Returns: Path to the generated CSV file
     """
     logger.info("Starting corpus generation with text splitting...")
     
     source_docs = []
     
-    # Collect documentation files
+    # Collect processed documentation files
     if os.path.exists(FIDDLER_MD_DOCS_DIR):
         logger.info("Collecting documentation files...")
         for root, dirs, files in os.walk(FIDDLER_MD_DOCS_DIR):
@@ -592,7 +651,9 @@ def generate_corpus_from_sources() -> str | None:
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
-                            source_docs.append(f'BLOG_CONTENT:{file_content}')
+                            doc_url = f'BLOG_URL:{file_path[:-3]}'
+                            doc_content = f'BLOG_CONTENT:{file_content}'
+                            source_docs.append(f'{doc_url}\n{doc_content}')
                     except Exception as e:
                         logger.error(f"Failed to read blog file {file_path}: {str(e)}")
     
@@ -606,19 +667,21 @@ def generate_corpus_from_sources() -> str | None:
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
-                            source_docs.append(f'RESOURCES_CONTENT:{file_content}')
+                            doc_url = f'RESOURCES_URL:{file_path[:-3]}'
+                            doc_content = f'RESOURCES_CONTENT:{file_content}'
+                            source_docs.append(f'{doc_url}\n{doc_content}')
                     except Exception as e:
                         logger.error(f"Failed to read resources file {file_path}: {str(e)}")
     
     if not source_docs:
         logger.warning("No source documents found for corpus generation")
-        return ""
+        raise RuntimeError("No source documents found for corpus generation")
     
     logger.info(f"Collected {len(source_docs)} source documents")
     
     # Clean and prepare corpus
-    corpus = [item.strip() for item in source_docs if item.strip()]
-    logger.info(f"Cleaned corpus contains {len(corpus)} documents")
+    source_docs_trimmed = [item.strip() for item in source_docs if item.strip()]
+    logger.info(f"Cleaned corpus contains {len(source_docs_trimmed)} documents")
     
     # Initialize text splitter
     text_splitter = RecursiveCharacterTextSplitter(
@@ -630,7 +693,7 @@ def generate_corpus_from_sources() -> str | None:
     # Split corpus into chunks
     logger.info("Splitting corpus into chunks...")
     corpus_chunks = []
-    for doc in corpus:
+    for doc in source_docs_trimmed:
         try:
             texts = text_splitter.split_text(doc)
             corpus_chunks.extend(texts)
@@ -642,7 +705,7 @@ def generate_corpus_from_sources() -> str | None:
     
     if not corpus_chunks:
         logger.error("No chunks generated from corpus")
-        return ""
+        raise RuntimeError("No chunks generated from corpus")
     
     # Create DataFrame and save to CSV
     df = pd.DataFrame({'text': corpus_chunks})
@@ -655,13 +718,14 @@ def generate_corpus_from_sources() -> str | None:
         df.to_csv(output_path, index=False)
         logger.info(f"Successfully saved corpus to {output_path}")
         logger.info(f"DataFrame shape: {df.shape}")
-        return output_path
+        return Path(output_path)
+
     except Exception as e:
         logger.error(f"Failed to save corpus CSV: {str(e)}")
-        return None
+        raise RuntimeError("Failed to save corpus CSV")
 
 
-def corpus_data_generation_process() -> str | None:
+def corpus_data_generation_process() -> Path | None:
     """
     Main function to orchestrate the complete data management workflow.
     Returns: Path to the generated corpus CSV file
@@ -669,8 +733,7 @@ def corpus_data_generation_process() -> str | None:
     logger.info("Starting local data management workflow")
     
     try:
-        keep_repos = True # todo - should come from config_dataprep.py
-        reset_local_data_assets(keep_repos=keep_repos)  # Keep repos for efficiency at start
+        reset_local_data_assets(keep_repos=KEEP_REPOS, keep_csv_files=KEEP_CSV_FILES)  # Keep repos for efficiency at start
         
         clone_or_pull_repo(FIDDLER_MAIN_REPO_URL, FIDDLER_MAIN_REPO_DIR)
         checkout_latest_release_branch(FIDDLER_MAIN_REPO_DIR)
