@@ -36,13 +36,14 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from pathlib import Path
 from packaging import version
 
-# Import native notebook conversion function
 from utils.notebook_to_md import convert_notebooks_jupyter_nbconvert, convert_notebooks_native_regex
 from utils.flatten_folders import flatten_all_files_individually, concatenate_files_in_leaf_folders
+from utils.logging import setup_logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Setup logging with default values
+setup_logging(log_level="DEBUG")
 logger = logging.getLogger(__name__)
+
 
 # Repo URLs
 FIDDLER_MAIN_REPO_URL     = "https://github.com/fiddler-labs/fiddler.git"

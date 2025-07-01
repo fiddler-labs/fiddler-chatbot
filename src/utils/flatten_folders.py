@@ -15,14 +15,16 @@ Both approaches preserve the original file structure information in different wa
 
 import os
 import shutil
+import logging
 from typing import List
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 def flatten_all_files_individually(
     source_dir: Path, 
     dest_dir: Path, 
     file_extension: str = '.md',
-    verbose: bool = True
     ) -> List[str]:
     """
     Flatten markdown files by copying each file individually with flattened names.
@@ -38,7 +40,6 @@ def flatten_all_files_individually(
         source_dir: Root directory containing the files to flatten
         dest_dir: Destination directory for flattened files
         file_extension: File extension to process (default: '.md')
-        verbose: Whether to print progress information
         
     Returns:
         List of created filenames
@@ -80,9 +81,7 @@ def flatten_all_files_individually(
                 # Copy the file to the destination directory
                 shutil.copy2(src_file, dest_file)
                 created_files.append(new_filename)
-                
-                if verbose:
-                    print(f"Created: {new_filename}")
+                logger.info(f"Created: {new_filename}")
     
     return created_files
 
@@ -90,7 +89,6 @@ def concatenate_files_in_leaf_folders(
     source_dir: Path, 
     dest_dir: Path, 
     file_extension: str = '.md',
-    verbose: bool = True
     ) -> List[str]:
     """
     Flatten markdown files by concatenating files within each directory branch.
@@ -108,7 +106,6 @@ def concatenate_files_in_leaf_folders(
         source_dir: Root directory containing the files to flatten
         dest_dir: Destination directory for flattened files
         file_extension: File extension to process (default: '.md')
-        verbose: Whether to print progress information
         
     Returns:
         List of created filenames
@@ -151,8 +148,7 @@ def concatenate_files_in_leaf_folders(
             shutil.copy2(item_path, dest_file)
             created_files.append(item)
             
-            if verbose:
-                print(f"Copied root file: {item}")
+            logger.info(f"Copied root file: {item}")
     
     # Now, process each subdirectory
     for dirpath, dirnames, filenames in os.walk(source_dir):
@@ -192,14 +188,11 @@ def concatenate_files_in_leaf_folders(
                             # Add a separator between files
                             outfile.write("\n\n---\n\n")
                     except UnicodeDecodeError:
-                        if verbose:
-                            print(f"Warning: Could not read file {file_path} (encoding issue)")
+                        logger.warning(f"Warning: Could not read file {file_path} (encoding issue)")
                         continue
             
             created_files.append(concatenated_filename)
-            
-            if verbose:
-                print(f"Created concatenated file: {concatenated_filename} ({len(files)} files)")
+            logger.info(f"Created concatenated file: {concatenated_filename} ({len(files)} files)")
             
             # Mark this directory as processed
             processed_dirs.add(rel_dir)

@@ -26,7 +26,7 @@
   - Install langraph sdk by understanding the process with Sri
 
 - Deployment and Development QoL
-  - While logging is present, there's no structured logging , import logging standard from aict
+  - While logging is present , it is not very verbose , build stuff with INFO level around the chatbot
   - Set up GitHub Actions workflow for automated embedding update
   - make a definitive notebook , to onbaord the models and aset up the alerts ; will serve as a iterative improvement checkpoint
   - make a notebook to that leverages data_generation.py and the /utils to create demp props
@@ -44,11 +44,6 @@
 
 - duplicate sri's MCP server to have a docs RAG server
 
-- create .mdc file that just contains the tree view of the repo
-  - include it on every chat via 'always' setting
-  - make a python script that updates this .mdc file and run this script as a precommit hook
-  - add it to git ognore , both the files : mdc and py
-
 ## Better coding practices
 
 - Data Consistency Problems
@@ -58,10 +53,3 @@
 - Resource Management:  No cleanup of temporary files on failure
 - Magic numbers: Hardcoded timeouts, chunk sizes
 - Make CSS selectors configurable - Move to config file
-
----
-
-## Notes
-
-- since we use notebooks from `fiddler-examples` , all the good stuff from cs-utils will automatically be inherited as reference assets
-- this repo is now essentially zero touch , as all the manual work of updating the embeddings has been converted into scripts; all the cloning , massaging , is now automated
