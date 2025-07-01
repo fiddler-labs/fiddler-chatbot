@@ -11,3 +11,7 @@ uv.lock
 
 local_assets/*/*.md
 local_assets/vector_index_feed_*.csv
+
+logs/log_*.log
+
+docs/private.md

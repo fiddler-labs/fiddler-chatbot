@@ -6,8 +6,6 @@ from typing import Optional, List
 import subprocess
 import logging
 
-# Configure logging - todo - unify with other logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
