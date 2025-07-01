@@ -7,7 +7,7 @@ __pycache__/
 /.venv
 .venv/
 uv.lock
-
 .ruff_cache/
 
-.idea/
+local_assets/*/*.md
+local_assets/vector_index_feed_*.csv
