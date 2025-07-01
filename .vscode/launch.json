@@ -6,8 +6,8 @@
       "request": "launch",
       "program": "${workspaceFolder}/src/app.py",
       // "args": [],
-      // "console": "integratedTerminal",
-      "console": "externalTerminal",
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
       "env": {
@@ -20,8 +20,8 @@
       "request": "launch",
       "program": "${workspaceFolder}/src/data_generation.py",
       // "args": [],
-      // "console": "integratedTerminal",
-      "console": "externalTerminal",
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
       "env": {
