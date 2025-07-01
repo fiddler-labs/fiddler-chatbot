@@ -26,9 +26,12 @@
 
   - Also explore the gitbook APIs : those can be a tool call ideas too
 
-- Deployment QoL
+- Deployment and Development QoL
+  - While logging is present, there's no structured logging , import logging standard from aict
   - Set up GitHub Actions workflow for automated embedding update
   - make a definitive notebook , to onbaord the models and aset up the alerts ; will serve as a iterative improvement checkpoint
+  - make a notebook to that leverages data_generation.py and the /utils to create demp props
+    - need to showcase to team all the possible methods to see what works best
 
 - Langraph-sdk integration for proposed agentic tools
   - Install langraph sdk by understanding the process with Sri
@@ -38,9 +41,9 @@
 - Expand README with comprehensive project documentation (setup, usage, architecture, etc.)
 - Implement error handling and logging throughout the application
 - Implemnt PROD mode and DEV mode globally controllable , cicd style , point to different location
-- Testing framework setup (pytest)
 - Security review of Datastax authentication flow
 - purge uv env and re-install everything after clean up to retain only needed packages
+- Testing framework setup (pytest)
 - git submodules implementation for cloned repos to allow for stable rollbacks
 
 - duplicate sri's MCP server to have a docs RAG server
