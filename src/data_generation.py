@@ -165,6 +165,12 @@ def clone_or_pull_repo(repo_url: str, repo_location: str) -> None:
         if _is_valid_git_repo(repo_location):
             # Try to pull latest changes
             try:
+                # Fetch latest remote information first
+                fetch_result = subprocess.run([
+                    "git", "-C", repo_location, "fetch"
+                ], check=True, capture_output=True, text=True)
+                logger.info(f"Fetched remote updates: {fetch_result.stdout.strip()}")
+                
                 result = subprocess.run([
                     "git", "-C", repo_location, "pull"
                 ], check=True, capture_output=True, text=True)
@@ -189,7 +195,7 @@ def clone_or_pull_repo(repo_url: str, repo_location: str) -> None:
         logger.error(f"Failed to clone repository {repo_url}: {e.stderr}")
         raise RuntimeError(f"Repository cloning failed: {e.stderr}")
 
-def checkout_latest_release_branch(repo_path: str, branch_override: str | None = None):
+def checkout_latest_release_branch(repo_path: str, branch_override: Optional[str] = None) -> version.Version:
     """
     Get the latest release branch name from the repository and check out to it.
     Args: 
@@ -235,12 +241,17 @@ def checkout_latest_release_branch(repo_path: str, branch_override: str | None =
     if branch_override:
         logger.info(f"Using branch override: {branch_override}")
         try:
+            # Fetch latest remote information first
+            subprocess.run([
+                "git", "-C", repo_path, "fetch"
+            ], check=True, capture_output=True, text=True)
+            
             # Checkout the specified branch
             subprocess.run([
                 "git", "-C", repo_path, "checkout", branch_override
             ], check=True, capture_output=True, text=True)
             logger.info(f"Successfully checked out override branch: {branch_override}")
-            return branch_override
+            return version.parse(branch_override)
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to checkout override branch {branch_override}: {e.stderr}")
             logger.warning("Falling back to automatic branch selection...")
@@ -295,7 +306,7 @@ def checkout_latest_release_branch(repo_path: str, branch_override: str | None =
         ], check=True, capture_output=True, text=True)
         logger.info(f"Successfully checked out {latest_branch}")
         
-        return latest_branch
+        return version.parse(latest_branch)
         
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to get release branches or checkout: {e.stderr}")
@@ -305,7 +316,7 @@ def checkout_latest_release_branch(repo_path: str, branch_override: str | None =
                 "git", "-C", repo_path, "checkout", "main"
             ], check=True, capture_output=True, text=True)
             logger.info("Successfully checked out main branch")
-            return "main"
+            return version.parse("main")
         except subprocess.CalledProcessError as e2:
             logger.error(f"Failed to checkout main branch: {e2.stderr}")
             raise
