@@ -23,8 +23,33 @@ Our approach is:
 
 ## Rules Files
 
-- **project.mdc**: Pragmatic coding standards focused on rapid delivery
-- **ai_assistant.mdc**: Guidelines for AI to prioritize working solutions
+- **ai_assistant.mdc**: Guidelines for Cursor
+- **README.mdc**: Documentation of the rules system and philosophy
+- **tool_diagram_assistant.mdc**: Specialized rules for diagram generation and concept 
+visualization
+
+## Test Execution Logging
+
+**CRITICAL REQUIREMENT**: All AI-assisted test executions must be logged to `logs/cursor_logs/` to prevent hallucinated test results.
+
+### Why This Matters
+- Prevents LLMs from creating fake test outputs with print statements
+- Ensures all tests contain real logical assertions
+- Provides audit trail of actual test execution
+- Enables verification of test results and debugging
+
+### Implementation
+- All test runs are automatically logged with timestamps
+- Log files contain complete command output, exit codes, and error traces
+- AI must reference specific log files when reporting test results
+- Failed tests must include complete failure information from logs
+
+## Key Standards
+
+### Markdown Formatting
+- Always use bullet points (dashes) instead of numbered lists unless content represents step-by-step processes
+- Numbered lists are reserved for sequential procedures where order matters
+- This approach enables flexible reordering of priorities and cleaner documentation
 
 ## How Rules Work
 

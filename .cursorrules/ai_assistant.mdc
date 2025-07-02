@@ -12,6 +12,37 @@ alwaysApply: true
 - Focus on the 80/20 rule - get the core functionality working first
 - Be a pragmatic coding partner, not a best-practices enforcer
 
+## Test Execution and Logging Protocol
+
+### Mandatory Test Logging
+**CRITICAL REQUIREMENT**: All test executions must be logged to prevent hallucinated test results.
+
+- **Log Location**: All test runs are logged to `logs/cursor_logs/` directory
+- **Log File Naming**: format used `test_run_YYYY-MM-DD_HH-MM-SS.log`
+- **Required Log Content**:
+  - Timestamp of test execution
+  - Full command executed
+  - Complete output (stdout and stderr)
+  - Exit code
+  - Test file path and line numbers
+  - Actual assertions and their results
+  - Any error messages or failures
+
+### Test Execution Rules
+- **NO DEVIOUS PRETENSE PRINT STATEMENT TESTS**: Never create tests that only contain print statements claiming success
+- **REAL VERIFICATION**: All tests must contain actual logical assertions that can fail
+- **COMPLETE OUTPUT CAPTURE**: Log the entire test execution output, not summaries
+- **FAILURE DOCUMENTATION**: When tests fail, log the complete failure trace
+- **BEFORE/AFTER STATE**: Log relevant system state before and after test execution
+
+### Test Logging Implementatiom **MANDATORY WRAPPER USAGE**: 
+All test commands must be executed through the test logger wrapper.
+Verification Requirements
+- **Always reference log files**: When reporting test results, always mention the specific log file created
+- **Show actual output**: Include actual test output in responses
+- **Verify assertions**: Confirm that actual assertions were executed and their results
+- **Document failures**: When tests fail, provide the complete failure information from logs
+
 ### Code Generation
 - Favor working solutions over perfectly structured ones
 - Focus on rapid iteration and immediate functionality
