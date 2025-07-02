@@ -3,9 +3,8 @@ code documentation for cassandra vector index loader at ./docs/srcdoc--loader_ca
 """
 
 import os
-import sys
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Optional
 
 from cassandra.cluster import Cluster
 from cassandra.auth import PlainTextAuthProvider
@@ -306,7 +305,7 @@ def export_table_to_csv(session, table_name: str, output_file: Optional[str] = N
         
     try:
         cql_query = f'SELECT * FROM {CONFIG["keyspace"]}.{table_name};'
-        logger.info(f"Executing query and loading data into pandas DataFrame...")
+        logger.info("Executing query and loading data into pandas DataFrame...")
         rows = session.execute(cql_query)
         
         # Convert the Cassandra ResultSet to a pandas DataFrame
@@ -474,6 +473,7 @@ def main():
     # 4. Export to CSV (optional)
     logger.info("\n6. Exporting data to CSV...")
     csv_file = export_table_to_csv(session, TABLE_NAME)
+    logger.info(f"✅ Exported data to CSV: {csv_file}")
     
     # 5. Create chatbot history table (optional)
     logger.info("\n7. Creating chatbot history table...")
