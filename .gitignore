@@ -13,6 +13,7 @@ local_assets/*/*.md
 local_assets/vector_index_feed_*.csv
 
 logs/log_*.log
+logs/cursor_logs/test_run_*.log
 
 docs/private.md
 .env
