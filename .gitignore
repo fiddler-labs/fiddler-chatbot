@@ -7,7 +7,7 @@ __pycache__/
 /.venv
 .venv/
 uv.lock
-.ruff_cache/
+.ruff_cache
 
 local_assets/*/*.md
 local_assets/vector_index_feed_*.csv
@@ -15,3 +15,4 @@ local_assets/vector_index_feed_*.csv
 logs/log_*.log
 
 docs/private.md
+.env
