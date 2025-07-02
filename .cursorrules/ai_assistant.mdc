@@ -93,6 +93,14 @@ Verification Requirements
   - Data model entity-relationship diagram (docs/diagram-data_model_entity_rels.md)
 - mermaid daigrams are usually in ```mermaid ...``` blocks in .md files
 
+### Markdown Formatting Standards
+- **Always prefer bullet points (dashes) over numbered lists** unless the content represents a step-by-step process
+- Use dashes (-) for all unordered lists including features, components, options, or general items
+- Only use numbered lists (1., 2., 3.) for actual sequential processes where order matters
+- This preference helps with reordering priorities and makes documentation more flexible
+- Examples of when to use numbered lists: installation steps, workflow processes, sequential procedures
+- Examples of when to use bullet points: feature lists, component descriptions, options, requirements
+
 ## Pragmatic Coding Standards
 
 ### Focus Areas

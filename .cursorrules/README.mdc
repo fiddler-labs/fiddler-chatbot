@@ -61,26 +61,29 @@ visualization
 ## Updating Rules
 
 When updating these rules:
-1. Keep changes focused and specific
-2. Avoid contradictory guidelines
-3. Test the effectiveness of rules after changes
-4. Document new patterns in appropriate rule files
+- Keep changes focused and specific
+- Avoid contradictory guidelines
+- Test the effectiveness of rules after changes
+- Document new patterns in appropriate rule files
 
 ## Maintainer Notes
 
 When updating these rules:
-1. Keep them focused on rapid delivery
-2. Prioritize working functionality over perfect structure
-3. Make changes only when they speed up development
-4. Remember: done is better than perfect! 
+- Keep them focused on rapid delivery
+- Prioritize working functionality over perfect structure
+- Make changes only when they speed up development
+- Remember: done is better than perfect!
+- Maintain consistent markdown formatting using bullet points by default
 
 ## Architecture Diagrams
 
-The project maintains three key Mermaid diagrams that document the architecture:
+The project should create three key Mermaid diagrams that document the architecture:
 - **System Architecture Diagram** (docs/diagram-system_architecture.md): Shows components, modules, and their relationships
 - **Integration Sequence Diagram** (docs/diagram-integration_sequence.md): Illustrates the interaction flow between components
 - **Data Model ER Diagram** (docs/diagram-data_model_entity_rels.md): Represents data models and their relationships
+
 When making significant changes to the codebase, ensure these diagrams are updated to reflect the current architecture.
+These can be updated by invoking the tool_diagram_assistant.mdc 
 
 ## Benefits of This Approach
 
@@ -89,4 +92,3 @@ When making significant changes to the codebase, ensure these diagrams are updat
 - Reduced need to repeat instructions
 - More relevant and accurate AI suggestions 
 - Maintained alignment between code and architecture documentation
-

@@ -1,7 +1,6 @@
-
 ## Advanced Refactoring Proposal for Cassandra Managemnt
 
-### 1. config.py - Configuration Management
+### config.py - Configuration Management
 ```python
 @dataclass
 class CassandraConfig:
@@ -23,7 +22,7 @@ class LoaderConfig:
     batch_size: int = 100
 ```
 
-### 2. connection.py - Database Connection
+### connection.py - Database Connection
 ```python
 class CassandraConnection:
     """Manages Cassandra database connections with proper resource handling."""
@@ -44,7 +43,7 @@ class CassandraConnection:
         """Context manager for automatic connection handling."""
 ```
 
-### 3. embeddings.py - Embedding Management
+### embeddings.py - Embedding Management
 ```python
 class EmbeddingManager:
     """Handles OpenAI embedding configuration and testing."""
@@ -60,7 +59,7 @@ class EmbeddingManager:
         """Test embedding generation (replaces the deprecated API call)."""
 ```
 
-### 4. loader.py - Main Loading Logic
+### loader.py - Main Loading Logic
 ```python
 class VectorLoader:
     """Main class for loading documents into vector store."""
@@ -79,7 +78,7 @@ class VectorLoader:
         """Test the vector store with a sample query."""
 ```
 
-### 5. vector_store.py - Vector Store Operations
+### vector_store.py - Vector Store Operations
 ```python
 class VectorStoreManager:
     """Manages Cassandra vector store operations."""
@@ -99,7 +98,7 @@ class VectorStoreManager:
         """Add documents with progress tracking."""
 ```
 
-### 6. table_manager.py - Table Management
+### table_manager.py - Table Management
 ```python
 class TableManager:
     """Handles table creation and schema management."""
@@ -117,7 +116,7 @@ class TableManager:
         """Get detailed table schema information."""
 ```
 
-### 7. inspector.py - Inspection Utilities
+### inspector.py - Inspection Utilities
 ```python
 class TableInspector:
     """Utilities for inspecting and analyzing tables."""
@@ -135,7 +134,7 @@ class TableInspector:
         """Export table data to CSV."""
 ```
 
-### 8. migrator.py - Data Migration
+### migrator.py - Data Migration
 ```python
 class DataMigrator:
     """Handles data migration between tables."""
@@ -150,7 +149,7 @@ class DataMigrator:
         """Process and convert squad table data."""
 ```
 
-### 9. cli.py - Command Line Interface
+### cli.py - Command Line Interface
 ```python
 @click.group()
 def cli():
