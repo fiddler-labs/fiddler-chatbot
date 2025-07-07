@@ -9,6 +9,8 @@ __pycache__/
 uv.lock
 .ruff_cache
 
+.vscode/settings.json
+
 local_assets/*/*.md
 local_assets/vector_index_feed_*.csv
 

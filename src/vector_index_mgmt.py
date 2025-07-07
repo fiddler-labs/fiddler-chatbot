@@ -175,8 +175,6 @@ def setup_llm_and_embeddings():
     Returns: (llm, embedding) tuple
     """
     try:
-        os.environ["OPENAI_API_TYPE"] = "open_ai"
-        
         llm = OpenAI(temperature=CONFIG["temperature"])
         
         # Explicitly use the desired model and configure its dimension size
@@ -893,8 +891,6 @@ def query_squad_table(session) -> pd.DataFrame:
         # Restore original row factory (don't assume it was None)
         session.row_factory = original_row_factory
 
-
-
 # ==================== MAIN EXECUTION ====================
 
 def validate_environment() -> ValidationResult:
@@ -928,7 +924,6 @@ def validate_environment() -> ValidationResult:
             logger.error(f"   - {error}")
     
     return result
-
 
 def load_vector_data(replace_existing: bool = False, csv_path: Optional[str] = None) -> LoadResult:
     """
@@ -1090,7 +1085,6 @@ def main(truncate_first: bool = False, skip_maintenance: bool = False, csv_path:
         except Exception as e:
             logger.error(f"❌ Maintenance operations failed: {e}")
             # Don't raise here, as these are optional operations
-
 
 def comprehensive_health_check(session, table_name: str) -> dict:
     """
