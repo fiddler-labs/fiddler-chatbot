@@ -391,7 +391,6 @@ def process_docs() -> None: # WIP
 
     return
 
-
 def process_notebooks() -> None:
     """
     Convert .ipynb files from the fiddler-examples repository to markdown.
