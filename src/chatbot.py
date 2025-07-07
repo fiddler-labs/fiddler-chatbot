@@ -1,4 +1,34 @@
-"""Fiddler Chatbot - A Streamlit app for RAG-based Q&A using Fiddler documentation."""
+"""
+# Fiddler Chatbot - A Streamlit app for RAG-based Q&A using Fiddler documentation.
+
+- Streamlit for the web UI
+- LangChain as the orchestration framework
+- OpenAI's GPT-4-turbo for language understanding and generation
+- DataStax Cassandra as the vector database
+- Fiddler AI Platform for monitoring and guardrails
+
+## Key Architectural Patterns
+
+1. Safety-First Design: Every query goes through a jailbreak detection system before processing
+2. Streaming Responses: Real-time token streaming for better user experience
+3. Conversational Memory: Maintains context across the entire session
+4. Dual Persistence: Both Cassandra and Fiddler platform store interaction data
+5. Feedback Loop: Built-in user feedback collection system
+
+
+## Features
+
+1. Guardrail System
+   - Pre-flight safety checks (jailbreak detection)
+   - Post-generation faithfulness validation
+   - Visual indicators for scores
+
+2. Comprehensive Monitoring
+   - Every interaction tracked with unique IDs
+   - Token counting and latency measurement
+   - Integration with Fiddler's ML monitoring platform
+
+"""
 
 # Standard library imports
 import json
@@ -158,7 +188,7 @@ docsearch_preexisting = Cassandra(
     session=st.session_state[DB_CONN],
     keyspace=ASTRA_DB_KEYSPACE,
     table_name=ASTRA_DB_TABLE_NAME,
-)
+    )
 
 
 def get_faithfulness_guardrail_results(response: str, source_docs: list):
@@ -182,12 +212,10 @@ def get_faithfulness_guardrail_results(response: str, source_docs: list):
                 "context": source_doc0 + source_doc1 + source_doc2,
             }
         }
-    )
+        )
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
     guardrail_start_time = time.time()
-    guardrail_response_faithfulness = requests.request(
-        "POST", url_faithfulness, headers=headers, data=payload, timeout=REQUESTS_TIMEOUT
-    )
+    guardrail_response_faithfulness = requests.request( "POST", url_faithfulness, headers=headers, data=payload, timeout=REQUESTS_TIMEOUT )
     guardrail_end_time = time.time()
     guardrail_latency = guardrail_end_time - guardrail_start_time
 
@@ -203,9 +231,7 @@ def get_safety_guardrail_results(query: str):
     payload = json.dumps({"data": {"input": query}})
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
     guardrail_start_time = time.time()
-    guardrail_response_safety = requests.request(
-        "POST", url_safety, headers=headers, data=payload, timeout=REQUESTS_TIMEOUT
-    )
+    guardrail_response_safety = requests.request( "POST", url_safety, headers=headers, data=payload, timeout=REQUESTS_TIMEOUT )
     guardrail_end_time = time.time()
     guardrail_latency = guardrail_end_time - guardrail_start_time
 
@@ -218,7 +244,7 @@ def publish_and_store(
     response: str,
     source_docs: list,
     duration: float,
-):
+    ):
     """Publishes the RAG trace to Fiddler and stores it in the database."""
     # Break out the source docs into a list
     source_docs_list = []
@@ -255,7 +281,7 @@ def publish_and_store(
         FDL_COMPLETION_TOKENS: completion_tokens,
         FDL_DURATION: duration,
         FDL_MODEL_NAME: model_name,
-    }
+        }
 
     # Sore the trace/event to DataStax
     astra_session = st.session_state[DB_CONN]
@@ -277,8 +303,8 @@ def publish_and_store(
             prompt_tokens,
             completion_tokens,
             total_tokens,
-        ],
-    )
+            ],
+        )
 
     trace_df = pd.DataFrame([trace_dict])
     trace_df["ts"] = pd.Timestamp.today()
@@ -314,7 +340,7 @@ def store_feedback(uuid, feedback=-1):
         "UPDATE fiddlerai.fiddler_chatbot_ledger "
         f"SET feedback = {feedback}, feedback2 = '{feedback2}' "
         f"WHERE row_id = '{uuid}'"
-    )
+        )
     return
 
 
@@ -383,9 +409,7 @@ def main():
             full_response = qa(prompt)
             end_time = time.time()
 
-        st.session_state.messages.append(
-            {"role": "assistant", "content": full_response["answer"]}
-        )
+        st.session_state.messages.append( {"role": "assistant", "content": full_response["answer"] })
         st.session_state[ANSWER] = full_response["answer"]
         logger.info(st.session_state[ANSWER])
         if JAILBREAK_SCORE > 0.5:
@@ -410,11 +434,7 @@ def main():
                 (end_time - start_time),
             )
 
-    if (
-        st.session_state[ANSWER] is not None
-        and st.session_state[THUMB_UP] is None
-        and st.session_state[THUMB_DOWN] is None
-    ):
+    if st.session_state[ANSWER] is not None and st.session_state[THUMB_UP] is None and st.session_state[THUMB_DOWN] is None:
         # Display thumbs up and thumbs down buttons
 
         col1, col2, col3 = st.columns([3.5, 3.5, 3.5])
