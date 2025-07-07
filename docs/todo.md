@@ -27,14 +27,17 @@
 
 - Deployment and Development QoL
   - Set up GitHub Actions workflow for automated embedding update
-  - make a definitive notebook , to onbaord the models and aset up the alerts ; will serve as a iterative improvement checkpoint
+    - set up a dev branch of `fiddler` repo to test out the github action
+
+- make a definitive fiddler monitoring notebook , 
+to onbaord the models and aset up the alerts . Will also serve as a iterative improvement checkpoint
+
+- need to showcase to team all the possible methods to see what works best
   - make a notebook to that leverages data_generation.py and the /utils to create demp props
-    - need to showcase to team all the possible methods to see what works best
 
 ## Lower priority considerations
 
 - Expand README with comprehensive project documentation (setup, usage, architecture, etc.)
-- Cursor Scan : Implement error handling and logging throughout the application
 - Implemnt PROD mode and DEV mode globally controllable , cicd style , point to different location
 - purge uv env and re-install everything after clean up to retain only needed packages
 - Testing framework basic setup (pytest)
