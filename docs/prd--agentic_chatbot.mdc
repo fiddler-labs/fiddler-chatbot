@@ -1,0 +1,191 @@
+---
+alwaysApply: true
+---
+
+# Product Requirements Document: LangGraph Chatbot Development for FiddleJam
+
+## Executive Summary
+
+This document outlines the development roadmap for building a sophisticated agentic chatbot application using LangGraph as part of the **FiddleJam hackathon**. The primary objective is to stress test Fiddler's agentic monitoring capabilities by building agentic applications using LangGraph and testing them on the Fiddler platform using the Fiddler LangGraph SDK.
+
+## Project Context: FiddleJam Hackathon
+
+**FiddleJam** is Fiddler's internal hackathon focused on exploring and validating agentic monitoring capabilities. The core mission of this project is to:
+
+- Build agentic applications using LangGraph framework
+- Integrate comprehensive Fiddler monitoring from the initial phase
+- Stress test Fiddler's agentic monitoring infrastructure
+- Validate monitoring capabilities across various agentic workflows
+- Demonstrate real-world agentic application monitoring scenarios
+
+**Key Success Metric**: Successful integration and monitoring of agentic workflows within the Fiddler platform, providing valuable insights for Fiddler's agentic monitoring product development.
+
+This project follows an iterative, verification-driven approach, emphasizing small, testable increments with validation at each stage, avoiding large-scale development without proper testing.
+
+## Core Development Philosophy
+
+### Iterative Development Approach
+
+- **Small, Verifiable Units**: Start with the smallest possible functional component
+- **Continuous Validation**: Verify functionality at every development stage
+- **No Pseudocode**: All code must be tested and working before proceeding
+- **Incremental Building**: Each phase builds upon the previous verified foundation
+
+### Technology Constraints
+
+- **Primary Framework**: LangGraph (mandatory where alternatives exist)
+- **LangChain Usage**: Prohibited when LangGraph alternatives are available
+- **State Management**: Utilize LangGraph state for chatbot functionality
+- **Monitoring Integration**: Fiddler LangGraph SDK (mandatory from Phase 1)
+- **Initial Interface**: CLI-based (Streamlit integration planned for later phases)
+
+## Development Roadmap
+
+### Phase 1: Foundation - Simple Chatbot with Fiddler Monitoring
+
+**Objective**: Create a basic, functional CLI chatbot using LangGraph with integrated Fiddler monitoring
+
+**Deliverables**:
+
+- Basic LangGraph state implementation
+- Fiddler LangGraph SDK integration
+- CLI interface for user interaction
+- Input/output handling with monitoring
+- Basic error handling
+- Fiddler platform visibility and monitoring dashboard
+
+**Success Criteria**:
+
+- Chatbot conversations are visible in Fiddler platform web UI
+- Agentic workflows are properly monitored and tracked
+- Basic monitoring metrics are captured and displayed
+- Integration with Fiddler monitoring is stable and consistent
+
+**Verification Steps**:
+
+- Manual testing of conversation flow
+- Edge case handling (empty inputs, special characters)
+- Validation of Fiddler monitoring integration
+- Verification of data visibility in Fiddler platform
+
+### Phase 2: RAG Integration
+
+**Objective**: Add Retrieval-Augmented Generation capabilities
+
+**Deliverables**:
+
+- read info from local_assets/vector_index_feed_*.csv
+- RAG-enhanced response generation
+
+**Success Criteria**:
+
+- Chatbot can retrieve relevant context from knowledge base
+- Responses are enhanced with retrieved information
+- RAG pipeline is stable and consistent
+- Performance metrics are within acceptable ranges
+- shows up in Fiddler platform web UI
+
+### Phase 3: Response Quality Validation
+
+**Objective**: Implement response quality checks using Fiddler guardrails
+
+**Deliverables**:
+
+- Fiddler guardrails integration
+- Response faithfulness validation
+- Conciseness evaluation
+- Quality scoring system
+- Automated quality checks
+
+**Success Criteria**:
+
+- Responses are evaluated for faithfulness
+- Conciseness metrics are implemented
+- Quality scores are generated consistently (Fiddler platform web UI)
+- Poor responses are flagged or improved
+
+**Verification Steps**:
+
+- Measure improvement in response quality
+
+### Phase 4: Tool Usage Integration
+
+**Objective**: Add tool calling capabilities to the chatbot
+
+**Deliverables**:
+
+- Tool definition framework
+- Tool execution system
+- Tool result integration
+- Enhanced conversation flow with tool usage
+- Tool selection logic
+
+**Success Criteria**:
+
+- Chatbot can identify when tools are needed
+- Tools are executed correctly
+- Tool results are integrated into responses
+- Tool usage enhances conversation quality
+
+**Verification Steps**:
+
+- Test various tool scenarios
+- Validate tool selection accuracy
+- Measure response improvement with tools
+- Error handling for tool failures
+
+### Phase 5: Advanced Features & UI Enhancement
+
+**Objective**: Implement Streamlit interface and advanced capabilities
+
+**Deliverables**:
+
+- Streamlit web interface
+- Enhanced user experience
+- Advanced conversation features
+- Deployment configuration
+- Performance optimizations
+
+**Success Criteria**:
+
+- Web interface is intuitive and responsive
+- All CLI functionality is preserved
+- Advanced features work seamlessly
+- Application is deployment-ready
+
+**Verification Steps**:
+
+- UI/UX testing
+- Cross-browser compatibility
+- Performance testing
+- User acceptance testing
+
+## Overall Success Criteria
+
+### FiddleJam Hackathon Objectives
+
+- **Primary Goal**: Successful stress testing of Fiddler's agentic monitoring capabilities
+- **Monitoring Integration**: Fiddler LangGraph SDK integration working from Phase 1
+- **Platform Visibility**: All agentic workflows visible and tracked in Fiddler platform
+- **Validation**: Comprehensive monitoring of various agentic application scenarios
+
+### Development Quality Standards
+
+- Each phase must be fully functional before proceeding
+- All features must be tested and verified
+- Performance benchmarks must be met
+- Code quality standards must be maintained
+- Fiddler monitoring integration must be available across all phases
+
+## Risk Mitigation
+
+- **Scope Creep**: Strict adherence to phase-based development
+- **Testing Gaps**: Mandatory verification at each phase
+- **Integration Issues**: Continuous integration testing
+- **Monitoring Failures**: Early integration of Fiddler monitoring in Phase 1 to identify issues
+- **Platform Compatibility**: Regular validation of Fiddler LangGraph SDK compatibility
+- **Data Visibility**: Continuous monitoring of data flow to Fiddler platform
+
+---
+
+*This PRD serves as a living document that will be updated as development progresses and requirements evolve.*

@@ -19,3 +19,4 @@ logs/cursor_logs/test_run_*.log
 
 docs/private.md
 .env
+temp_ref/
