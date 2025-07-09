@@ -1,3 +1,5 @@
+# Test Logger Diagram
+
 ```mermaid
 flowchart TD
     A["User/AI wants to run test"] --> B["Instead of direct command"]
