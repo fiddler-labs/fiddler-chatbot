@@ -71,26 +71,22 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    ```
 
    test the env
+
    ```bash
    uv run src/utils/test_agentic_env.py
    ```
 
-4. **Database Setup**
-
-   **WIP** - Detailed database setup and schema creation instructions.
-
-5. **Run the application**
+4. **Run the application**
 
    ```bash
    python src/chatbot_agentic.py
    ```
 
-6. Log the application run to local file
+   Log the application run to local file
 
    ```bash
    uv run src/utils/test_logger.py "uv run python src/test_chatbot_agentic.py" "src/test_chatbot_agentic.py"
    ```
-
 
 ## 🔧 Local Development
 
