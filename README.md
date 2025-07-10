@@ -32,6 +32,11 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
 - OpenAI API key
 - DataStax Astra DB account and credentials
 - Fiddler AI platform access (optional, for monitoring)
+- Fiddler LangGraph (for agentic monitoring)
+
+   ```bash
+   uv pip install -i https://test.pypi.org/simple/ fiddler-langgraph --prerelease=allow
+   ```
 
 ### Setup
 
