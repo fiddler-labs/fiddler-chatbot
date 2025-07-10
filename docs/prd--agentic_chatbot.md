@@ -50,7 +50,7 @@ Based on the monitoring dashboard, the following span types are automatically ge
 #### 3. **LangGraph** Span
 
 - **Purpose**: Tracks the overall LangGraph workflow execution
-- **Session ID Format**: `bf246607` (shortened UUID)
+- **Session ID Format**: `bf246607` (shortened UUID) 
 - **Represents**: State transitions and graph execution
 
 ## Core Development Philosophy
@@ -64,27 +64,15 @@ Based on the monitoring dashboard, the following span types are automatically ge
 
 ### Technology Constraints
 
+- **Primary Framework**: LangGraph (mandatory where alternatives exist)
 - **LangChain Usage**: Prohibited when LangGraph alternatives are available
+- **State Management**: Utilize LangGraph state for chatbot functionality
 - **Monitoring Integration**: Fiddler LangGraph SDK (mandatory from Phase 1)
 - **Initial Interface**: CLI-based (Streamlit integration planned for later phases)
 
-## Running+Testing+Debugging Methodology
-
-1. with only logs
-
-   ```bash
-   python src/chatbot_agentic.py
-   ```
-
-2. with logs and terminal trace in a separate file
-
-   ```bash
-   uv run src/utils/test_logger.py "uv run python src/test_chatbot_agentic.py" "src/test_chatbot_agentic.py"
-   ```
-
 ## Development Roadmap
 
-### DONE Phase 1: Foundation - Simple Chatbot with Fiddler Monitoring
+### Phase 1: Foundation - Simple Chatbot with Fiddler Monitoring
 
 **Objective**: Create a basic, functional CLI chatbot using LangGraph with integrated Fiddler monitoring
 

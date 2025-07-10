@@ -43,7 +43,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/fiddler-labs/fiddler-chatbot.git
+   git clone <repository-url>
    cd fiddler-chatbot
    ```
 
@@ -54,7 +54,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    uv sync
 
    # Or using pip
-   uv pip install .
+   pip install -e .
    ```
 
 3. **Environment Configuration**
@@ -71,22 +71,26 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    ```
 
    test the env
-
    ```bash
    uv run src/utils/test_agentic_env.py
    ```
 
-4. **Run the application**
+4. **Database Setup**
+
+   **WIP** - Detailed database setup and schema creation instructions.
+
+5. **Run the application**
 
    ```bash
    python src/chatbot_agentic.py
    ```
 
-   Log the application run to local file
+6. Log the application run to local file
 
    ```bash
    uv run src/utils/test_logger.py "uv run python src/test_chatbot_agentic.py" "src/test_chatbot_agentic.py"
    ```
+
 
 ## 🔧 Local Development
 
