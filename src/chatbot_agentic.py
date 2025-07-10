@@ -307,10 +307,52 @@ def run_chatbot():
             logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
             pass
 
+
+def verify_setup():
+    """
+    Verify that the setup is correct and all components are working.
+    """
+    logger.info("Verifying setup...")
+    
+    # Check OpenAI connection
+    try:
+        test_response = llm.invoke([HumanMessage(content="Say 'Hello, I'm working!'")])
+        logger.info("✓ OpenAI connection: OK")
+        logger.info(test_response.content)
+    except Exception as e:
+        logger.error(f"❌ OpenAI connection: FAILED - {e}")
+        return False
+    
+    # Check Fiddler connection
+    if fdl_client:
+        logger.info("✓ Fiddler client: Initialized")
+        logger.info(f"  - Application ID: {FIDDLER_APPLICATION_ID}")
+        logger.info(f"  - URL: {FIDDLER_URL}")
+    else:
+        logger.error("❌ Fiddler client: Not initialized")
+    
+    # Test the graph
+    try:
+        test_result = app.invoke({"messages": [HumanMessage(content="Test message")]})
+        logger.info("✓ LangGraph workflow: OK")
+        logger.info(test_result)
+    except Exception as e:
+        logger.error(f"❌ LangGraph workflow: FAILED - {e}")
+        return False
+    
+    logger.info("✅ All systems operational!")
+    return True
+
+
 if __name__ == "__main__":
     # Run verification
     try :
-        run_chatbot()
+        if verify_setup():
+            run_chatbot()
+        else:
+            logger.error("❌ Setup verification failed. Please check your configuration.")
+            sys.exit(1)
+            
     except Exception as e:
         logger.error(f"❌ Error: {e}")
         sys.exit(1)

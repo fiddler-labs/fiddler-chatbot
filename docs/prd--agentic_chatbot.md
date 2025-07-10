@@ -50,7 +50,7 @@ Based on the monitoring dashboard, the following span types are automatically ge
 #### 3. **LangGraph** Span
 
 - **Purpose**: Tracks the overall LangGraph workflow execution
-- **Session ID Format**: `bf246607` (shortened UUID)
+- **Session ID Format**: `bf246607` (shortened UUID) 
 - **Represents**: State transitions and graph execution
 
 ## Core Development Philosophy

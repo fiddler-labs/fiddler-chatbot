@@ -71,6 +71,11 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    ```
 
    test the env
+   ```bash
+   uv run src/utils/test_agentic_env.py
+   ```
+
+   test the env
 
    ```bash
    uv run src/utils/test_agentic_env.py
@@ -87,6 +92,19 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    ```bash
    uv run src/utils/test_logger.py "uv run python src/test_chatbot_agentic.py" "src/test_chatbot_agentic.py"
    ```
+
+5. **Run the application**
+
+   ```bash
+   python src/chatbot_agentic.py
+   ```
+
+6. Log the application run to local file
+
+   ```bash
+   uv run src/utils/test_logger.py "uv run python src/test_chatbot_agentic.py" "src/test_chatbot_agentic.py"
+   ```
+
 
 ## 🔧 Local Development
 
