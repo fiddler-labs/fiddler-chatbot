@@ -66,12 +66,31 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    ```bash
    OPENAI_API_KEY=your_openai_api_key
    ASTRA_DB_APPLICATION_TOKEN=your_datastax_token
-   FIDDLER_API_TOKEN=your_fiddler_token  # Optional
+   FIDDLER_API_TOKEN=your_fiddler_token
+   FIDDLER_APP_ID=your_fiddler_app_id  # for chatbot_agentic.py
+   ```
+
+   test the env
+   ```bash
+   uv run src/utils/test_agentic_env.py
    ```
 
 4. **Database Setup**
 
    **WIP** - Detailed database setup and schema creation instructions.
+
+5. **Run the application**
+
+   ```bash
+   python src/chatbot_agentic.py
+   ```
+
+6. Log the application run to local file
+
+   ```bash
+   uv run src/utils/test_logger.py "uv run python src/test_chatbot_agentic.py" "src/test_chatbot_agentic.py"
+   ```
+
 
 ## 🔧 Local Development
 
