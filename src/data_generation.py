@@ -38,7 +38,7 @@ from packaging import version
 
 from utils.notebook_to_md import convert_notebooks_jupyter_nbconvert, convert_notebooks_native_regex
 from utils.flatten_folders import flatten_all_files_individually, concatenate_files_in_leaf_folders
-from utils.logging import setup_logging
+from utils.custom_logging import setup_logging
 
 # Setup logging with default values
 setup_logging(log_level="DEBUG")
