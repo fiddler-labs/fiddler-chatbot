@@ -8,19 +8,50 @@ alwaysApply: true
 
 This document outlines the development roadmap for building a sophisticated agentic chatbot application using LangGraph as part of the **FiddleJam hackathon**. The primary objective is to stress test Fiddler's agentic monitoring capabilities by building agentic applications using LangGraph and testing them on the Fiddler platform using the Fiddler LangGraph SDK.
 
-## Project Context: FiddleJam Hackathon
+## Fiddler Monitoring Integration
 
-**FiddleJam** is Fiddler's internal hackathon focused on exploring and validating agentic monitoring capabilities. The core mission of this project is to:
+The agentic chatbot application is fully integrated with Fiddler monitoring from the foundation phase:
 
-- Build agentic applications using LangGraph framework
-- Integrate comprehensive Fiddler monitoring from the initial phase
-- Stress test Fiddler's agentic monitoring infrastructure
-- Validate monitoring capabilities across various agentic workflows
-- Demonstrate real-world agentic application monitoring scenarios
+- **Application Name**: "Agentic Documentation Chatbot - APP1"
+- **Platform**: Fiddler Cloud Pre-production (`preprod.cloud.fiddler.ai`)
+- **Monitoring Components**:
+  - LangGraph workflow execution spans
+  - ChatOpenAI LLM invocation tracking
+  - Chatbot node execution monitoring
+- **Session Tracking**: UUID-based conversation tracking with context preservation
+- **Real-time Visibility**: All interactions visible in Fiddler web UI dashboard
 
-**Key Success Metric**: Successful integration and monitoring of agentic workflows within the Fiddler platform, providing valuable insights for Fiddler's agentic monitoring product development.
+### Expected Web UI Behavior
 
-This project follows an iterative, verification-driven approach, emphasizing small, testable increments with validation at each stage, avoiding large-scale development without proper testing.
+Based on current implementation, developers should expect to see:
+
+- Three primary span types: `LangGraph`, `ChatOpenAI`, and `chatbot`
+- Session IDs in shortened UUID format (e.g., `bf246607`, `b6a4fa2`, `528d3fe`)
+- Event ingestion counts per span
+- Agent classification showing named agents and unknown agents
+- Real-time span status (Active/Inactive)
+
+### Spans and Traces in Fiddler Web UI
+
+Based on the monitoring dashboard, the following span types are automatically generated:
+
+#### 1. **chatbot** Span
+
+- **Purpose**: Tracks the main chatbot node execution
+- **Session ID Format**: `528d3fe` (shortened UUID)
+- **Represents**: The core chatbot logic flow
+
+#### 2. **ChatOpenAI** Span
+
+- **Purpose**: Tracks OpenAI API calls and responses
+- **Session ID Format**: `b6a4fa2` (shortened UUID)
+- **Represents**: LLM invocations and responses
+
+#### 3. **LangGraph** Span
+
+- **Purpose**: Tracks the overall LangGraph workflow execution
+- **Session ID Format**: `bf246607` (shortened UUID) 
+- **Represents**: State transitions and graph execution
 
 ## Core Development Philosophy
 
@@ -185,6 +216,20 @@ This project follows an iterative, verification-driven approach, emphasizing sma
 - **Monitoring Failures**: Early integration of Fiddler monitoring in Phase 1 to identify issues
 - **Platform Compatibility**: Regular validation of Fiddler LangGraph SDK compatibility
 - **Data Visibility**: Continuous monitoring of data flow to Fiddler platform
+
+## Project Context: FiddleJam Hackathon
+
+**FiddleJam** is Fiddler's internal hackathon focused on exploring and validating agentic monitoring capabilities. The core mission of this project is to:
+
+- Build agentic applications using LangGraph framework
+- Integrate comprehensive Fiddler monitoring from the initial phase
+- Stress test Fiddler's agentic monitoring infrastructure
+- Validate monitoring capabilities across various agentic workflows
+- Demonstrate real-world agentic application monitoring scenarios
+
+**Key Success Metric**: Successful integration and monitoring of agentic workflows within the Fiddler platform, providing valuable insights for Fiddler's agentic monitoring product development.
+
+This project follows an iterative, verification-driven approach, emphasizing small, testable increments with validation at each stage, avoiding large-scale development without proper testing.
 
 ---
 

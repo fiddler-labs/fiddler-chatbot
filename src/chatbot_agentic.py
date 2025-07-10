@@ -302,7 +302,7 @@ def run_chatbot():
     if instrumentor:
         try:
             instrumentor.uninstrument()
-            logger.info("\n✓ Fiddler instrumentation cleaned up")
+            logger.info("✓ Fiddler instrumentation cleaned up")
         except Exception as e:
             logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
             pass
@@ -312,7 +312,7 @@ def verify_setup():
     """
     Verify that the setup is correct and all components are working.
     """
-    logger.info("\n🔍 Verifying setup...")
+    logger.info("Verifying setup...")
     
     # Check OpenAI connection
     try:
@@ -340,7 +340,7 @@ def verify_setup():
         logger.error(f"❌ LangGraph workflow: FAILED - {e}")
         return False
     
-    logger.info("\n✅ All systems operational!")
+    logger.info("✅ All systems operational!")
     return True
 
 
@@ -350,7 +350,7 @@ if __name__ == "__main__":
         if verify_setup():
             run_chatbot()
         else:
-            logger.error("\n❌ Setup verification failed. Please check your configuration.")
+            logger.error("❌ Setup verification failed. Please check your configuration.")
             sys.exit(1)
             
     except Exception as e:
