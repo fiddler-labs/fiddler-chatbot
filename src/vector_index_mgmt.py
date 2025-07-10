@@ -33,7 +33,7 @@ from langchain.vectorstores.cassandra import Cassandra
 from langchain_openai import OpenAI
 from langchain_openai import OpenAIEmbeddings
 
-from utils.logging import setup_logging
+from utils.custom_logging import setup_logging
 
 # Setup logging with default values
 setup_logging(log_level="DEBUG")

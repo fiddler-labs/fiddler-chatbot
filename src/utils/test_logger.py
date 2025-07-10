@@ -161,7 +161,7 @@ def main():
     """
     import sys
     
-    if not (2 <= len(sys.argv) <= 3):
+    if not (3 <= len(sys.argv) <= 4):
         print("❌ Error: Wrong arguments count")
         print("\nUsage:")
         print("  python src/utils/test_logger.py \"command\" \"test_file_path\" [working_dir]")
@@ -169,10 +169,11 @@ def main():
         print("  python src/utils/test_logger.py \"python -m pytest tests/\" \"tests/\"")
         print("  python src/utils/test_logger.py \"python src/app.py\" \"src/app.py\"")
         print("  python src/utils/test_logger.py \"uv run pipeline\" \"pipeline_script.py\"")
+        return
     
     command = sys.argv[1]
     test_file = sys.argv[2]
-    working_dir = sys.argv[3] if len(sys.argv) >= 3 else None
+    working_dir = sys.argv[3] if len(sys.argv) >= 4 else None
     
     print("Test Logger - Command Wrapper")
     print("=" * 50)
