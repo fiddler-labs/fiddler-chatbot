@@ -1,0 +1,16 @@
+README.md
+pyproject.toml
+src/chatbot.py
+src/chatbot_agentic.py
+src/data_generation.py
+src/vector_index_mgmt.py
+src/fiddler_chatbot.egg-info/PKG-INFO
+src/fiddler_chatbot.egg-info/SOURCES.txt
+src/fiddler_chatbot.egg-info/dependency_links.txt
+src/fiddler_chatbot.egg-info/requires.txt
+src/fiddler_chatbot.egg-info/top_level.txt
+src/utils/custom_logging.py
+src/utils/flatten_folders.py
+src/utils/notebook_to_md.py
+src/utils/test_agentic_env.py
+src/utils/test_logger.py

@@ -1,3 +1,40 @@
+Metadata-Version: 2.4
+Name: fiddler-chatbot
+Version: 0.1.0
+Summary: Fiddler AI Model Monitoring Chatbot
+Author: Fiddler AI Team
+Maintainer: Fiddler AI Team
+Requires-Python: ==3.11.10
+Description-Content-Type: text/markdown
+Requires-Dist: fiddler-client>=3.9.2
+Requires-Dist: langchain>=0.3.26
+Requires-Dist: langchain-community>=0.3.26
+Requires-Dist: langchain-core>=0.3.66
+Requires-Dist: langchain-openai>=0.3.26
+Requires-Dist: tiktoken>=0.9.0
+Requires-Dist: python-dotenv>=1.1.1
+Requires-Dist: cassandra-driver>=3.29.2
+Requires-Dist: requests>=2.32.4
+Requires-Dist: streamlit>=1.46.1
+Requires-Dist: pandas>=2.3.0
+Requires-Dist: openai>=1.92.1
+Requires-Dist: protobuf<=6.0.0
+Requires-Dist: bs4>=0.0.2
+Requires-Dist: feedparser>=6.0.9
+Requires-Dist: nbconvert>=7.16.6
+Requires-Dist: packaging>=24.2
+Requires-Dist: importlib-metadata>=8.7.0
+Requires-Dist: googleapis-common-protos>=1.70.0
+Requires-Dist: opentelemetry-api==1.34.1
+Requires-Dist: opentelemetry-exporter-otlp-proto-common==1.34.1
+Requires-Dist: opentelemetry-exporter-otlp-proto-http==1.34.1
+Requires-Dist: opentelemetry-instrumentation==0.55b1
+Requires-Dist: opentelemetry-proto==1.34.1
+Requires-Dist: opentelemetry-sdk==1.34.1
+Requires-Dist: opentelemetry-semantic-conventions==0.55b1
+Requires-Dist: langgraph>=0.5.1
+Requires-Dist: langgraph-cli>=0.3.4
+
 # Fiddler Chatbot
 
 A RAG-based (Retrieval-Augmented Generation) chatbot application designed to answer questions about Fiddler AI's product documentation. The chatbot uses vector similarity search to retrieve relevant documentation snippets and generates contextual responses using OpenAI's GPT models.
