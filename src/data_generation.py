@@ -517,9 +517,7 @@ def crawl_rss_feeds() -> None:
                         
                         if content_text.strip():
                             # Create a safe filename from the title
-                            safe_filename = re.sub(r'[^\w\s-]', '', title).strip()
-                            safe_filename = re.sub(r'[-\s]+', '-', safe_filename)
-                            safe_filename = f"{i+1:03d}_{safe_filename[:50]}.md"  # Limit filename length
+                            safe_filename = article_url.split('/')[-1] + '.md'
                             
                             # Create markdown content
                             markdown_content = f"# {title}\n\n"
@@ -617,12 +615,13 @@ def generate_corpus_from_sources() -> Path:
         for root, dirs, files in os.walk(FIDDLER_MD_DOCS_DIR):
             for filename in files:
                 if filename.endswith(".md"):
-                    file_path = os.path.join(root, filename)
+                    file_path = os.path.join(os.path.relpath(root), filename)
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
                             # Embed the URL/path of the doc in the content for reference
-                            doc_url = f'DOC_URL:{file_path[:-3]}'  # Remove .md extension
+                            doc_url = os.path.join('https://docs.fiddler.ai/', filename).replace('__', '/')
+                            doc_url = f'DOC_URL:{doc_url[:-3]}'  # Remove .md extension
                             doc_content = f'DOC_CONTENT:{file_content}'
                             source_docs.append(f'{doc_url}\n{doc_content}')
                     except Exception as e:
@@ -634,7 +633,7 @@ def generate_corpus_from_sources() -> Path:
         for root, dirs, files in os.walk(FIDDLER_MD_NOTEBOOKS_DIR):
             for filename in files:
                 if filename.endswith(".md"):
-                    file_path = os.path.join(root, filename)
+                    file_path = os.path.join(os.path.relpath(root), filename)
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
@@ -651,11 +650,12 @@ def generate_corpus_from_sources() -> Path:
         for root, dirs, files in os.walk(FIDDLER_MD_BLOGS_DIR):
             for filename in files:
                 if filename.endswith(".md"):
-                    file_path = os.path.join(root, filename)
+                    file_path = os.path.join(os.path.relpath(root), filename)
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
-                            doc_url = f'BLOG_URL:{file_path[:-3]}'
+                            doc_url = os.path.join('https://fiddler.ai/blog/', filename).replace('__', '/')
+                            doc_url = f'BLOG_URL:{doc_url[:-3]}'
                             doc_content = f'BLOG_CONTENT:{file_content}'
                             source_docs.append(f'{doc_url}\n{doc_content}')
                     except Exception as e:
@@ -667,11 +667,12 @@ def generate_corpus_from_sources() -> Path:
         for root, dirs, files in os.walk(FIDDLER_MD_RESOURCES_DIR):
             for filename in files:
                 if filename.endswith(".md"):
-                    file_path = os.path.join(root, filename)
+                    file_path = os.path.join(os.path.relpath(root), filename)
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
-                            doc_url = f'RESOURCES_URL:{file_path[:-3]}'
+                            doc_url = os.path.join('https://fiddler.ai/resources/', filename).replace('__', '/')
+                            doc_url = f'RESOURCES_URL:{doc_url[:-3]}'
                             doc_content = f'RESOURCES_CONTENT:{file_content}'
                             source_docs.append(f'{doc_url}\n{doc_content}')
                     except Exception as e:
