@@ -55,52 +55,58 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from openai import OpenAI
 from streamlit.logger import get_logger
 
-FIDDLER_CHATBOT_PROJECT_NAME = "fiddler_chatbot_v3"
-FIDDLER_CHATBOT_MODEL_NAME = "fiddler_rag_chatbot"
-FIDDLER_URL = "https://demo.fiddler.ai"
-FIDDLER_ORG_NAME = "demo"
+from agentic_tools.fiddler_gaurdrails import get_safety_guardrail_results, get_faithfulness_guardrail_results
 
-ASTRA_DB_SECURE_BUNDLE_PATH = "datastax_auth/secure-connect-fiddlerai.zip"
-ASTRA_DB_KEYSPACE = "fiddlerai"
-ASTRA_DB_TABLE_NAME = "fiddler_doc_snippets_openai"
-ASTRA_DB_LEDGER_TABLE_NAME = "fiddler_chatbot_ledger"
+from ..config import CONFIG_CHATBOT_OLD as config
 
-EMBEDDING_MODEL = "text-embedding-3-large"
-LLM_MODEL = "gpt-4-turbo"
+FIDDLER_CHATBOT_PROJECT_NAME = config["PROJECT_NAME"]
+FIDDLER_CHATBOT_MODEL_NAME = config["MODEL_NAME"]
+FIDDLER_URL = config["URL"]
+FIDDLER_ORG_NAME = config["ORG_NAME"]
 
-MEMORY = "memory"
-QA = "qa"
-ANSWER = "answer"
-THUMB_UP = "thumbs_up_button"
-THUMB_DOWN = "thumbs_down_button"
+ASTRA_DB_SECURE_BUNDLE_PATH = config["ASTRA_DB_SECURE_BUNDLE_PATH"]
+ASTRA_DB_KEYSPACE = config["ASTRA_DB_KEYSPACE"]
+ASTRA_DB_TABLE_NAME = config["ASTRA_DB_TABLE_NAME"]
+ASTRA_DB_LEDGER_TABLE_NAME = config["ASTRA_DB_LEDGER_TABLE_NAME"]
 
-COMMENT = "comment"
-UUID = "uuid"
-SESSION_ID = "session_id"
-DB_CONN = "db_conn"
+EMBEDDING_MODEL = config["OPENAI_EMBEDDING_MODEL"]
+LLM_MODEL = config["OPENAI_LLM_MODEL"]
 
-FAITHFULNESS_SCORE = 0.0
-JAILBREAK_SCORE = 0.0
-SAFETY_GUARDRAIL_LATENCY = 0.0
-REQUESTS_TIMEOUT = 30
 
-FDL_PROMPT = "prompt"
-FDL_RESPONSE = "response"
-FDL_SESSION_ID = "session_id"
-FDL_ROW_ID = "row_id"
-FDL_RUN_ID = "run_id"
-FDL_SOURCE_DOC0 = "source_doc0"
-FDL_SOURCE_DOC1 = "source_doc1"
-FDL_SOURCE_DOC2 = "source_doc2"
-FDL_COMMENT = "comment"
-FDL_FEEDBACK = "feedback"
-FDL_FEEDBACK2 = "feedback2"
-FDL_PROMPT_TOKENS = "prompt_tokens"
-FDL_TOTAL_TOKENS = "total_tokens"
-FDL_COMPLETION_TOKENS = "completion_tokens"
-FDL_DURATION = "duration"
-FDL_MODEL_NAME = "model_name"
 
+FAITHFULNESS_SCORE = config["FAITHFULNESS_SCORE"]
+JAILBREAK_SCORE = config["JAILBREAK_SCORE"]
+SAFETY_GUARDRAIL_LATENCY = config["SAFETY_GUARDRAIL_LATENCY"]
+REQUESTS_TIMEOUT = config["REQUESTS_TIMEOUT"]
+
+# Chat instance Global state inits # todo - this is not the best pattern , to use global vars for state management as such
+CHAT_INSTANCE__PROMPT = "prompt"
+CHAT_INSTANCE__RESPONSE = "response"
+CHAT_INSTANCE__SESSION_ID = "session_id"
+CHAT_INSTANCE__ROW_ID = "row_id"
+CHAT_INSTANCE__RUN_ID = "run_id"
+CHAT_INSTANCE__SOURCE_DOC0 = "source_doc0"
+CHAT_INSTANCE__SOURCE_DOC1 = "source_doc1"
+CHAT_INSTANCE__SOURCE_DOC2 = "source_doc2"
+CHAT_INSTANCE__COMMENT = "comment"
+CHAT_INSTANCE__FEEDBACK = "feedback"
+CHAT_INSTANCE__FEEDBACK2 = "feedback2"
+CHAT_INSTANCE__PROMPT_TOKENS = "prompt_tokens"
+CHAT_INSTANCE__TOTAL_TOKENS = "total_tokens"
+CHAT_INSTANCE__COMPLETION_TOKENS = "completion_tokens"
+CHAT_INSTANCE__DURATION = "duration"
+CHAT_INSTANCE__MODEL_NAME = "model_name"
+
+# Chat instance Global state inits # todo - this is not the best pattern , to use global vars for state management as such
+CHAT_INSTANCE__MEMORY = "memory"
+CHAT_INSTANCE__QA = "qa"
+CHAT_INSTANCE__ANSWER = "answer"
+CHAT_INSTANCE__THUMB_UP = "thumbs_up_button"
+CHAT_INSTANCE__THUMB_DOWN = "thumbs_down_button"
+CHAT_INSTANCE__COMMENT = "comment"
+CHAT_INSTANCE__UUID = "uuid"
+CHAT_INSTANCE__SESSION_ID = "session_id"
+CHAT_INSTANCE__DB_CONN = "db_conn"
 
 # Read the system instructions template
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
@@ -136,39 +142,39 @@ memory = ConversationSummaryBufferMemory(
 question_generator = LLMChain(llm=non_stream_llm, prompt=CONDENSE_QUESTION_PROMPT)
 
 
-if THUMB_DOWN not in st.session_state:
-    st.session_state[THUMB_DOWN] = None
+if CHAT_INSTANCE__THUMB_DOWN not in st.session_state:
+    st.session_state[CHAT_INSTANCE__THUMB_DOWN] = None
 
-if THUMB_UP not in st.session_state:
-    st.session_state[THUMB_UP] = None
+if CHAT_INSTANCE__THUMB_UP not in st.session_state:
+    st.session_state[CHAT_INSTANCE__THUMB_UP] = None
 
-if MEMORY not in st.session_state:
-    st.session_state[MEMORY] = memory
+if CHAT_INSTANCE__MEMORY not in st.session_state:
+    st.session_state[CHAT_INSTANCE__MEMORY] = memory
 
-if COMMENT not in st.session_state:
-    st.session_state[COMMENT] = ""
+if CHAT_INSTANCE__COMMENT not in st.session_state:
+    st.session_state[CHAT_INSTANCE__COMMENT] = ""
 
-if ANSWER not in st.session_state:
-    st.session_state[ANSWER] = None
+if CHAT_INSTANCE__ANSWER not in st.session_state:
+    st.session_state[CHAT_INSTANCE__ANSWER] = None
 
-if UUID not in st.session_state:
-    st.session_state[UUID] = None
+if CHAT_INSTANCE__UUID not in st.session_state:
+    st.session_state[CHAT_INSTANCE__UUID] = None
 
-if SESSION_ID not in st.session_state:
-    st.session_state[SESSION_ID] = None
+if CHAT_INSTANCE__SESSION_ID not in st.session_state:
+    st.session_state[CHAT_INSTANCE__SESSION_ID] = None
 
-if DB_CONN not in st.session_state:
-    st.session_state[DB_CONN] = None
+if CHAT_INSTANCE__DB_CONN not in st.session_state:
+    st.session_state[CHAT_INSTANCE__DB_CONN] = None
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if not st.session_state[DB_CONN] or st.session_state[DB_CONN] is None:
+if not st.session_state[CHAT_INSTANCE__DB_CONN] or st.session_state[CHAT_INSTANCE__DB_CONN] is None:
     if ASTRA_DB_APPLICATION_TOKEN is None:
         raise ValueError("ASTRA_DB_APPLICATION_TOKEN environment variable is required")
     auth_provider = PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
     cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
-    st.session_state[DB_CONN] = cluster.connect()
+    st.session_state[CHAT_INSTANCE__DB_CONN] = cluster.connect()
 
 
 class StreamHandler(BaseCallbackHandler):
@@ -185,59 +191,10 @@ class StreamHandler(BaseCallbackHandler):
 
 docsearch_preexisting = Cassandra(
     embedding=embeddings,
-    session=st.session_state[DB_CONN],
+    session=st.session_state[CHAT_INSTANCE__DB_CONN],
     keyspace=ASTRA_DB_KEYSPACE,
     table_name=ASTRA_DB_TABLE_NAME,
     )
-
-
-def get_faithfulness_guardrail_results(response: str, source_docs: list):
-    """Calculates the faithfulness score for a response given a query and source documents."""
-    url_faithfulness = "https://demo.fiddler.ai/v3/guardrails/ftl-response-faithfulness"
-    token = FIDDLER_API_TOKEN
-
-    source_docs_list = []
-    for document in source_docs:
-        source_docs_list.append(document.page_content)
-
-    response = response.replace("'", "''")
-    source_doc0 = source_docs_list[0].replace("'", "''")
-    source_doc1 = source_docs_list[1].replace("'", "''")
-    source_doc2 = source_docs_list[2].replace("'", "''")
-
-    payload = json.dumps(
-        {
-            "data": {
-                "response": response,
-                "context": source_doc0 + source_doc1 + source_doc2,
-            }
-        }
-        )
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-    guardrail_start_time = time.time()
-    guardrail_response_faithfulness = requests.request( "POST", url_faithfulness, headers=headers, data=payload, timeout=REQUESTS_TIMEOUT )
-    guardrail_end_time = time.time()
-    guardrail_latency = guardrail_end_time - guardrail_start_time
-
-    response_dict = guardrail_response_faithfulness.json()
-    return response_dict["fdl_faithful_score"], guardrail_latency
-
-
-def get_safety_guardrail_results(query: str):
-    """Calculates the safety score for a given query."""
-    url_safety = "https://demo.fiddler.ai/v3/guardrails/ftl-safety"
-    token = FIDDLER_API_TOKEN
-
-    payload = json.dumps({"data": {"input": query}})
-    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
-    guardrail_start_time = time.time()
-    guardrail_response_safety = requests.request( "POST", url_safety, headers=headers, data=payload, timeout=REQUESTS_TIMEOUT )
-    guardrail_end_time = time.time()
-    guardrail_latency = guardrail_end_time - guardrail_start_time
-
-    response_dict = guardrail_response_safety.json()
-    return response_dict["fdl_jailbreaking"], guardrail_latency
-
 
 def publish_and_store(
     query: str,
@@ -252,10 +209,10 @@ def publish_and_store(
         source_docs_list.append(document.page_content)
 
     # Capture the values for storage and publication
-    st.session_state[UUID] = uuid_g.uuid4()
-    row_id = str(st.session_state[UUID])
-    run_id = str(st.session_state[UUID])
-    session_id = str(st.session_state[SESSION_ID])
+    st.session_state[CHAT_INSTANCE__UUID] = uuid_g.uuid4()
+    row_id = str(st.session_state[CHAT_INSTANCE__UUID])
+    run_id = str(st.session_state[CHAT_INSTANCE__UUID])
+    session_id = str(st.session_state[CHAT_INSTANCE__SESSION_ID])
     model_name = LLM_MODEL
     prompt = query.replace("'", "''")
     response = response.replace("'", "''")
@@ -268,23 +225,23 @@ def publish_and_store(
 
     # Create the trace/event dict
     trace_dict = {
-        FDL_PROMPT: prompt,
-        FDL_RESPONSE: response,
-        FDL_SESSION_ID: session_id,
-        FDL_ROW_ID: row_id,
-        FDL_RUN_ID: run_id,
-        FDL_SOURCE_DOC0: source_doc0,
-        FDL_SOURCE_DOC1: source_doc1,
-        FDL_SOURCE_DOC2: source_doc2,
-        FDL_PROMPT_TOKENS: prompt_tokens,
-        FDL_TOTAL_TOKENS: total_tokens,
-        FDL_COMPLETION_TOKENS: completion_tokens,
-        FDL_DURATION: duration,
-        FDL_MODEL_NAME: model_name,
+        CHAT_INSTANCE__PROMPT: prompt,
+        CHAT_INSTANCE__RESPONSE: response,
+        CHAT_INSTANCE__SESSION_ID: session_id,
+        CHAT_INSTANCE__ROW_ID: row_id,
+        CHAT_INSTANCE__RUN_ID: run_id,
+        CHAT_INSTANCE__SOURCE_DOC0: source_doc0,
+        CHAT_INSTANCE__SOURCE_DOC1: source_doc1,
+        CHAT_INSTANCE__SOURCE_DOC2: source_doc2,
+        CHAT_INSTANCE__PROMPT_TOKENS: prompt_tokens,
+        CHAT_INSTANCE__TOTAL_TOKENS: total_tokens,
+        CHAT_INSTANCE__COMPLETION_TOKENS: completion_tokens,
+        CHAT_INSTANCE__DURATION: duration,
+        CHAT_INSTANCE__MODEL_NAME: model_name,
         }
 
     # Sore the trace/event to DataStax
-    astra_session = st.session_state[DB_CONN]
+    astra_session = st.session_state[CHAT_INSTANCE__DB_CONN]
     astra_session.execute(
         "INSERT INTO fiddlerai.fiddler_chatbot_ledger \
         (row_id, run_id, session_id, prompt, source_doc0, source_doc1, source_doc2, response, model_name, duration, prompt_tokens, completion_tokens, total_tokens, ts) \
@@ -335,7 +292,7 @@ def store_feedback(uuid, feedback=-1):
     elif feedback == 0:
         feedback2 = "dislike"
 
-    astra_session = st.session_state[DB_CONN]
+    astra_session = st.session_state[CHAT_INSTANCE__DB_CONN]
     astra_session.execute(
         "UPDATE fiddlerai.fiddler_chatbot_ledger "
         f"SET feedback = {feedback}, feedback2 = '{feedback2}' "
@@ -346,36 +303,36 @@ def store_feedback(uuid, feedback=-1):
 
 def store_comment(uuid):
     """Stores user comments in the database."""
-    comment = str(st.session_state[COMMENT]).replace("'", "''")
-    astra_session = st.session_state[DB_CONN]
+    comment = str(st.session_state[CHAT_INSTANCE__COMMENT]).replace("'", "''")
+    astra_session = st.session_state[CHAT_INSTANCE__DB_CONN]
     astra_session.execute(
         "UPDATE fiddlerai.fiddler_chatbot_ledger "
         f"SET comment = '{comment}' "
         f"WHERE row_id = '{uuid}'"
     )
-    st.session_state[COMMENT] = ""
+    st.session_state[CHAT_INSTANCE__COMMENT] = ""
     return
 
 
 def erase_history():
     """Clears the chat history and resets the session."""
-    st.session_state[MEMORY].clear()
+    st.session_state[CHAT_INSTANCE__MEMORY].clear()
     st.session_state.messages = []
-    st.session_state[ANSWER] = None
-    st.session_state[COMMENT] = ""
-    st.session_state[UUID] = None
-    st.session_state[SESSION_ID] = None
+    st.session_state[CHAT_INSTANCE__ANSWER] = None
+    st.session_state[CHAT_INSTANCE__COMMENT] = ""
+    st.session_state[CHAT_INSTANCE__UUID] = None
+    st.session_state[CHAT_INSTANCE__SESSION_ID] = None
 
 
 def main():
     """Main function to run the Streamlit chatbot application."""
     # st.image('assets/poweredby.jpg', width=550)
     st.title("Fiddler Chatbot")
-    if not st.session_state[UUID] or st.session_state[UUID] is None:
-        st.session_state[UUID] = uuid_g.uuid4()
+    if not st.session_state[CHAT_INSTANCE__UUID] or st.session_state[CHAT_INSTANCE__UUID] is None:
+        st.session_state[CHAT_INSTANCE__UUID] = uuid_g.uuid4()
 
-    if not st.session_state[SESSION_ID] or st.session_state[SESSION_ID] is None:
-        st.session_state[SESSION_ID] = uuid_g.uuid4()
+    if not st.session_state[CHAT_INSTANCE__SESSION_ID] or st.session_state[CHAT_INSTANCE__SESSION_ID] is None:
+        st.session_state[CHAT_INSTANCE__SESSION_ID] = uuid_g.uuid4()
 
     if st.session_state.messages:
         for message in st.session_state.messages:
@@ -402,7 +359,7 @@ def main():
                 combine_docs_chain=doc_chain,
                 question_generator=question_generator,
                 retriever=docsearch_preexisting.as_retriever(search_kwargs={"k": 3}),
-                memory=st.session_state[MEMORY],
+                memory=st.session_state[CHAT_INSTANCE__MEMORY],
                 max_tokens_limit=8000,
                 return_source_documents=True,
             )
@@ -410,8 +367,8 @@ def main():
             end_time = time.time()
 
         st.session_state.messages.append( {"role": "assistant", "content": full_response["answer"] })
-        st.session_state[ANSWER] = full_response["answer"]
-        logger.info(st.session_state[ANSWER])
+        st.session_state[CHAT_INSTANCE__ANSWER] = full_response["answer"]
+        logger.info(st.session_state[CHAT_INSTANCE__ANSWER])
         if JAILBREAK_SCORE > 0.5:
             FAITHFULNESS_SCORE = 0.0
             publish_and_store(
@@ -434,7 +391,7 @@ def main():
                 (end_time - start_time),
             )
 
-    if st.session_state[ANSWER] is not None and st.session_state[THUMB_UP] is None and st.session_state[THUMB_DOWN] is None:
+    if st.session_state[CHAT_INSTANCE__ANSWER] is not None and st.session_state[CHAT_INSTANCE__THUMB_UP] is None and st.session_state[CHAT_INSTANCE__THUMB_DOWN] is None:
         # Display thumbs up and thumbs down buttons
 
         col1, col2, col3 = st.columns([3.5, 3.5, 3.5])
@@ -462,24 +419,24 @@ def main():
         """
         st.markdown(hide, unsafe_allow_html=True)
 
-    if st.session_state[ANSWER] is not None:
+    if st.session_state[CHAT_INSTANCE__ANSWER] is not None:
         # Display thumbs up and thumbs down buttons
         col1, col2, col3 = st.columns([0.5, 0.5, 3.0])
         with col1:
-            if not st.session_state[THUMB_UP] or st.session_state[THUMB_UP] is None:
+            if not st.session_state[CHAT_INSTANCE__THUMB_UP] or st.session_state[CHAT_INSTANCE__THUMB_UP] is None:
                 st.button(
                     "👍",
                     key="thumbs_up_button",
                     on_click=store_feedback,
-                    kwargs={"uuid": st.session_state[UUID], "feedback": 1},
+                    kwargs={"uuid": st.session_state[CHAT_INSTANCE__UUID], "feedback": 1},
                 )
         with col2:
-            if not st.session_state[THUMB_DOWN] or st.session_state[THUMB_DOWN] is None:
+            if not st.session_state[CHAT_INSTANCE__THUMB_DOWN] or st.session_state[CHAT_INSTANCE__THUMB_DOWN] is None:
                 st.button(
                     "👎",
                     key="thumbs_down_button",
                     on_click=store_feedback,
-                    kwargs={"uuid": st.session_state[UUID], "feedback": 0},
+                    kwargs={"uuid": st.session_state[CHAT_INSTANCE__UUID], "feedback": 0},
                 )
         with col3:
             st.button("Reset Chat History", on_click=erase_history)
@@ -489,7 +446,7 @@ def main():
                 "Leave your comments here.",
                 key="comment",
                 on_change=store_comment,
-                kwargs={"uuid": st.session_state[UUID]},
+                kwargs={"uuid": st.session_state[CHAT_INSTANCE__UUID]},
                 value="",
             )
         hide = """
