@@ -33,6 +33,7 @@ dependencies = [
     "opentelemetry-semantic-conventions==0.55b1",
     "langgraph>=0.5.1",
     "langgraph-cli>=0.3.4",
+    "cassio>=0.1.10",
 ]
 authors = [
     {name = "Fiddler AI Team"},
