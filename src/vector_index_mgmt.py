@@ -564,25 +564,25 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
                 else:
                     raise
         
-        # 6. Copy data from staging to target table
-        logger.info(f"Copying data from staging to target table '{table_name}'...")
-        copy_result = _copy_table_data_chunked(session, staging_table, table_name)
-        if not copy_result:
-            raise ValueError("Failed to copy data from staging to target table")
-        
-        # 7. Verify target table
-        verify_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{table_name}"
-        result = session.execute(verify_query)
-        target_count = list(result)[0].count
-        
-        if replace_existing and target_count != len(documents):
-            raise ValueError(f"Target table verification failed: expected {len(documents)} rows, got {target_count}")
-        
-        logger.info(f"✅ Target table populated successfully with {target_count} rows")
-        
-        # 8. Clean up staging table
-        logger.info(f"Cleaning up staging table '{staging_table}'...")
-        session.execute(f"DROP TABLE IF EXISTS {CONFIG['keyspace']}.{staging_table}")
+            # 6. Copy data from staging to target table
+            logger.info(f"Copying data from staging to target table '{table_name}'...")
+            copy_result = _copy_table_data_chunked(session, staging_table, table_name)
+            if not copy_result:
+                raise ValueError("Failed to copy data from staging to target table")
+            
+            # 7. Verify target table
+            verify_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{table_name}"
+            result = session.execute(verify_query)
+            target_count = list(result)[0].count
+            
+            if replace_existing and target_count != len(documents):
+                raise ValueError(f"Target table verification failed: expected {len(documents)} rows, got {target_count}")
+            
+            logger.info(f"✅ Target table populated successfully with {target_count} rows")
+            
+            # 8. Clean up staging table
+            logger.info(f"Cleaning up staging table '{staging_table}'...")
+            session.execute(f"DROP TABLE IF EXISTS {CONFIG['keyspace']}.{staging_table}")
         
         logger.info("\n✅ Success! All document chunks have been embedded and stored in Cassandra.")
         
