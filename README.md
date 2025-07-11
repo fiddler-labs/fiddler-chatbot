@@ -43,7 +43,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/fiddler-labs/fiddler-chatbot.git
    cd fiddler-chatbot
    ```
 
@@ -54,7 +54,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    uv sync
 
    # Or using pip
-   pip install -e .
+   uv pip install .
    ```
 
 3. **Environment Configuration**
