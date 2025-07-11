@@ -28,8 +28,8 @@ from cassandra.query import named_tuple_factory
 
 from openai import OpenAI as OpenAIClient
 
-from langchain.document_loaders import DataFrameLoader
-from langchain.vectorstores.cassandra import Cassandra
+from langchain_community.document_loaders import DataFrameLoader
+from langchain_community.vectorstores import Cassandra
 from langchain_openai import OpenAI
 from langchain_openai import OpenAIEmbeddings
 
@@ -180,7 +180,7 @@ def setup_llm_and_embeddings():
         # Explicitly use the desired model and configure its dimension size
         embedding = OpenAIEmbeddings(
             model=CONFIG["embedding_model"],
-            model_kwargs={"dimensions": CONFIG["embedding_dimensions"]}
+            dimensions=CONFIG["embedding_dimensions"]
         )
         
         logger.info(f"✅ LLM and Embeddings configured: {embedding.model} with {CONFIG['embedding_dimensions']} dimensions")
@@ -1149,7 +1149,7 @@ def comprehensive_health_check(session, table_name: str) -> dict:
         
         # 4. Vector store functionality check
         try:
-            from langchain.vectorstores.cassandra import Cassandra
+            from langchain_community.vectorstores import Cassandra
             from langchain_openai import OpenAIEmbeddings
             
             # Create a minimal embedding for testing

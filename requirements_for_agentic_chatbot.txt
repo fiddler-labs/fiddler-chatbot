@@ -1,0 +1,15 @@
+pip install \
+    --index-url https://test.pypi.org/simple/ \
+    --extra-index-url https://pypi.org/simple \
+    fiddler-langgraph==0.1.0a8
+
+langgraph
+openai
+ragstack-ai
+tiktoken
+python-dotenv
+langchain
+langchain-openai
+langchain-core
+openai
+pydantic
