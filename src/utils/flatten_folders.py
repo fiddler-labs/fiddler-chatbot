@@ -67,9 +67,9 @@ def flatten_all_files_individually(
                 if rel_dir == '.':
                     prefix = ''
                 else:
-                    # Replace directory separators with hyphens
-                    prefix = rel_dir.replace(os.sep, '-')
-                    prefix += '-'
+                    # Replace directory separators with underscores (replace later with / for url)
+                    prefix = rel_dir.replace(os.sep, '__')
+                    prefix += '__'
                 
                 # Construct the new filename
                 new_filename = f"{prefix}{filename}"
