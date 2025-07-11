@@ -50,8 +50,8 @@ FIDDLER_MAIN_REPO_URL     = "https://github.com/fiddler-labs/fiddler.git"
 FIDDLER_EXAMPLES_REPO_URL = "https://github.com/fiddler-labs/fiddler-examples.git"
 
 # RSS Feed URLs
-FIDDLER_WEBSITE_BLOG_URL      = 'https://www.fiddler.ai/blog/'
-FIDDLER_WEBSITE_RESOURCES_URL = 'https://www.fiddler.ai/resources/'
+BLOG_RSS_URL      = 'https://www.fiddler.ai/blog/rss.xml'
+RESOURCES_RSS_URL = 'https://www.fiddler.ai/resources/rss.xml'
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/data_generation.py to project root ./
 LOCAL_DATA_ASSETS_DIR = os.path.join(PROJECT_ROOT, "local_assets")
@@ -559,7 +559,7 @@ def crawl_rss_feeds() -> None:
     try:
         logger.info("Attempting to crawl blog RSS feed...")
         _crawl_single_rss_feed(
-            rss_url=FIDDLER_WEBSITE_BLOG_URL + 'rss.xml',
+            rss_url=BLOG_RSS_URL,
             div_class='blog-post_content-wrapper',
             output_dir=FIDDLER_MD_BLOGS_DIR,
             content_type='blog'
@@ -575,7 +575,7 @@ def crawl_rss_feeds() -> None:
     try:
         logger.info("Attempting to crawl resources RSS feed...")
         _crawl_single_rss_feed(
-            rss_url=FIDDLER_WEBSITE_RESOURCES_URL + 'rss.xml',
+            rss_url=RESOURCES_RSS_URL,
             div_class='resources-copy',
             output_dir=FIDDLER_MD_RESOURCES_DIR,
             content_type='resources'
@@ -654,7 +654,7 @@ def generate_corpus_from_sources() -> Path:
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
-                            doc_url = os.path.join(FIDDLER_WEBSITE_BLOG_URL, filename).replace('__', '/')
+                            doc_url = os.path.join('https://fiddler.ai/blog/', filename).replace('__', '/')
                             doc_url = f'BLOG_URL:{doc_url[:-3]}'
                             doc_content = f'BLOG_CONTENT:{file_content}'
                             source_docs.append(f'{doc_url}\n{doc_content}')
@@ -671,7 +671,7 @@ def generate_corpus_from_sources() -> Path:
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
-                            doc_url = os.path.join(FIDDLER_WEBSITE_RESOURCES_URL, filename).replace('__', '/')
+                            doc_url = os.path.join('https://fiddler.ai/resources/', filename).replace('__', '/')
                             doc_url = f'RESOURCES_URL:{doc_url[:-3]}'
                             doc_content = f'RESOURCES_CONTENT:{file_content}'
                             source_docs.append(f'{doc_url}\n{doc_content}')
