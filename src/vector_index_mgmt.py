@@ -22,9 +22,17 @@ from typing import Optional, Any, Callable, Dict, List, Tuple, Union
 from contextlib import contextmanager
 from enum import Enum
 
-from cassandra.cluster import Cluster, Session
-from cassandra.auth import PlainTextAuthProvider
-from cassandra.query import named_tuple_factory
+# Configure Cassandra driver for Python 3.13 compatibility
+# Need to provide asyncore compatibility for Python 3.13
+# Python 3.12+ removed asyncore module, so we need to provide a compatibility layer
+try:
+    from utils.cassandra_compatibility import setup_cassandra_compatibility
+    Cluster, Session, PlainTextAuthProvider, named_tuple_factory, cassandra_connection_class = setup_cassandra_compatibility()
+except Exception as e:
+    print(f"❌ Failed to setup Cassandra compatibility: {e}")
+    sys.exit(1)
+
+# Cassandra imports are now handled in the compatibility section above
 
 from openai import OpenAI as OpenAIClient
 
@@ -60,7 +68,7 @@ class LoadResult:
 class ValidationResult:
     """Result of configuration validation"""
     is_valid: bool
-    errors: List[str] = field(default_factory=list)
+    errors:   List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     valid_rows: int = 0
     total_rows: int = 0
@@ -74,14 +82,15 @@ CONFIG = { # todo - follow this pattern in the chatbot.py file too
     "embedding_model": "text-embedding-3-large",
     "embedding_dimensions": 1536,
     "temperature": 0,
-    "default_csv_path": "documentation_data/vector_index_feed_v25.10.csv",
+    "default_csv_path": "./local_assets/vector_index_feed_20250701011105.csv",
     "squad_table": "squad",
     "chatbot_history_table": "fiddler_chatbot_history",
     "backup_chunk_size": 1000,  # For backup operations
+    "embedding_batch_size": 100,  # For processing embeddings in batches to avoid token limits
     "max_retry_attempts": 3,
     "retry_delay": 2.0,
     "retry_backoff": 2.0
-}
+    }
 
 # Computed values
 TABLE_NAME = f'fiddler_doc_snippets_{CONFIG["llm_provider"]}'
@@ -123,7 +132,12 @@ def cassandra_connection():
             # Establish connection to DataStax Cassandra
             cloud_config = {'secure_connect_bundle': CONFIG["secure_bundle_path"]}
             auth_provider = PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
-            cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
+            
+            # Use the selected connection class if available, otherwise default
+            if cassandra_connection_class:
+                cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider, connection_class=cassandra_connection_class)
+            else:
+                cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
             
             session = cluster.connect()
             session.set_keyspace(CONFIG["keyspace"])
@@ -181,7 +195,7 @@ def setup_llm_and_embeddings():
         embedding = OpenAIEmbeddings(
             model=CONFIG["embedding_model"],
             dimensions=CONFIG["embedding_dimensions"]
-        )
+            )
         
         logger.info(f"✅ LLM and Embeddings configured: {embedding.model} with {CONFIG['embedding_dimensions']} dimensions")
         return llm, embedding
@@ -465,9 +479,46 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
             table_name=staging_table,
         )
         
-        # 3. Add documents to staging table
-        logger.info(f"Adding {len(documents)} chunks to staging table. This may take a few minutes...")
-        staging_vector_store.add_documents(documents)
+        # 3. Add documents to staging table in batches to avoid token limits
+        batch_size = CONFIG["embedding_batch_size"]  # Process documents in batches to stay within token limits
+        total_documents = len(documents)
+        logger.info(f"Adding {total_documents} chunks to staging table in batches of {batch_size}. This may take a few minutes...")
+        
+        for i in range(0, total_documents, batch_size):
+            batch_end = min(i + batch_size, total_documents)
+            batch_documents = documents[i:batch_end]
+            batch_num = (i // batch_size) + 1
+            total_batches = (total_documents + batch_size - 1) // batch_size
+            
+            logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch_documents)} documents)...")
+            
+            # Add batch with retry logic for token limits
+            max_retries = CONFIG["max_retry_attempts"]
+            retry_delay = CONFIG["retry_delay"]
+            
+            for attempt in range(max_retries):
+                try:
+                    staging_vector_store.add_documents(batch_documents)
+                    logger.info(f"✅ Successfully processed batch {batch_num}/{total_batches}")
+                    break
+                except Exception as e:
+                    if "max_tokens_per_request" in str(e) and attempt < max_retries - 1:
+                        # If we hit token limits, reduce batch size and retry
+                        if batch_size > 10:
+                            batch_size = max(10, batch_size // 2)
+                            logger.warning(f"⚠️  Token limit hit, reducing batch size to {batch_size} and retrying...")
+                            # Recalculate batch with smaller size
+                            batch_documents = documents[i:min(i + batch_size, total_documents)]
+                            time.sleep(retry_delay)
+                            continue
+                        else:
+                            raise e
+                    elif attempt < max_retries - 1:
+                        logger.warning(f"⚠️  Batch processing failed (attempt {attempt + 1}/{max_retries}): {e}")
+                        time.sleep(retry_delay)
+                        continue
+                    else:
+                        raise e
         
         # 4. Verify staging table has expected number of rows
         verify_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{staging_table}"
@@ -610,28 +661,62 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
         
         logger.info(f"Copying {total_rows} rows from {source_table} to {target_table} in chunks of {chunk_size}")
         
-        # For small datasets, do it all at once
-        if total_rows <= chunk_size:
-            copy_query = f"""
-            INSERT INTO {CONFIG["keyspace"]}.{target_table} (row_id, vector, body_blob, metadata_s)
-            SELECT row_id, vector, body_blob, metadata_s FROM {CONFIG["keyspace"]}.{source_table}
-            """
-            session.execute(copy_query)
-            logger.info(f"✅ Copied {total_rows} rows in single operation")
-            return True
+        # Cassandra doesn't support INSERT INTO ... SELECT syntax
+        # We need to read data and insert it row by row
+        logger.info(f"Copying {total_rows} rows from {source_table} to {target_table}")
         
-        # For large datasets, we need to use token-based pagination
-        # This is a limitation of Cassandra - we can't easily do LIMIT/OFFSET
-        logger.warning(f"Large dataset detected ({total_rows} rows). Using simplified copy approach.")
-        logger.warning("For very large datasets, consider using manual chunking or Cassandra bulk loader.")
+        # Read data in chunks and process them to avoid timeout
+        effective_chunk_size = min(chunk_size if chunk_size is not None else 500, 500)  # Limit chunk size for data copy operations
+        logger.info(f"Reading data in chunks of {effective_chunk_size} rows to avoid timeout...")
         
-        # Use a simplified approach for now
-        copy_query = f"""
+        # Insert data into target table
+        insert_query = f"""
         INSERT INTO {CONFIG["keyspace"]}.{target_table} (row_id, vector, body_blob, metadata_s)
-        SELECT row_id, vector, body_blob, metadata_s FROM {CONFIG["keyspace"]}.{source_table}
+        VALUES (?, ?, ?, ?)
         """
-        session.execute(copy_query)
-        logger.info(f"✅ Copied {total_rows} rows")
+        prepared_statement = session.prepare(insert_query)
+        
+        rows_copied = 0
+        
+        # Process data in chunks using token-based pagination
+        # First, get all row IDs to process
+        select_ids_query = f"SELECT row_id FROM {CONFIG['keyspace']}.{source_table}"
+        id_rows = session.execute(select_ids_query)
+        row_ids = [row.row_id for row in id_rows]
+        
+        logger.info(f"Found {len(row_ids)} rows to copy")
+        
+        # Process in chunks
+        for i in range(0, len(row_ids), effective_chunk_size):
+            chunk_end = min(i + effective_chunk_size, len(row_ids))
+            chunk_ids = row_ids[i:chunk_end]
+            
+            # Get full row data for this chunk
+            for row_id in chunk_ids:
+                select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {CONFIG['keyspace']}.{source_table} WHERE row_id = ?"
+                row_result = session.execute(select_query, (row_id,))
+                row_data = list(row_result)
+                
+                if row_data:
+                    row = row_data[0]
+                    # Insert with timeout handling
+                    try:
+                        session.execute(prepared_statement, (row.row_id, row.vector, row.body_blob, row.metadata_s))
+                        rows_copied += 1
+                    except Exception as e:
+                        if "timeout" in str(e).lower():
+                            logger.warning(f"⚠️  Timeout on row {row_id}, retrying...")
+                            time.sleep(1)
+                            session.execute(prepared_statement, (row.row_id, row.vector, row.body_blob, row.metadata_s))
+                            rows_copied += 1
+                        else:
+                            raise e
+                
+                # Log progress for large datasets
+                if rows_copied % 100 == 0:
+                    logger.info(f"Copied {rows_copied}/{total_rows} rows...")
+        
+        logger.info(f"✅ Copied {rows_copied} rows from {source_table} to {target_table}")
         return True
         
     except Exception as e:
@@ -947,35 +1032,35 @@ def load_vector_data(replace_existing: bool = False, csv_path: Optional[str] = N
             errors=env_validation.errors
         )
     
-    # Initialize LLM and embeddings
+    # 1. Load and validate data first (for both dry-run and normal mode)
+    logger.info("\n1. Loading and validating documentation data...")
+    validation_result, df = validate_and_load_documentation_data(csv_path)
+    if not validation_result.is_valid:
+        logger.error("❌ Data validation failed:")
+        for error in validation_result.errors:
+            logger.error(f"   - {error}")
+        return LoadResult(
+            result=OperationResult.FAILURE,
+            message="Data validation failed",
+            errors=validation_result.errors
+        )
+    
+    if df is None:
+        return LoadResult(
+            result=OperationResult.FAILURE,
+            message="Failed to load data despite validation passing",
+            errors=["Data loading failed"]
+        )
+    
+    # Log warnings if any
+    for warning in validation_result.warnings:
+        logger.warning(f"⚠️  {warning}")
+    
+    # Initialize LLM and embeddings (only for non-dry-run)
     llm, myEmbedding = setup_llm_and_embeddings()
     
     try:
         with cassandra_connection() as (cluster, session):
-            # 1. Load and validate data
-            logger.info("\n1. Loading and validating documentation data...")
-            validation_result, df = validate_and_load_documentation_data(csv_path)
-            if not validation_result.is_valid:
-                logger.error("❌ Data validation failed:")
-                for error in validation_result.errors:
-                    logger.error(f"   - {error}")
-                return LoadResult(
-                    result=OperationResult.FAILURE,
-                    message="Data validation failed",
-                    errors=validation_result.errors
-                )
-            
-            if df is None:
-                return LoadResult(
-                    result=OperationResult.FAILURE,
-                    message="Failed to load data despite validation passing",
-                    errors=["Data loading failed"]
-                )
-            
-            # Log warnings if any
-            for warning in validation_result.warnings:
-                logger.warning(f"⚠️  {warning}")
-            
             # 2. Populate vector store
             logger.info("\n2. Populating vector store...")
             if replace_existing:
@@ -1155,7 +1240,7 @@ def comprehensive_health_check(session, table_name: str) -> dict:
             # Create a minimal embedding for testing
             embedding = OpenAIEmbeddings(
                 model=CONFIG["embedding_model"],
-                model_kwargs={"dimensions": CONFIG["embedding_dimensions"]}
+                dimensions=CONFIG["embedding_dimensions"]
             )
             
             vector_store = Cassandra(
