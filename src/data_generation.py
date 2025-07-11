@@ -654,7 +654,7 @@ def generate_corpus_from_sources() -> Path:
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
-                            doc_url = os.path.join(FIDDLER_WEBSITE_BLOG_URL, filename).replace('__', '/')
+                            doc_url = os.path.join('https://fiddler.ai/blog/', filename).replace('__', '/')
                             doc_url = f'BLOG_URL:{doc_url[:-3]}'
                             doc_content = f'BLOG_CONTENT:{file_content}'
                             source_docs.append(f'{doc_url}\n{doc_content}')
@@ -671,7 +671,7 @@ def generate_corpus_from_sources() -> Path:
                     try:
                         with open(file_path, "r", encoding='utf-8') as f:
                             file_content = f.read()
-                            doc_url = os.path.join(FIDDLER_WEBSITE_RESOURCES_URL, filename).replace('__', '/')
+                            doc_url = os.path.join('https://fiddler.ai/resources/', filename).replace('__', '/')
                             doc_url = f'RESOURCES_URL:{doc_url[:-3]}'
                             doc_content = f'RESOURCES_CONTENT:{file_content}'
                             source_docs.append(f'{doc_url}\n{doc_content}')
