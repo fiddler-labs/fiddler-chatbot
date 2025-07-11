@@ -9,9 +9,16 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Add the src directory to the Python path so we can import from it
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from chatbot_agentic import *
+from langchain_core.messages import HumanMessage
+
+
 def check_environment():
     """Check if required environment variables are set"""
-    print("🔍 Checking environment variables...")
+    logger.info("🔍 Checking environment variables...")
     
     required_vars = {
         "OPENAI_API_KEY": "Required for LLM functionality",
@@ -24,27 +31,27 @@ def check_environment():
         value = os.getenv(var)
         if not value or value.startswith("your-"):
             missing_vars.append(f"  - {var}: {description}")
-            print(f"❌ {var}: Not set")
+            logger.error(f"❌ {var}: Not set")
         else:
             # Mask sensitive values
             if "KEY" in var:
                 masked_value = value[:8] + "..." + value[-4:] if len(value) > 12 else "***"
             else:
                 masked_value = value
-            print(f"✅ {var}: {masked_value}")
+            logger.info(f"✅ {var}: {masked_value}")
     
     if missing_vars:
-        print("\n⚠️  Missing environment variables:")
+        logger.error("\n⚠️  Missing environment variables:")
         for var in missing_vars:
-            print(var)
-        print("\nPlease set these environment variables before running the chatbot.")
+            logger.error(var)
+        logger.error("\nPlease set these environment variables before running the chatbot.")
         return False
     
     return True
 
 def check_library_imports():
     """Test if all required packages are installed"""
-    print("\n🔍 Testing imports...")
+    logger.info("\n🔍 Testing imports...")
     
     try:
         import langchain_core    # noqa: F401
@@ -52,60 +59,66 @@ def check_library_imports():
         import langgraph         # noqa: F401
         import fiddler_langgraph # noqa: F401
     except ImportError:
-        print("❌ - Run: pip install [fiddler-langgraph langchain-core, langchain-openai, langgraph]")
+        logger.error("❌ - Run: pip install [fiddler-langgraph langchain-core, langchain-openai, langgraph]")
         return False
     
     return True
 
 def run_automated_test():
     """Run an automated test of the chatbot"""
-    print("\n🤖 Running automated chatbot test...")
-        
+    logger.info("\n🤖 Running automated chatbot test...")
     try:
-        # Run the chatbot with test input
-        result = subprocess.run(
-            [sys.executable, "chatbot_agentic.py"],
-            input="Hello, chatbot!\nWhat is LangGraph?\nquit\n",
-            capture_output=True,
-            text=True,
-            timeout=30,
-            cwd="src"  # Run from src directory
-        )
+        """
+        Verify that the setup is correct and all components are working.
+        """
+        logger.info("Verifying setup...")
         
-        if result.returncode == 0:
-            print("✅ Chatbot ran successfully")
-            print("\nOutput preview:")
-            print("-" * 50)
-            lines = result.stdout.split('\n')
-            for line in lines[:20]:  # Show first 20 lines
-                print(line)
-            if len(lines) > 20:
-                print(f"... ({len(lines) - 20} more lines)")
-            print("-" * 50)
-            return True
-        else:
-            print(f"❌ Chatbot failed with return code: {result.returncode}")
-            print("\nError output:")
-            print(result.stderr)
+        # Check OpenAI connection
+        try:
+            test_response = llm.invoke([HumanMessage(content="Say 'Hello, I'm working!'")])
+            logger.info("✓ OpenAI connection: OK")
+            logger.info(test_response.content)
+        except Exception as e:
+            logger.error(f"❌ OpenAI connection: FAILED - {e}")
             return False
-            
-    except subprocess.TimeoutExpired:
-        print("❌ Chatbot test timed out")
-        return False
+        
+        # Check Fiddler connection
+        if fdl_client:
+            logger.info("✓ Fiddler client: Initialized")
+            logger.info(f"  - Application ID: {FIDDLER_APPLICATION_ID}")
+            logger.info(f"  - URL: {FIDDLER_URL}")
+        else:
+            logger.error("❌ Fiddler client: Not initialized")
+        
+        # Test the graph
+        try:
+            test_result = app.invoke({"messages": [HumanMessage(content="Test message")]})
+            logger.info("✓ LangGraph workflow: OK")
+            logger.info(test_result)
+        except Exception as e:
+            logger.error(f"❌ LangGraph workflow: FAILED - {e}")
+            return False
+        
+        logger.info("✅ All systems operational!")
+        logger.info("✅ Chatbot ran successfully")
+        return True
+
+
     except Exception as e:
-        print(f"❌ Error running chatbot: {e}")
+        logger.error(f"❌ Error running chatbot: {e}")
         return False
+
 
 def main():
     """Main test function"""
-    print("="*60)
-    print("🧪 Fiddler Agentic Chatbot Test Suite")
-    print("="*60)
+    logger.info("="*60)
+    logger.info("🧪 Fiddler Agentic Chatbot Test Suite")
+    logger.info("="*60)
     
     # Check if chatbot file exists
     chatbot_path = Path("./src/chatbot_agentic.py")
     if not chatbot_path.exists():
-        print(f"❌ Chatbot file not found: {chatbot_path}")
+        logger.error(f"❌ Chatbot file not found: {chatbot_path}")
         sys.exit(1)
     
     # Run tests
@@ -122,14 +135,14 @@ def main():
             tests_passed = False
     
     # Summary
-    print("\n" + "="*60)
+    logger.info("\n" + "="*60)
     if tests_passed:
-        print("✅ All tests passed! The chatbot is ready to use.")
-        print("\nTo run the chatbot interactively:")
-        print("  python ./src/chatbot_agentic.py")
+        logger.info("✅ All tests passed! The chatbot is ready to use.")
+        logger.info("\nTo run the chatbot interactively:")
+        logger.info("  python ./src/chatbot_agentic.py")
     else:
-        print("❌ Some tests failed. Please fix the issues above.")
-    print("="*60)
+        logger.error("❌ Some tests failed. Please fix the issues above.")
+    logger.info("="*60)
     
     return 0 if tests_passed else 1
 
