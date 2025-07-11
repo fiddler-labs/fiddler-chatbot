@@ -6,6 +6,10 @@ __pycache__/
 
 /.venv
 .venv/
+.venv_backup/
+
+build/
+
 uv.lock
 .ruff_cache
 
