@@ -35,6 +35,9 @@ to onbaord the models and aset up the alerts . Will also serve as a iterative im
 - need to showcase to team all the possible methods to see what works best
   - make a notebook to that leverages data_generation.py and the /utils to create demp props
 
+- need to reference local URLs and paths in `vector_index_feed_*.csv` when running `data_generation.py` 
+  - currently uses full path in `local_assets`
+
 ## Lower priority considerations
 
 - Expand README with comprehensive project documentation (setup, usage, architecture, etc.)
