@@ -43,14 +43,14 @@ import requests
 import streamlit as st
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.cluster import Cluster
-from langchain_core.callbacks.base import BaseCallbackHandler
+from langchain.callbacks.base import BaseCallbackHandler
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.chains.llm import LLMChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationSummaryBufferMemory
-from langchain_core.prompts import PromptTemplate
-from langchain_community.vectorstores import Cassandra
+from langchain.prompts import PromptTemplate
+from langchain.vectorstores.cassandra import Cassandra
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from openai import OpenAI
 from streamlit.logger import get_logger
@@ -60,22 +60,24 @@ from agentic_tools.fiddler_gaurdrails import get_safety_guardrail_results, get_f
 from ..config import CONFIG_CHATBOT_OLD as config
 
 FIDDLER_CHATBOT_PROJECT_NAME = config["PROJECT_NAME"]
-FIDDLER_CHATBOT_MODEL_NAME   = config["MODEL_NAME"]
-FIDDLER_URL                  = config["URL"]
-FIDDLER_ORG_NAME             = config["ORG_NAME"]
+FIDDLER_CHATBOT_MODEL_NAME = config["MODEL_NAME"]
+FIDDLER_URL = config["URL"]
+FIDDLER_ORG_NAME = config["ORG_NAME"]
 
 ASTRA_DB_SECURE_BUNDLE_PATH = config["ASTRA_DB_SECURE_BUNDLE_PATH"]
-ASTRA_DB_KEYSPACE           = config["ASTRA_DB_KEYSPACE"]
-ASTRA_DB_TABLE_NAME         = config["ASTRA_DB_TABLE_NAME"]
-ASTRA_DB_LEDGER_TABLE_NAME  = config["ASTRA_DB_LEDGER_TABLE_NAME"]
+ASTRA_DB_KEYSPACE = config["ASTRA_DB_KEYSPACE"]
+ASTRA_DB_TABLE_NAME = config["ASTRA_DB_TABLE_NAME"]
+ASTRA_DB_LEDGER_TABLE_NAME = config["ASTRA_DB_LEDGER_TABLE_NAME"]
 
 EMBEDDING_MODEL = config["OPENAI_EMBEDDING_MODEL"]
-LLM_MODEL       = config["OPENAI_LLM_MODEL"]
+LLM_MODEL = config["OPENAI_LLM_MODEL"]
 
-GR__FAITHFULNESS_SCORE = config["GR__FAITHFULNESS_SCORE"]
-GR__JAILBREAK_SCORE    = config["GR__JAILBREAK_SCORE"]
-GR__SAFETY_LATENCY     = config["GR__SAFETY_LATENCY"]
-GR__REQUESTS_TIMEOUT   = config["GR__REQUESTS_TIMEOUT"]
+
+
+FAITHFULNESS_SCORE = config["FAITHFULNESS_SCORE"]
+JAILBREAK_SCORE = config["JAILBREAK_SCORE"]
+SAFETY_GUARDRAIL_LATENCY = config["SAFETY_GUARDRAIL_LATENCY"]
+REQUESTS_TIMEOUT = config["REQUESTS_TIMEOUT"]
 
 # Chat instance Global state inits # todo - this is not the best pattern , to use global vars for state management as such
 CHAT_INSTANCE__PROMPT = "prompt"
