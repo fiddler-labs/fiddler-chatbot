@@ -17,3 +17,12 @@ CONFIG_CHATBOT_OLD = {
     "GR__SAFETY_LATENCY": 0.0,
     "GR__REQUESTS_TIMEOUT": 30
 }
+
+CONFIG_CHATBOT_NEW = {
+    "URL": "https://preprod.fiddler.ai",
+
+    "GR__FAITHFULNESS_SCORE": 0.0,
+    "GR__JAILBREAK_SCORE": 0.0,
+    "GR__SAFETY_LATENCY": 0.0,
+    "GR__REQUESTS_TIMEOUT": 30
+}

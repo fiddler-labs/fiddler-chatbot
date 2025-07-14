@@ -8,33 +8,38 @@ import os
 import sys
 import uuid
 import logging
-from typing import Sequence, Dict, Any, Optional
-from typing_extensions import TypedDict, Annotated
+from dotenv import load_dotenv
+from typing import Dict, Any
 
 from pydantic import SecretStr
 
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage #, BaseMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
+# from langgraph.graph.message import add_messages
 
 from fiddler_langgraph import FiddlerClient
 from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set_conversation_id, set_llm_context
 
-from dotenv import load_dotenv
+from utils.custom_logging import setup_logging
+
+from agentic_tools.state_data_model import ChatbotState
+from agentic_tools.rag import rag_node
+
+from config import CONFIG_CHATBOT_NEW as config
+
 load_dotenv()
 
 setup_logging(log_level="INFO")
 logger = logging.getLogger(__name__)
 
-
-FIDDLER_URL = os.getenv("FIDDLER_URL")
+FIDDLER_URL = config.get("FIDDLER_URL")
 FIDDLER_API_KEY = os.getenv("FIDDLER_API_KEY")
-FIDDLER_APPLICATION_ID = os.getenv("FIDDLER_APPLICATION_ID")
+FIDDLER_APPLICATION_ID = os.getenv("FIDDLER_APP_ID")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APPLICATION_ID or not FIDDLER_URL:
-    logger.error("Error: OPENAI_API_KEY, FIDDLER_API_KEY, FIDDLER_URL, or FIDDLER_APPLICATION_ID environment variables are required")
+if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APPLICATION_ID :
+    logger.error("Error: OPENAI_API_KEY, FIDDLER_API_KEY, or FIDDLER_APP_ID environment variables are required")
     sys.exit(1)
 
 logger.info("Initializing Fiddler monitoring...")
@@ -42,7 +47,7 @@ try:
     fdl_client = FiddlerClient(
         api_key=FIDDLER_API_KEY,
         application_id=FIDDLER_APPLICATION_ID,
-        url=FIDDLER_URL,
+        url=str(FIDDLER_URL),
         console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
         )
     
@@ -57,12 +62,6 @@ except Exception as e:
     instrumentor = None
 
 
-# Define the state schema for our chatbot
-class ChatbotState(TypedDict):
-    """Enhanced state schema for the chatbot conversation"""
-    messages: Annotated[Sequence[BaseMessage], add_messages]
-    retrieved_documents: Optional[list]  # Store retrieved documents
-    retrieval_query: Optional[str]  # Store the query used for retrieval
 
 
 # Initialize the language model
@@ -71,91 +70,7 @@ llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.7,
     api_key=SecretStr(OPENAI_API_KEY) if OPENAI_API_KEY else None,
-)
-
-# Define the RAG Retrieval Function
-def rag_retrieval_node(state: ChatbotState) -> Dict[str, Any]:
-    """
-    Retrieve relevant documents from the Cassandra vector database using RAG.
-    
-    Args:
-        state: Current conversation state containing messages
-        
-    Returns:
-        Dictionary with updated messages including retrieved context
-    """
-    try:
-        # Get the last user message for retrieval
-        last_message = None
-        for msg in reversed(state["messages"]):
-            if isinstance(msg, HumanMessage):
-                last_message = msg
-                break
-        
-        if not last_message:
-            logger.warning("No user message found for RAG retrieval")
-            return {"messages": [AIMessage(content="No query found for document retrieval.")]}
-        
-        query = str(last_message.content)  # Ensure query is a string
-        logger.info(f"Performing RAG retrieval for query: '{query[:100]}...'")
-        
-        # Set up embeddings and vector store
-        llm, embedding = setup_llm_and_embeddings()
-        
-        # Connect to Cassandra and perform retrieval
-        with cassandra_connection() as (cluster, session):
-            # Initialize vector store
-            vector_store = CassandraVectorStore(
-                embedding=embedding,
-                session=session,
-                keyspace=CONFIG["keyspace"],
-                table_name=TABLE_NAME
-            )
-            
-            # Perform similarity search
-            k = 5  # Number of documents to retrieve
-            documents = vector_store.similarity_search(query, k=k)
-            
-            if not documents:
-                logger.warning("No relevant documents found")
-                return {"messages": [AIMessage(content="No relevant documents found in the knowledge base.")]}
-            
-            # Format retrieved documents
-            retrieved_context = []
-            for i, doc in enumerate(documents, 1):
-                content = doc.page_content[:500]  # Truncate for brevity
-                metadata = doc.metadata
-                
-                # Extract useful metadata
-                source = metadata.get('source', 'Unknown')
-                title = metadata.get('title', 'Untitled')
-                
-                retrieved_context.append(
-                    f"Document {i} (Source: {source}, Title: {title}):\n{content}..."
-                )
-            
-            set_llm_context(llm, retrieved_context)
-            
-            # Create context message
-            context_message = (
-                f"📚 Retrieved {len(documents)} relevant documents for your query:\n\n" +
-                "\n\n".join(retrieved_context) +
-                "\n\n🤖 I'll use this information to provide you with a comprehensive answer."
-            )
-            
-            logger.info(f"Successfully retrieved {len(documents)} documents")
-            
-            # Store retrieved documents in state for use by other nodes
-            return {
-                "messages": [AIMessage(content=context_message)],
-                "retrieved_documents": documents,  # Store for potential use by other nodes
-                "retrieval_query": query
-            }
-            
-    except Exception as e:
-        logger.error(f"Error in RAG retrieval: {e}")
-        error_message = f"❌ Error retrieving documents: {str(e)}"
-        return {"messages": [AIMessage(content=error_message)]}
+    )
 
 
 # Enhanced chatbot node that can use retrieved context
@@ -215,13 +130,12 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
     # Return the updated state with the new message
     return {"messages": [response]}
 
-
 # Build the LangGraph workflow
 logger.info("Building LangGraph workflow...")
 workflow = StateGraph(ChatbotState)
 
 # Add the chatbot node
-workflow.add_node("rag_retrieval", rag_retrieval_node)
+workflow.add_node("rag_retrieval", rag_node)
 workflow.add_node("chatbot", chatbot_node)
 
 # Define the graph flow
