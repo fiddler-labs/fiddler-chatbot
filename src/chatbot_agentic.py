@@ -9,13 +9,19 @@ import sys
 import uuid
 import logging
 from dotenv import load_dotenv
-from typing import Dict, Any
+from typing import Dict, Any, List
+from datetime import datetime
 
 from pydantic import SecretStr
 
-from langchain_core.messages import HumanMessage, AIMessage, SystemMessage #, BaseMessage
+from langchain_core.tools import Tool
+from langgraph.prebuilt import ToolNode, tools_condition
+from langchain_core.messages import HumanMessage, SystemMessage #, BaseMessage #, AIMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.types import Command #, interrupt
+from langchain_core.runnables.config import RunnableConfig
 # from langgraph.graph.message import add_messages
 
 from fiddler_langgraph import FiddlerClient
@@ -61,10 +67,8 @@ except Exception as e:
     fdl_client = None
     instrumentor = None
 
+checkpointer = MemorySaver()
 
-
-
-# Initialize the language model
 logger.info("Initializing language model...")
 llm = ChatOpenAI(
     model="gpt-4o-mini",
@@ -72,6 +76,38 @@ llm = ChatOpenAI(
     api_key=SecretStr(OPENAI_API_KEY) if OPENAI_API_KEY else None,
     )
 
+logger.info("Initializing tools...")
+tools : List[Tool] = [
+    Tool(
+        name="get a system time",
+        description="Get the current system time",
+        func=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    )
+]
+logger.debug("Binding tools to language model...")
+llm.bind_tools(tools) # todo : is this needed? in addition to the tool_node?
+logger.debug("✓ Tools bound to language model successfully")
+
+
+tool_node = ToolNode(tools=tools)
+
+def human_node(state: ChatbotState) -> Command:
+    """
+    Human input node that uses interrupt to get user input and directs the flow.
+    Args: state: Current conversation state
+    Returns: Command with user input and next node to execute
+    """
+    # Display prompt to user
+    print("You: ", end="", flush=True)
+    user_input = input("Please enter your message (or 'quit' to exit): ")
+    
+    # Check for exit commands
+    if user_input and user_input.lower() in ["quit", "exit", "q"]:
+        print("👋 Goodbye! Thank you for chatting.\n")
+        return Command(update={"messages": [HumanMessage(content="Goodbye!")]}, goto=END)
+    
+    # Return command with user input and next node
+    return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="rag_retrieval" )
 
 # Enhanced chatbot node that can use retrieved context
 def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
@@ -79,11 +115,8 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
     Process the conversation state and generate a response using the LLM.
     Enhanced to use retrieved context from RAG when available.
     
-    Args: 
-        state: Current conversation state containing messages
-        
-    Returns: 
-        Dictionary with updated messages including the LLM response
+    Args: state: Current conversation state containing messages
+    Returns: Dictionary with updated messages including the LLM response
     """
     # Check if we have retrieved documents
     retrieved_docs = state.get("retrieved_documents", [])
@@ -127,6 +160,9 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
     # Generate response from the LLM
     response = llm.invoke(messages_with_context)
     
+    # Display the response immediately
+    print(f"🤖 Assistant: {response.content}\n")
+    
     # Return the updated state with the new message
     return {"messages": [response]}
 
@@ -134,17 +170,24 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
 logger.info("Building LangGraph workflow...")
 workflow = StateGraph(ChatbotState)
 
-# Add the chatbot node
+# Component entities
+workflow.add_node("human", human_node)
 workflow.add_node("rag_retrieval", rag_node)
 workflow.add_node("chatbot", chatbot_node)
+workflow.add_node("tools", tool_node)
 
 # Define the graph flow
-workflow.add_edge(START, "rag_retrieval")
+workflow.add_edge(START, "human")
+workflow.add_edge("human", "rag_retrieval")
 workflow.add_edge("rag_retrieval", "chatbot")
-workflow.add_edge("chatbot", END)
+workflow.add_conditional_edges("chatbot", tools_condition)
+workflow.add_edge("tools", "chatbot")
 
-# Compile the graph
-app = workflow.compile()
+workflow.add_edge("chatbot", "human")
+workflow.add_edge("human",END)
+
+# Compile the graph with checkpointer
+app = workflow.compile(checkpointer=checkpointer)
 logger.info("✓ Workflow compiled successfully")
 
 output_path = "workflow_graph.png"
@@ -162,72 +205,51 @@ def run_chatbot():
     """
     Main function to run the interactive CLI chatbot.
     """
+
+    def get_thread_config() -> RunnableConfig:
+        """
+        Generate a thread configuration for the conversation.
+        Returns: RunnableConfig with thread ID
+        """
+        thread_id = str(uuid.uuid4())
+        return RunnableConfig(configurable={"thread_id": thread_id})
+
     print("\n" + "="*60)
-    print("🤖 Fiddler Agentic Chatbot - Phase 1")
-    session_id = str(uuid.uuid4())
+    print("🤖 Fiddler Agentic Chatbot (Human-in-the-Loop)")
+    thread_config = get_thread_config()
+    session_id = thread_config.get("configurable", {}).get("thread_id", str(uuid.uuid4()))
     print(f"Session ID: {session_id}\n")
     print("Type 'quit', 'exit', or 'q' to end the conversation.")
     print("="*60 + "\n")
     
-    set_conversation_id(app, session_id) # for Fiddler monitoring
-    
-    # Initialize conversation state
-    messages = []
-    
-    while True:
-        try:
-            # Get user input
-            user_input = input("You: ").strip()
-            
-            # Check for exit commands
-            if user_input.lower() in ["quit", "exit", "q"]:
-                print("\n👋 Goodbye! Thank you for chatting.")
-                break
-            
-            # Skip empty inputs
-            if not user_input:
-                continue
-            
-            # Add user message to conversation
-            messages.append(HumanMessage(content=user_input))
-            
-            # Process through the graph
-            try:
-                result = app.invoke({"messages": messages})
-                
-                # Extract and display the assistant's response
-                assistant_message = result["messages"][-1]
-                if isinstance(assistant_message, AIMessage):
-                    print(f"\nAssistant: {assistant_message.content}\n")
-                    # Add assistant message to conversation history
-                    messages.append(assistant_message)
-                
-            except Exception as e:
-                print(f"\n❌ Error generating response: {e}")
-                print("Please try again.\n")
-                # Remove the last user message if there was an error
-                if messages and isinstance(messages[-1], HumanMessage):
-                    messages.pop()
+    set_conversation_id(app, session_id)  # for Fiddler monitoring
         
-        except KeyboardInterrupt:
-            print("\n\n👋 Interrupted. Goodbye!")
-            break
-        except EOFError:
-            print("\n\n👋 Goodbye!")
-            break
+    exec_state = ChatbotState(messages=[])
+
+    try:
+        for event in app.stream(exec_state, thread_config, stream_mode="values"):
+            # Just let the graph execute - nodes handle their own output
+            logger.debug("Graph executed node, continuing...")
+            
+    except KeyboardInterrupt:
+        print("\n\n👋 Interrupted. Goodbye!")
+    except Exception as e:
+        logger.error(f"Error in conversation: {e}")
+        print(f"\n❌ Error: {e}")
+        raise e
     
-    # Clean up instrumentation
-    if instrumentor:
-        try:
-            instrumentor.uninstrument()
-            logger.info("✓ Fiddler instrumentation cleaned up")
-        except Exception as e:
-            logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
-            pass
+    finally:
+        # Clean up instrumentation
+        if instrumentor:
+            try:
+                instrumentor.uninstrument()
+                logger.info("✓ Fiddler instrumentation cleaned up")
+            except Exception as e:
+                logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
 
 if __name__ == "__main__":
     # Run verification
-    try :
+    try:
         run_chatbot()
     except Exception as e:
         logger.error(f"❌ Error: {e}")
