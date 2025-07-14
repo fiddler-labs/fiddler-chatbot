@@ -276,4 +276,4 @@ graph TB
 
 ---
 
-*These diagrams illustrate the complete flow from code implementation to Web UI visualization in the Fiddler monitoring system.* 
+*These diagrams illustrate the complete flow from code implementation to Web UI visualization in the Fiddler monitoring system.*
