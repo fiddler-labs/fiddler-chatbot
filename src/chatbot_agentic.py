@@ -29,6 +29,8 @@ from utils.custom_logging import setup_logging
 from vector_index_mgmt import cassandra_connection, setup_llm_and_embeddings, CONFIG, TABLE_NAME
 from langchain_community.vectorstores import Cassandra as CassandraVectorStore
 
+setup_logging(log_level="INFO")
+logger = logging.getLogger(__name__)
 
 setup_logging(log_level="INFO")
 logger = logging.getLogger(__name__)
