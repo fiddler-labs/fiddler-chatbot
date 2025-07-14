@@ -43,7 +43,6 @@ from langchain_openai import OpenAIEmbeddings
 
 from utils.custom_logging import setup_logging
 
-# Setup logging with default values
 setup_logging(log_level="DEBUG")
 logger = logging.getLogger(__name__)
 
