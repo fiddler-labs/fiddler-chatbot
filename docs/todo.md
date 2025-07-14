@@ -1,4 +1,42 @@
-# Pending Tasks
+# TODO
+
+## FiddleJam Tasks
+
+These are the action items on the horizon
+( listed in planned order of execution and priority )
+
+**RAG Refactor (FiddleJam Scope)**
+Will take up the RAG retriever wrapper refactor work.
+Goal is to ensure RAG content appears correctly, aligning with feedback from Robin.
+
+**Tool Calling Pipeline** (FiddleJam Scope)
+
+- P0 : Currently using a dummy tool to begin implementation. <!Ongoing!>
+- P1 : Will transition to using Fiddler Guardrails once the dummy tool setup is validated. <!Ongoing!>
+- P2: Plan to integrate tools ( good-to-have features as they dont contribute to harrier testing ) <!Pending!>
+  - URL validation tool. ( P2.1 )
+  - Python validation tool. ( P2.2 )
+
+**Chatbot Streamlit UI**
+
+- Current chatbot only available via CLI. Need to add Streamlit
+- Would allow hosted visibly on the website , Required for demoing to customers.
+- Timing & Priority : Not urgent or core to FiddleJam scope.
+- Will pursue this Streamlit interface after:
+  - Guardrails tools are fully integrated and tested.
+  - Core functionality is stable and demo-ready.
+
+**Demo Asset for Stakeholders (Sol. Eng.)**
+
+Once tools are integrated and tested, and the Streamlit UI is ready ,
+the goal is to:
+
+- Create a demo asset usable by Max and Nick.
+- Showcase chatbot usage with both Guardrails and Harrier monitoring.
+- Also showcase traditional LLM Fiddler monitoring
+  (planned for the future, including eventual showcase for enrichments based monitoring).
+
+## Pending Tasks
 
 - Tools implementation for agentic orchestration
   - Overall Strategy:
@@ -29,8 +67,8 @@
   - Set up GitHub Actions workflow for automated embedding update
     - set up a dev branch of `fiddler` repo to test out the github action
 
-- make a definitive fiddler monitoring notebook , 
-to onbaord the models and aset up the alerts . Will also serve as a iterative improvement checkpoint
+- make a definitive fiddler monitoring notebook
+  to onbaord the models and aset up the alerts . Will also serve as a iterative improvement checkpoint
 
 - need to showcase to team all the possible methods to see what works best
   - make a notebook to that leverages data_generation.py and the /utils to create demp props
