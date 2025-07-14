@@ -59,7 +59,7 @@ def rag_node(state: ChatbotState) -> Dict[str, Any]:
             # Format retrieved documents
             retrieved_context = []
             for i, doc in enumerate(documents, 1):
-                content = doc.page_content[:500]  # Truncate for brevity
+                content = doc.page_content[:50]  # Truncate for brevity
                 metadata = doc.metadata
                 
                 # Extract useful metadata
