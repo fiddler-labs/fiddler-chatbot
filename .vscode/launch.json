@@ -1,20 +1,6 @@
 {
   "configurations": [
     {
-      "name": "Run Fiddler-Chatbot : local streamlit app",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/app.py",
-      // "args": [],
-      "console": "integratedTerminal",
-      // "console": "externalTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
       "name": "Run Data-Generation-Workflow",
       "type": "debugpy",
       "request": "launch",
@@ -23,25 +9,71 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
     },
     {
-      "name": "Test Logger: Run Fiddler-Chatbot (Logged)",
+      "name": "Run AGENTIC Chatbot",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/chatbot_agentic.py",
+      // "args": [],
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run LEGACY Chatbot",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/chatbot.py",
+      // "args": [],
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run LEGACY Chatbot (Logged via test_logger.py)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/utils/test_logger.py",
-      "args": ["python ${workspaceFolder}/src/app.py", "src/app.py"],
+      "args": ["python ${workspaceFolder}/src/chatbot.py", "src/chatbot.py"],
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
     },
     {
-      "name": "Test Logger: Run Data-Generation (Logged)",
+      "name": "Run AGENTIC Chatbot (Logged via test_logger.py)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/utils/test_logger.py",
+      "args": ["python ${workspaceFolder}/src/chatbot_agentic.py", "src/chatbot_agentic.py"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run Data-Generation (Logged via test_logger.py)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/utils/test_logger.py",
@@ -49,12 +81,13 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
     },
     {
-      "name": "Test Logger: Run Pytest (Logged)",
+      "name": "Run Pytest (Logged via test_logger.py)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/utils/test_logger.py",
@@ -62,12 +95,13 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
     },
     {
-      "name": "Test Logger: Custom Command",
+      "name": "Custom Command (Logged via test_logger.py)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/utils/test_logger.py",
@@ -75,6 +109,8 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Any Task",
+      "envFile": "${workspaceFolder}/.env",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
