@@ -43,14 +43,14 @@ import requests
 import streamlit as st
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.cluster import Cluster
-from langchain.callbacks.base import BaseCallbackHandler
+from langchain_core.callbacks.base import BaseCallbackHandler
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chains.conversational_retrieval.prompts import CONDENSE_QUESTION_PROMPT
 from langchain.chains.llm import LLMChain
 from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationSummaryBufferMemory
-from langchain.prompts import PromptTemplate
-from langchain.vectorstores.cassandra import Cassandra
+from langchain_core.prompts import PromptTemplate
+from langchain_community.vectorstores import Cassandra
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from openai import OpenAI
 from streamlit.logger import get_logger
