@@ -147,6 +147,16 @@ workflow.add_edge("chatbot", END)
 app = workflow.compile()
 logger.info("✓ Workflow compiled successfully")
 
+output_path = "workflow_graph.png"
+try:
+    image_data = app.get_graph().draw_mermaid_png()
+    with open(output_path, "wb") as file:
+        file.write(image_data)
+    logger.info(f"Workflow graph saved to {output_path}")
+except Exception as e:
+    logger.error(f"Workflow visualization failed: {e}")
+
+
 
 def run_chatbot():
     """
