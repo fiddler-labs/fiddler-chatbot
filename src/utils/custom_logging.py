@@ -4,9 +4,17 @@ from datetime import datetime
 
 def setup_logging(log_level: str = "INFO"):
     """
-    Set up logging with appropriate configuration
+    Set up logging with appropriate configuration (singleton pattern)
+    
+    This function can be called multiple times safely - it will only configure
+    logging once. The first call determines the configuration.
+    
     Args: log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
+    # Singleton pattern: return early if already configured
+    if hasattr(setup_logging, '_configured'):
+        return
+    
     # Generate timestamped log filename
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     # Create logs directory if it doesn't exist
@@ -42,4 +50,22 @@ def setup_logging(log_level: str = "INFO"):
     root_logger.addHandler(console_handler)
     
     root_logger.setLevel(numeric_level)
-
+    
+    # Mark as configured (singleton pattern)
+    setup_logging._configured = True
+    
+    def configure_third_party_logging():
+        """
+        Configure logging for common third-party libraries to reduce noise.
+        Call this after setup_logging() if needed.
+        """
+        # Suppress verbose third-party library logs
+        logging.getLogger('urllib3').setLevel(logging.WARNING)
+        logging.getLogger('requests').setLevel(logging.WARNING)
+        logging.getLogger('boto3').setLevel(logging.WARNING)
+        logging.getLogger('botocore').setLevel(logging.WARNING)
+        logging.getLogger('cassandra').setLevel(logging.WARNING)
+        
+    configure_third_party_logging()
+    
+    
