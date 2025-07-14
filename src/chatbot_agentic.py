@@ -8,32 +8,37 @@ import os
 import sys
 import uuid
 import logging
+from dotenv import load_dotenv
+from typing import Dict, Any
 
 from pydantic import SecretStr
-from typing import Annotated, Sequence, Dict, Any
-from typing_extensions import TypedDict
 
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage #, BaseMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
+# from langgraph.graph.message import add_messages
 
 from fiddler_langgraph import FiddlerClient
 from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set_conversation_id, set_llm_context
 
 from utils.custom_logging import setup_logging
 
+from agentic_tools.state_data_model import ChatbotState
+from agentic_tools.rag import rag_node
+
+from config import CONFIG_CHATBOT_NEW as config
+
+load_dotenv()
+
 setup_logging(log_level="INFO")
 logger = logging.getLogger(__name__)
 
-
-FIDDLER_URL = 'https://preprod.cloud.fiddler.ai'
-
+FIDDLER_URL = config.get("FIDDLER_URL")
 FIDDLER_API_KEY = os.getenv("FIDDLER_API_KEY")
 FIDDLER_APPLICATION_ID = os.getenv("FIDDLER_APP_ID")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APPLICATION_ID:
+if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APPLICATION_ID :
     logger.error("Error: OPENAI_API_KEY, FIDDLER_API_KEY, or FIDDLER_APP_ID environment variables are required")
     sys.exit(1)
 
@@ -42,7 +47,7 @@ try:
     fdl_client = FiddlerClient(
         api_key=FIDDLER_API_KEY,
         application_id=FIDDLER_APPLICATION_ID,
-        url=FIDDLER_URL,
+        url=str(FIDDLER_URL),
         console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
         )
     
@@ -57,10 +62,6 @@ except Exception as e:
     instrumentor = None
 
 
-# Define the state schema for our chatbot
-class ChatbotState(TypedDict):
-    """State schema for the chatbot conversation"""
-    messages: Annotated[Sequence[BaseMessage], add_messages]
 
 
 # Initialize the language model
@@ -69,39 +70,77 @@ llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.7,
     api_key=SecretStr(OPENAI_API_KEY) if OPENAI_API_KEY else None,
-)
+    )
 
-# Define the chatbot node function
+
+# Enhanced chatbot node that can use retrieved context
 def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
     """
     Process the conversation state and generate a response using the LLM.
-    Args: state: Current conversation state containing messages
-    Returns: Dictionary with updated messages including the LLM response
+    Enhanced to use retrieved context from RAG when available.
+    
+    Args: 
+        state: Current conversation state containing messages
+        
+    Returns: 
+        Dictionary with updated messages including the LLM response
     """
-    # Create a context string from recent messages
-    context = " | ".join([
+    # Check if we have retrieved documents
+    retrieved_docs = state.get("retrieved_documents", [])
+    
+    # Create enhanced context for the LLM
+    context_parts = []
+    
+    # Add conversation context
+    conversation_context = " | ".join([
         f"{msg.__class__.__name__}: {msg.content[:100]}..." 
         if len(msg.content) > 100 else f"{msg.__class__.__name__}: {msg.content}"
-        for msg in state["messages"][-15:]  # Last 15 messages for context
+        for msg in state["messages"][-10:]  # Last 10 messages for context
     ])
-    set_llm_context(llm, context)
+    context_parts.append(f"Conversation: {conversation_context}")
+    
+    # Add retrieved documents context if available
+    if retrieved_docs:
+        doc_context = " | ".join([
+            f"Doc {i}: {doc.page_content[:150]}..." 
+            for i, doc in enumerate(retrieved_docs[:3], 1)  # Top 3 docs
+        ])
+        context_parts.append(f"Retrieved Knowledge: {doc_context}")
+        
+        # Add system message with retrieved context
+        system_message = (
+            "You are a helpful AI assistant with access to a knowledge base. "
+            "Use the retrieved documents to provide accurate, contextual responses. "
+            "If the retrieved information is relevant, reference it in your answer. "
+            "If the retrieved information is not relevant, rely on your general knowledge."
+        )
+        
+        # Insert system message at the beginning
+        messages_with_context = [SystemMessage(content=system_message)] + list(state["messages"])
+    else:
+        messages_with_context = state["messages"]
+    
+    # Set context for Fiddler monitoring
+    full_context = " | ".join(context_parts)
+    set_llm_context(llm, full_context)
     
     # Generate response from the LLM
-    response = llm.invoke(state["messages"])
+    response = llm.invoke(messages_with_context)
     
     # Return the updated state with the new message
     return {"messages": [response]}
-
 
 # Build the LangGraph workflow
 logger.info("Building LangGraph workflow...")
 workflow = StateGraph(ChatbotState)
 
 # Add the chatbot node
+workflow.add_node("rag_retrieval", rag_node)
 workflow.add_node("chatbot", chatbot_node)
 
 # Define the graph flow
-workflow.add_edge(START, "chatbot")
+workflow.add_edge(START, "rag_retrieval")
+workflow.add_edge("rag_retrieval", "chatbot")
 workflow.add_edge("chatbot", END)
 
 # Compile the graph
