@@ -5,6 +5,7 @@ Part of the FiddleJam hackathon to stress test Fiddler's agentic monitoring capa
 """
 
 import os
+from re import L
 import sys
 import uuid
 import logging
@@ -21,6 +22,7 @@ from langchain_core.tools import Tool
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage #, BaseMessage
 from langchain_openai import ChatOpenAI
+import uuid  # ensure uuid is imported for tool_call id
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -78,14 +80,13 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go
 with open(os.path.join(PROJECT_ROOT, "src", "system_instructions.md"), "r") as f:
     SYSTEM_INSTRUCTIONS_PROMPT = PromptTemplate.from_template(f.read().strip())
 
-logger.info("Initializing language model...")
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.7,
     api_key=SecretStr(OPENAI_API_KEY) if OPENAI_API_KEY else None,
     )
+logger.info("✓ language model initialized successfully")
 
-logger.info("Initializing tools...")
 tools : List[Tool] = [
     Tool(
         name="get a system time",
@@ -93,6 +94,7 @@ tools : List[Tool] = [
         func=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
     ]
+logger.info("✓ tools initialized successfully")
 
 
 rag_retriever_tool_selector = {
@@ -103,9 +105,8 @@ rag_retriever_tool_selector = {
 
 all_tools = tools + [make_local_rag_retriever_tool() , make_cassandra_rag_retriever_tool()]
 
-logger.debug("Binding tools to language model...")
 llm.bind_tools(all_tools)
-logger.debug("✓ Tools bound to language model successfully")
+logger.info("✓ Tools bound to language model successfully")
 
 
 def human_node(state: ChatbotState) -> Command:
@@ -129,7 +130,7 @@ def human_node(state: ChatbotState) -> Command:
         return Command(update={"messages": [HumanMessage(content="Goodbye!")]}, goto=END)
     
     # Return command with user input and next node
-    return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="rag_retrieval" )
+    return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="force_rag_tool_call" )
 
 # Enhanced chatbot node that can use retrieved context
 def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
@@ -186,6 +187,22 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
     # Return the updated state with the new AIMessage
     return {"messages": [ai_message]}
 
+def force_rag_tool_call_node(state: ChatbotState) -> Dict[str, Any]:
+    """
+    Node that takes the last HumanMessage and returns an AIMessage with a tool call for the RAG retriever.
+    """
+    if not state["messages"] or not isinstance(state["messages"][-1], HumanMessage):
+        raise ValueError("No HumanMessage found in state for tool call generation.")
+    user_msg = state["messages"][-1]
+    tool_call = {
+        "name": "local_data_corpus_retrieval_tool",
+        "args": {"query": user_msg.content},
+        "id": str(uuid.uuid4()),
+        "type": "tool_call"
+    }
+    ai_msg = AIMessage(content="", tool_calls=[tool_call])
+    return {"messages": [ai_msg]}
+
 def build_chatbot_graph():
     # Build the LangGraph workflow
     logger.info("Building LangGraph workflow...")
@@ -193,13 +210,15 @@ def build_chatbot_graph():
 
     # Component entities
     workflow_builder.add_node("human", human_node)
+    workflow_builder.add_node("force_rag_tool_call", force_rag_tool_call_node)
     workflow_builder.add_node("chatbot", chatbot_node)
     workflow_builder.add_node("tools", ToolNode(tools=tools))
     workflow_builder.add_node("rag_retrieval", rag_retriever_tool_selector["local"])
 
     # Define the graph flow
     workflow_builder.add_edge(START, "human")
-    workflow_builder.add_edge("human", "rag_retrieval")
+    workflow_builder.add_edge("human", "force_rag_tool_call")
+    workflow_builder.add_edge("force_rag_tool_call", "rag_retrieval")
     workflow_builder.add_edge("rag_retrieval", "chatbot")
     workflow_builder.add_conditional_edges("chatbot", tools_condition)
     workflow_builder.add_edge("tools", "chatbot")
@@ -251,7 +270,11 @@ def run_chatbot():
     
     set_conversation_id(chatbot_graph, session_id)  # for Fiddler monitoring
         
-    exec_state = ChatbotState(messages=[])
+    # Patch: Start with a HumanMessage if automation_messages is not empty
+    if automation_messages:
+        exec_state = ChatbotState(messages=[HumanMessage(content=automation_messages.pop(0))])
+    else:
+        exec_state = ChatbotState(messages=[])
 
     try:
         for yeilded_event in chatbot_graph.stream(exec_state, thread_config, stream_mode="values"):
