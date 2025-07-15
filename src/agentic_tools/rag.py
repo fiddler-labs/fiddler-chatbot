@@ -31,9 +31,9 @@ def make_local_rag_retriever_tool() -> Tool:
 
     vectorstore = InMemoryVectorStore.from_documents( documents=doc_splits, embedding=OpenAIEmbeddings() )
     retriever = vectorstore.as_retriever(
-        search_type="similarity_score_threshold", 
-        search_kwargs={"score_threshold": 0.5, "k": 5}
-        )
+        search_type="similarity",
+        search_kwargs={"k": 5}
+    )
     
     retriever_tool = create_retriever_tool(
         retriever,
