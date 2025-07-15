@@ -124,7 +124,7 @@ def summarize_test_results(log_file_path: str) -> dict:
         # Count test results from pytest output
         passed_tests = content.count(' PASSED')
         failed_tests = content.count(' FAILED')
-        error_tests = content.count(' ERROR')
+        error_tests  = content.count(' ERROR')
         
         return {
             'log_file': log_file_path,
@@ -201,6 +201,7 @@ def main():
     
     # Exit with same code as the wrapped command
     if 'exit_code' in summary:
+        print(f"Exit code: {summary['exit_code']}")
         sys.exit(summary['exit_code'])
     else:
         sys.exit(0 if success else 1)
