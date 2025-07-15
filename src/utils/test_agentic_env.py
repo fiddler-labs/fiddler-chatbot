@@ -85,14 +85,14 @@ def run_automated_test():
         # Check Fiddler connection
         if fdl_client:
             logger.info("✓ Fiddler client: Initialized")
-            logger.info(f"  - Application ID: {FIDDLER_APPLICATION_ID}")
+            logger.info(f"  - Application ID: {FIDDLER_APP_ID}")
             logger.info(f"  - URL: {FIDDLER_URL}")
         else:
             logger.error("❌ Fiddler client: Not initialized")
         
         # Test the graph
         try:
-            test_result = app.invoke({"messages": [HumanMessage(content="Test message")]})
+            test_result = chatbot_graph.invoke({"messages": [HumanMessage(content="Test message")]})
             logger.info("✓ LangGraph workflow: OK")
             logger.info(test_result)
         except Exception as e:
