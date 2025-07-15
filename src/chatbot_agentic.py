@@ -9,20 +9,27 @@ import sys
 import uuid
 import logging
 from dotenv import load_dotenv
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime
+import argparse
 
+from langchain_core.prompts import PromptTemplate
 from pydantic import SecretStr
 
 from langchain_core.tools import Tool
-from langgraph.prebuilt import ToolNode, tools_condition
+from langchain_core.runnables.config import RunnableConfig
 from langchain_core.messages import HumanMessage, SystemMessage #, BaseMessage #, AIMessage
 from langchain_openai import ChatOpenAI
+
 from langgraph.graph import StateGraph, START, END
+from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command #, interrupt
-from langchain_core.runnables.config import RunnableConfig
 # from langgraph.graph.message import add_messages
+
+# from langchain.chat_models import init_chat_model 
+    # llm = init_chat_model("anthropic:claude-3-5-sonnet-latest")
+    # response_model = init_chat_model("openai:gpt-4.1", temperature=0)
 
 from fiddler_langgraph import FiddlerClient
 from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set_conversation_id, set_llm_context
@@ -39,35 +46,36 @@ load_dotenv()
 setup_logging(log_level="INFO")
 logger = logging.getLogger(__name__)
 
-FIDDLER_URL = config.get("FIDDLER_URL")
+FIDDLER_URL     = config.get("FIDDLER_URL")
 FIDDLER_API_KEY = os.getenv("FIDDLER_API_KEY")
-FIDDLER_APPLICATION_ID = os.getenv("FIDDLER_APP_ID")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+FIDDLER_APP_ID  = os.getenv("FIDDLER_APP_ID")
+OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
 
-if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APPLICATION_ID :
+if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APP_ID :
     logger.error("Error: OPENAI_API_KEY, FIDDLER_API_KEY, or FIDDLER_APP_ID environment variables are required")
     sys.exit(1)
 
+
 logger.info("Initializing Fiddler monitoring...")
-try:
-    fdl_client = FiddlerClient(
-        api_key=FIDDLER_API_KEY,
-        application_id=FIDDLER_APPLICATION_ID,
-        url=str(FIDDLER_URL),
-        console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
-        )
-    
-    # Instrument the application
-    instrumentor = LangGraphInstrumentor(fdl_client)
-    instrumentor.instrument()
-    logger.info("✓ Fiddler monitoring initialized successfully")
-except Exception as e:
-    logger.error(f"Warning: Failed to initialize Fiddler monitoring: {e}")
-    logger.info("Continuing without monitoring...")
-    fdl_client = None
-    instrumentor = None
+fdl_client = FiddlerClient(
+    api_key=FIDDLER_API_KEY,
+    application_id=FIDDLER_APP_ID,
+    url=str(FIDDLER_URL),
+    console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
+    )
+
+# Instrument the application
+instrumentor = LangGraphInstrumentor(fdl_client)
+instrumentor.instrument()
+logger.info("✓ Fiddler monitoring initialized successfully")
+
 
 checkpointer = MemorySaver()
+
+# Read the system instructions template
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
+with open(os.path.join(PROJECT_ROOT, "src", "system_instructions.md"), "r") as f:
+    SYSTEM_INSTRUCTIONS_PROMPT = PromptTemplate.from_template(f.read().strip())
 
 logger.info("Initializing language model...")
 llm = ChatOpenAI(
@@ -106,17 +114,20 @@ llm.bind_tools(tools) # todo : is this needed? in addition to the tool_node?
 logger.debug("✓ Tools bound to language model successfully")
 
 
-tool_node = ToolNode(tools=tools)
-
 def human_node(state: ChatbotState) -> Command:
     """
     Human input node that uses interrupt to get user input and directs the flow.
+    In automated mode, it takes messages from a list ( that was parsed via argparse).
     Args: state: Current conversation state
     Returns: Command with user input and next node to execute
     """
     # Display prompt to user
     print("You: ", end="", flush=True)
-    user_input = input("Please enter your message (or 'quit' to exit): ")
+    if automation_messages:
+        user_input = automation_messages.pop(0)
+        print(f"👤 You (automated): {user_input}")
+    else:
+        user_input = input("Please enter your message (or 'quit' to exit): ")
     
     # Check for exit commands
     if user_input and user_input.lower() in ["quit", "exit", "q"]:
@@ -157,16 +168,11 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
         ])
         context_parts.append(f"Retrieved Knowledge: {doc_context}")
         
-        # Add system message with retrieved context
-        system_message = (
-            "You are a helpful AI assistant with access to a knowledge base. "
-            "Use the retrieved documents to provide accurate, contextual responses. "
-            "If the retrieved information is relevant, reference it in your answer. "
-            "If the retrieved information is not relevant, rely on your general knowledge."
-        )
-        
-        # Insert system message at the beginning
-        messages_with_context = [SystemMessage(content=system_message)] + list(state["messages"])
+        messages_with_context = [SystemMessage(
+            content=SYSTEM_INSTRUCTIONS_PROMPT.format(
+                context=doc_context,
+                question=state["messages"][-1].content
+            ))] + list(state["messages"])
     else:
         messages_with_context = state["messages"]
     
@@ -253,8 +259,7 @@ def run_chatbot():
     exec_state = ChatbotState(messages=[])
 
     try:
-        for event in app.stream(exec_state, thread_config, stream_mode="values"):
-            # Just let the graph execute - nodes handle their own output
+        for yeilded_event in chatbot_graph.stream(exec_state, thread_config, stream_mode="values"):
             logger.debug("Graph executed node, continuing...")
             
     except KeyboardInterrupt:
@@ -274,7 +279,14 @@ def run_chatbot():
                 logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
 
 if __name__ == "__main__":
-    # Run verification
+    parser = argparse.ArgumentParser(description="Fiddler Agentic Chatbot")
+    parser.add_argument(
+        "--messages",
+        nargs="+",
+        help="A list of messages to send for an automated run that simulates human input during human node execution",
+        )
+    automation_messages = parser.parse_args().messages or []
+
     try:
         run_chatbot()
     except Exception as e:
