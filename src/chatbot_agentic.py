@@ -176,12 +176,15 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
     
     # Generate response from the LLM
     response = llm.invoke(messages_with_context)
-    
+
+    # Create an AIMessage from the response
+    ai_message = AIMessage(content=response.content)
+
     # Display the response immediately
     print(f"🤖 Assistant: {response.content}\n")
-    
-    # Return the updated state with the new message
-    return {"messages": list(state["messages"]) + [AIMessage(content=response.content)]}
+
+    # Return the updated state with the new AIMessage
+    return {"messages": [ai_message]}
 
 def build_chatbot_graph():
     # Build the LangGraph workflow
@@ -198,11 +201,13 @@ def build_chatbot_graph():
     workflow_builder.add_edge(START, "human")
     workflow_builder.add_edge("human", "rag_retrieval")
     workflow_builder.add_edge("rag_retrieval", "chatbot")
-    workflow_builder.add_edge("chatbot", "tools")
+    workflow_builder.add_conditional_edges("chatbot", tools_condition)
     workflow_builder.add_edge("tools", "chatbot")
+
     workflow_builder.add_edge("chatbot", "human")
     workflow_builder.add_edge("human",END)
 
+    # Compile the graph with checkpointer
     chatbot_graph = workflow_builder.compile(checkpointer=checkpointer)
 
     return chatbot_graph
