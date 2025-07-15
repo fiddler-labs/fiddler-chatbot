@@ -9,16 +9,17 @@ import sys
 import uuid
 import logging
 from dotenv import load_dotenv
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from datetime import datetime
 import argparse
+import traceback
 
 from langchain_core.prompts import PromptTemplate
 from pydantic import SecretStr
 
 from langchain_core.tools import Tool
 from langchain_core.runnables.config import RunnableConfig
-from langchain_core.messages import HumanMessage, SystemMessage #, BaseMessage #, AIMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage #, BaseMessage
 from langchain_openai import ChatOpenAI
 
 from langgraph.graph import StateGraph, START, END
@@ -37,7 +38,7 @@ from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set
 from utils.custom_logging import setup_logging
 
 from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import LEGACY_cassandra_rag_node, make_local_rag_retriever_tool, make_cassandra_rag_retriever_tool
+from agentic_tools.rag import make_local_rag_retriever_tool, make_cassandra_rag_retriever_tool #, LEGACY_cassandra_rag_node
 
 from config import CONFIG_CHATBOT_NEW as config
 
@@ -90,27 +91,20 @@ tools : List[Tool] = [
         name="get a system time",
         description="Get the current system time",
         func=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    )
-]
+        )
+    ]
 
 
 rag_retriever_tool_selector = {
     "local"     : ToolNode([make_local_rag_retriever_tool()     ], name="local_rag_retriever_tool"),
     "cassandra" : ToolNode([make_cassandra_rag_retriever_tool() ], name="cassandra_rag_retriever_tool"),
-    "LEGACY"    : ToolNode([LEGACY_cassandra_rag_node           ], name="LEGACY_cassandra_rag_node"),
+    # "LEGACY"    : ToolNode([LEGACY_cassandra_rag_node           ], name="LEGACY_cassandra_rag_node"),
     }
 
-rag_retriever_node_selector = {
-    "local"     : make_local_rag_retriever_tool(),
-    "cassandra" : make_cassandra_rag_retriever_tool(),
-    "LEGACY"    : LEGACY_cassandra_rag_node,
-    }
-
-all_tools = tools + list(rag_retriever_tool_selector.values()) + list(rag_retriever_node_selector.values())
-
+all_tools = tools + [make_local_rag_retriever_tool() , make_cassandra_rag_retriever_tool()]
 
 logger.debug("Binding tools to language model...")
-llm.bind_tools(tools) # todo : is this needed? in addition to the tool_node?
+llm.bind_tools(all_tools)
 logger.debug("✓ Tools bound to language model successfully")
 
 
@@ -187,7 +181,7 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
     print(f"🤖 Assistant: {response.content}\n")
     
     # Return the updated state with the new message
-    return {"messages": [response]}
+    return {"messages": list(state["messages"]) + [AIMessage(content=response.content)]}
 
 def build_chatbot_graph():
     # Build the LangGraph workflow
@@ -198,21 +192,17 @@ def build_chatbot_graph():
     workflow_builder.add_node("human", human_node)
     workflow_builder.add_node("chatbot", chatbot_node)
     workflow_builder.add_node("tools", ToolNode(tools=tools))
-    
     workflow_builder.add_node("rag_retrieval", rag_retriever_tool_selector["local"])
-    # workflow_builder.add_node("rag_retrieval", rag_retriever_node_selector["local"])
 
     # Define the graph flow
     workflow_builder.add_edge(START, "human")
     workflow_builder.add_edge("human", "rag_retrieval")
     workflow_builder.add_edge("rag_retrieval", "chatbot")
-    workflow_builder.add_conditional_edges("chatbot", tools_condition)
+    workflow_builder.add_edge("chatbot", "tools")
     workflow_builder.add_edge("tools", "chatbot")
-
     workflow_builder.add_edge("chatbot", "human")
     workflow_builder.add_edge("human",END)
 
-    # Compile the graph with checkpointer
     chatbot_graph = workflow_builder.compile(checkpointer=checkpointer)
 
     return chatbot_graph
@@ -266,7 +256,9 @@ def run_chatbot():
         print("\n\n👋 Interrupted. Goodbye!")
     except Exception as e:
         logger.error(f"Error in conversation: {e}")
+        logger.error(traceback.format_exc())
         print(f"\n❌ Error: {e}")
+        print(traceback.format_exc())
         raise e
     
     finally:
@@ -277,15 +269,14 @@ def run_chatbot():
                 logger.info("✓ Fiddler instrumentation cleaned up")
             except Exception as e:
                 logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
+                logger.error(traceback.format_exc())
+                raise e
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Fiddler Agentic Chatbot")
-    parser.add_argument(
-        "--messages",
-        nargs="+",
-        help="A list of messages to send for an automated run that simulates human input during human node execution",
-        )
-    automation_messages = parser.parse_args().messages or []
+    parser.add_argument("args", nargs="*")
+    automation_messages = parser.parse_args().args or []
+    print(f"Automation messages: {automation_messages}")
 
     try:
         run_chatbot()
