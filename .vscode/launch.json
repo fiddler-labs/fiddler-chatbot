@@ -19,9 +19,23 @@
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/chatbot_agentic.py",
-      // "args": [],
+      "args": ["Hello", "What is the current time?"],
       "console": "integratedTerminal",
       // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run AGENTIC Chatbot (Logged via test_logger.py)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/utils/test_logger.py",
+      "args": ["python ${workspaceFolder}/src/chatbot_agentic.py \"Hello\" \"What is the current time?\"", "src/chatbot_agentic.py"],
+      "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
       "envFile": "${workspaceFolder}/.env",
@@ -50,20 +64,6 @@
       "request": "launch",
       "program": "${workspaceFolder}/src/utils/test_logger.py",
       "args": ["python ${workspaceFolder}/src/chatbot.py", "src/chatbot.py"],
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Run AGENTIC Chatbot (Logged via test_logger.py)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/utils/test_logger.py",
-      "args": ["python ${workspaceFolder}/src/chatbot_agentic.py", "src/chatbot_agentic.py"],
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
