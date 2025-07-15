@@ -3,6 +3,7 @@ import logging
 import pandas as pd
 from typing import Dict, Any
 
+from langchain_core.documents import Document
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
@@ -22,8 +23,12 @@ logger = logging.getLogger(__name__)
 def make_local_rag_retriever_tool() -> Tool:
     glob_pattern = "local_assets/vector_index_feed_*.csv"
     latest_file = max(glob.glob(glob_pattern))
-    doc_splits = pd.read_csv(latest_file).to_list()
-    
+    doc_splits = pd.read_csv(latest_file)
+    doc_splits = doc_splits["text"].to_list()
+    doc_splits = [Document(page_content=split) for split in doc_splits]
+
+    doc_splits = doc_splits[-100:]
+
     vectorstore = InMemoryVectorStore.from_documents( documents=doc_splits, embedding=OpenAIEmbeddings() )
     retriever = vectorstore.as_retriever(
         search_type="similarity_score_threshold", 
