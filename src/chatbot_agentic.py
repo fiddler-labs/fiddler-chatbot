@@ -30,7 +30,7 @@ from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set
 from utils.custom_logging import setup_logging
 
 from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import rag_node
+from agentic_tools.rag import LEGACY_cassandra_rag_node, make_local_rag_retriever_tool, make_cassandra_rag_retriever_tool
 
 from config import CONFIG_CHATBOT_NEW as config
 
@@ -84,6 +84,23 @@ tools : List[Tool] = [
         func=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
     )
 ]
+
+
+rag_retriever_tool_selector = {
+    "local"     : ToolNode([make_local_rag_retriever_tool()     ], name="local_rag_retriever_tool"),
+    "cassandra" : ToolNode([make_cassandra_rag_retriever_tool() ], name="cassandra_rag_retriever_tool"),
+    "LEGACY"    : ToolNode([LEGACY_cassandra_rag_node           ], name="LEGACY_cassandra_rag_node"),
+    }
+
+rag_retriever_node_selector = {
+    "local"     : make_local_rag_retriever_tool(),
+    "cassandra" : make_cassandra_rag_retriever_tool(),
+    "LEGACY"    : LEGACY_cassandra_rag_node,
+    }
+
+all_tools = tools + list(rag_retriever_tool_selector.values()) + list(rag_retriever_node_selector.values())
+
+
 logger.debug("Binding tools to language model...")
 llm.bind_tools(tools) # todo : is this needed? in addition to the tool_node?
 logger.debug("✓ Tools bound to language model successfully")
@@ -166,39 +183,45 @@ def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
     # Return the updated state with the new message
     return {"messages": [response]}
 
-# Build the LangGraph workflow
-logger.info("Building LangGraph workflow...")
-workflow = StateGraph(ChatbotState)
+def build_chatbot_graph():
+    # Build the LangGraph workflow
+    logger.info("Building LangGraph workflow...")
+    workflow_builder = StateGraph(ChatbotState)
 
-# Component entities
-workflow.add_node("human", human_node)
-workflow.add_node("rag_retrieval", rag_node)
-workflow.add_node("chatbot", chatbot_node)
-workflow.add_node("tools", tool_node)
+    # Component entities
+    workflow_builder.add_node("human", human_node)
+    workflow_builder.add_node("chatbot", chatbot_node)
+    workflow_builder.add_node("tools", ToolNode(tools=tools))
+    
+    workflow_builder.add_node("rag_retrieval", rag_retriever_tool_selector["local"])
+    # workflow_builder.add_node("rag_retrieval", rag_retriever_node_selector["local"])
 
-# Define the graph flow
-workflow.add_edge(START, "human")
-workflow.add_edge("human", "rag_retrieval")
-workflow.add_edge("rag_retrieval", "chatbot")
-workflow.add_conditional_edges("chatbot", tools_condition)
-workflow.add_edge("tools", "chatbot")
+    # Define the graph flow
+    workflow_builder.add_edge(START, "human")
+    workflow_builder.add_edge("human", "rag_retrieval")
+    workflow_builder.add_edge("rag_retrieval", "chatbot")
+    workflow_builder.add_conditional_edges("chatbot", tools_condition)
+    workflow_builder.add_edge("tools", "chatbot")
 
-workflow.add_edge("chatbot", "human")
-workflow.add_edge("human",END)
+    workflow_builder.add_edge("chatbot", "human")
+    workflow_builder.add_edge("human",END)
 
-# Compile the graph with checkpointer
-app = workflow.compile(checkpointer=checkpointer)
-logger.info("✓ Workflow compiled successfully")
+    # Compile the graph with checkpointer
+    chatbot_graph = workflow_builder.compile(checkpointer=checkpointer)
 
-output_path = "workflow_graph.png"
-try:
-    image_data = app.get_graph().draw_mermaid_png()
-    with open(output_path, "wb") as file:
-        file.write(image_data)
-    logger.info(f"Workflow graph saved to {output_path}")
-except Exception as e:
-    logger.error(f"Workflow visualization failed: {e}")
+    return chatbot_graph
 
+def visualize_chatbot_graph(chatbot_graph):
+    logger.info("✓ Workflow compiled successfully")
+
+    output_path = "workflow_graph.png"
+    try:
+        image_data = chatbot_graph.get_graph().draw_mermaid_png()
+        with open(output_path, "wb") as file:
+            file.write(image_data)
+        logger.info(f"Workflow graph saved to {output_path}")
+    except Exception as e:
+        logger.error(f"Workflow visualization failed: {e}")
 
 
 def run_chatbot():
@@ -222,7 +245,10 @@ def run_chatbot():
     print("Type 'quit', 'exit', or 'q' to end the conversation.")
     print("="*60 + "\n")
     
-    set_conversation_id(app, session_id)  # for Fiddler monitoring
+    chatbot_graph = build_chatbot_graph()
+    visualize_chatbot_graph(chatbot_graph)
+    
+    set_conversation_id(chatbot_graph, session_id)  # for Fiddler monitoring
         
     exec_state = ChatbotState(messages=[])
 
