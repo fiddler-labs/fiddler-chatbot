@@ -85,7 +85,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    Log the application run to local file
 
    ```bash
-   uv run src/utils/test_logger.py "uv run python src/test_chatbot_agentic.py" "src/test_chatbot_agentic.py"
+   uv run src/utils/test_logger.py "uv run python src/chatbot_agentic.py \"Hello\" \"What is the current time?\"" "src/chatbot_agentic.py"
    ```
 
 ## 🔧 Local Development
