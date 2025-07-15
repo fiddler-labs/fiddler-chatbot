@@ -30,17 +30,12 @@
 
 """
 
-# Standard library imports
-import json
 import os
 import time
 import uuid as uuid_g
-
-# Third-party imports
-import fiddler as fdl
 import pandas as pd
-import requests
 import streamlit as st
+import fiddler as fdl
 from cassandra.auth import PlainTextAuthProvider
 from cassandra.cluster import Cluster
 from langchain_core.callbacks.base import BaseCallbackHandler
@@ -111,6 +106,9 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go
 with open(os.path.join(PROJECT_ROOT, "src", "system_instructions.md"), "r") as f:
     TEMPLATE = f.read().strip()
 
+QA_CHAIN_PROMPT = PromptTemplate.from_template(TEMPLATE)
+
+
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 if OPENAI_API_KEY is None:
     raise ValueError("OPENAI_API_KEY environment variable is required")
@@ -121,8 +119,6 @@ logger = get_logger(__name__)
 FIDDLER_API_TOKEN          = os.environ.get( "FIDDLER_API_TOKEN"          )
 OPENAI_API_KEY             = os.environ.get( "OPENAI_API_KEY"             )
 ASTRA_DB_APPLICATION_TOKEN = os.environ.get( "ASTRA_DB_APPLICATION_TOKEN" )
-
-QA_CHAIN_PROMPT = PromptTemplate.from_template(TEMPLATE)
 
 # Connect to DataStax Cassandra
 cloud_config = {"secure_connect_bundle": ASTRA_DB_SECURE_BUNDLE_PATH}
