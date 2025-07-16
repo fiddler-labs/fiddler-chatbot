@@ -15,11 +15,25 @@
       }
     },
     {
-      "name": "Run AGENTIC Chatbot",
+      "name": "Run AGENTIC Chatbot (Manual CLI chat)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/chatbot_agentic.py",
-      "args": ["Hello", "What is the current time?"],
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run AGENTIC Chatbot (Automated)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/chatbot_agentic.py",
+      "args": ["Hello", "What is the current time?", "quit"],
       "console": "integratedTerminal",
       // "console": "externalTerminal",
       "justMyCode": true,

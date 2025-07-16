@@ -79,7 +79,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
 4. **Run the application**
 
    ```bash
-   python src/chatbot_agentic.py
+   python src/chatbot_agentic.py "hello" "what is the current time?" "quit"
    ```
 
    Log the application run to local file
