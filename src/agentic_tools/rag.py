@@ -10,12 +10,9 @@ from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_community.vectorstores import Cassandra as CassandraVectorStore
 from langchain_core.tools import Tool
 from langchain.tools.retriever import create_retriever_tool
-
-from vector_index_mgmt import cassandra_connection, setup_llm_and_embeddings, CONFIG, TABLE_NAME
-
 from fiddler_langgraph.tracing.instrumentation import set_llm_context
 
-
+from vector_index_mgmt import cassandra_connection, setup_llm_and_embeddings, CONFIG, TABLE_NAME
 from agentic_tools.state_data_model import ChatbotState
 
 logger = logging.getLogger(__name__)
@@ -37,8 +34,9 @@ def make_local_rag_retriever_tool() -> Tool:
     
     retriever_tool = create_retriever_tool(
         retriever,
-        "local data corpus retrieval tool",
+        "retrieval_tool",
         "Search and return information from the local csv data corpus.",
+        # document_prompt=RAG_PROMPT
         )
 
     return retriever_tool
@@ -61,8 +59,9 @@ def make_cassandra_rag_retriever_tool() -> Tool:
     
     retriever_tool = create_retriever_tool(
         retriever,
-        "cassandra data corpus retrieval tool",
+        "retrieval_tool",
         "Search and return information from the cassandra data corpus.",
+        # document_prompt=RAG_PROMPT
         )
     
     return retriever_tool
@@ -146,4 +145,5 @@ def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
         logger.error(f"Error in RAG retrieval: {e}")
         error_message = f"❌ Error retrieving documents: {str(e)}"
         return {"messages": [AIMessage(content=error_message)]}
+
 

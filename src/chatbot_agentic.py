@@ -5,12 +5,12 @@ Part of the FiddleJam hackathon to stress test Fiddler's agentic monitoring capa
 """
 
 import os
-from re import L
+import json
 import sys
 import uuid
 import logging
 from dotenv import load_dotenv
-from typing import Dict, Any, List
+from typing import Any, List
 from datetime import datetime
 import argparse
 import traceback
@@ -20,14 +20,12 @@ from pydantic import SecretStr
 
 from langchain_core.tools import Tool
 from langchain_core.runnables.config import RunnableConfig
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage #, BaseMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage #, BaseMessage
 from langchain_openai import ChatOpenAI
-import uuid  # ensure uuid is imported for tool_call id
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.types import Command #, interrupt
 # from langgraph.graph.message import add_messages
 
 # from langchain.chat_models import init_chat_model 
@@ -40,14 +38,27 @@ from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set
 from utils.custom_logging import setup_logging
 
 from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import make_local_rag_retriever_tool, make_cassandra_rag_retriever_tool #, LEGACY_cassandra_rag_node
+from agentic_tools.rag import make_local_rag_retriever_tool #, make_cassandra_rag_retriever_tool #, LEGACY_cassandra_rag_node
 
 from config import CONFIG_CHATBOT_NEW as config
 
 load_dotenv()
 
-setup_logging(log_level="INFO")
+setup_logging(log_level="DEBUG")
 logger = logging.getLogger(__name__)
+
+def try_pretty_foramtting(incoming_str : Any) -> str:
+    try:
+        return json.dumps(incoming_str, indent=4)
+    except Exception:
+        try:
+            return json.dumps(str(incoming_str), indent=4)
+        except Exception:
+            try:
+                return str(incoming_str)
+            except Exception:
+                return incoming_str
+        
 
 FIDDLER_URL     = config.get("FIDDLER_URL")
 FIDDLER_API_KEY = os.getenv("FIDDLER_API_KEY")
@@ -89,7 +100,7 @@ logger.info("✓ language model initialized successfully")
 
 tools : List[Tool] = [
     Tool(
-        name="get a system time",
+        name="get_system_time",
         description="Get the current system time",
         func=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         )
@@ -97,19 +108,16 @@ tools : List[Tool] = [
 logger.info("✓ tools initialized successfully")
 
 
-rag_retriever_tool_selector = {
-    "local"     : ToolNode([make_local_rag_retriever_tool()     ], name="local_rag_retriever_tool"),
-    "cassandra" : ToolNode([make_cassandra_rag_retriever_tool() ], name="cassandra_rag_retriever_tool"),
-    # "LEGACY"    : ToolNode([LEGACY_cassandra_rag_node           ], name="LEGACY_cassandra_rag_node"),
-    }
+rag_retriever_tool_node = ToolNode([make_local_rag_retriever_tool()], name="retrieval_tool")
+# rag_retriever_tool = ToolNode([make_cassandra_rag_retriever_tool() ], name="retrieval_tool"),
 
-all_tools = tools + [make_local_rag_retriever_tool() , make_cassandra_rag_retriever_tool()]
+all_tools = tools #+ [make_local_rag_retriever_tool() , make_cassandra_rag_retriever_tool()]
 
 llm.bind_tools(all_tools)
 logger.info("✓ Tools bound to language model successfully")
 
 
-def human_node(state: ChatbotState) -> Command:
+def human_node(state: ChatbotState) -> ChatbotState:
     """
     Human input node that uses interrupt to get user input and directs the flow.
     In automated mode, it takes messages from a list ( that was parsed via argparse).
@@ -127,67 +135,56 @@ def human_node(state: ChatbotState) -> Command:
     # Check for exit commands
     if user_input and user_input.lower() in ["quit", "exit", "q"]:
         print("👋 Goodbye! Thank you for chatting.\n")
-        return Command(update={"messages": [HumanMessage(content="Goodbye!")]}, goto=END)
+        sys.exit(0)
+        # return Command(update={"messages": [HumanMessage(content="Goodbye!")]}, goto=END)
     
-    # Return command with user input and next node
-    return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="force_rag_tool_call" )
+    # return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="force_rag_tool_call" )
+    return {"messages": [HumanMessage(content=user_input)]}
 
-# Enhanced chatbot node that can use retrieved context
-def chatbot_node(state: ChatbotState) -> Dict[str, Any]:
+
+def chatbot_node(state: ChatbotState) -> ChatbotState:
     """
-    Process the conversation state and generate a response using the LLM.
-    Enhanced to use retrieved context from RAG when available.
-    
-    Args: state: Current conversation state containing messages
-    Returns: Dictionary with updated messages including the LLM response
+    Processes the conversation state to generate a response using the LLM.
+    It dynamically constructs a context from the conversation history and any retrieved documents from tool calls
     """
-    # Check if we have retrieved documents
-    retrieved_docs = state.get("retrieved_documents", [])
+    # Start with a base of messages from the current state
+    all_messages_in_State = list(state["messages"])
+
+    # Extract the most recent tool call outputs to build the context
+    tool_outputs = []
+    for msg in reversed(all_messages_in_State):
+        if isinstance(msg, ToolMessage):
+            tool_outputs.append(msg.content)
+
+    # Construct a unified context for both LLM and monitoring
+    fiddler_context_store = []
     
-    # Create enhanced context for the LLM
-    context_parts = []
-    
-    # Add conversation context
-    conversation_context = " | ".join([
-        f"{msg.__class__.__name__}: {msg.content[:100]}..." 
-        if len(msg.content) > 100 else f"{msg.__class__.__name__}: {msg.content}"
-        for msg in state["messages"][-10:]  # Last 10 messages for context
-    ])
-    context_parts.append(f"Conversation: {conversation_context}")
-    
-    # Add retrieved documents context if available
-    if retrieved_docs:
-        doc_context = " | ".join([
-            f"Doc {i}: {doc.page_content[:150]}..." 
-            for i, doc in enumerate(retrieved_docs[:3], 1)  # Top 3 docs
-        ])
-        context_parts.append(f"Retrieved Knowledge: {doc_context}")
-        
-        messages_with_context = [SystemMessage(
-            content=SYSTEM_INSTRUCTIONS_PROMPT.format(
-                context=doc_context,
-                question=state["messages"][-1].content
-            ))] + list(state["messages"])
-    else:
-        messages_with_context = state["messages"]
-    
-    # Set context for Fiddler monitoring
-    full_context = " | ".join(context_parts)
-    set_llm_context(llm, full_context)
+    conversation_history = " | ".join([ f"{msg.__class__.__name__}: {msg.content[:100]}..." for msg in all_messages_in_State[-10:] ])
+    fiddler_context_store.append(f"Conversation: {conversation_history}")
+    logger.debug(f"CHATBOT_NODE: Debug - Conversation History: {try_pretty_foramtting(conversation_history)}")
+
+    if tool_outputs:
+        retrieved_docs = " | ".join(tool_outputs)
+        fiddler_context_store.append(f"Retrieved Docs: {retrieved_docs}")
+        logger.debug(f"CHATBOT_NODE: Debug - Retrieved Docs: {try_pretty_foramtting(retrieved_docs)}")
+
+        system_message = SystemMessage( content=SYSTEM_INSTRUCTIONS_PROMPT.format( context=retrieved_docs, question=all_messages_in_State[-1].content ) )
+        all_messages_in_State.insert(0, system_message)
+
+    # Set the unified context for Fiddler monitoring
+    set_llm_context(llm, " | ".join(fiddler_context_store))
     
     # Generate response from the LLM
-    response = llm.invoke(messages_with_context)
+    logger.debug(f"CHATBOT_NODE: Debug - All Messages in State: {try_pretty_foramtting(all_messages_in_State)}")
+    response = llm.invoke(all_messages_in_State)
 
-    # Create an AIMessage from the response
     ai_message = AIMessage(content=response.content)
-
-    # Display the response immediately
     print(f"🤖 Assistant: {response.content}\n")
+    logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_foramtting(response.content)}")
 
-    # Return the updated state with the new AIMessage
     return {"messages": [ai_message]}
 
-def force_rag_tool_call_node(state: ChatbotState) -> Dict[str, Any]:
+def force_rag_tool_call_node(state: ChatbotState) -> ChatbotState:
     """
     Node that takes the last HumanMessage and returns an AIMessage with a tool call for the RAG retriever.
     """
@@ -195,13 +192,14 @@ def force_rag_tool_call_node(state: ChatbotState) -> Dict[str, Any]:
         raise ValueError("No HumanMessage found in state for tool call generation.")
     user_msg = state["messages"][-1]
     tool_call = {
-        "name": "local_data_corpus_retrieval_tool",
+        "name": "retrieval_tool",
         "args": {"query": user_msg.content},
         "id": str(uuid.uuid4()),
         "type": "tool_call"
-    }
+        }
     ai_msg = AIMessage(content="", tool_calls=[tool_call])
     return {"messages": [ai_msg]}
+
 
 def build_chatbot_graph():
     # Build the LangGraph workflow
@@ -213,18 +211,18 @@ def build_chatbot_graph():
     workflow_builder.add_node("force_rag_tool_call", force_rag_tool_call_node)
     workflow_builder.add_node("chatbot", chatbot_node)
     workflow_builder.add_node("tools", ToolNode(tools=tools))
-    workflow_builder.add_node("rag_retrieval", rag_retriever_tool_selector["local"])
+    workflow_builder.add_node("rag_retrieval", rag_retriever_tool_node)
 
     # Define the graph flow
     workflow_builder.add_edge(START, "human")
+    workflow_builder.add_edge("human",END)
     workflow_builder.add_edge("human", "force_rag_tool_call")
     workflow_builder.add_edge("force_rag_tool_call", "rag_retrieval")
     workflow_builder.add_edge("rag_retrieval", "chatbot")
-    workflow_builder.add_conditional_edges("chatbot", tools_condition)
+    workflow_builder.add_conditional_edges( "chatbot", tools_condition)
     workflow_builder.add_edge("tools", "chatbot")
-
     workflow_builder.add_edge("chatbot", "human")
-    workflow_builder.add_edge("human",END)
+    workflow_builder.add_edge("chatbot", END)
 
     # Compile the graph with checkpointer
     chatbot_graph = workflow_builder.compile(checkpointer=checkpointer)
@@ -254,13 +252,13 @@ def run_chatbot():
         Generate a thread configuration for the conversation.
         Returns: RunnableConfig with thread ID
         """
-        thread_id = str(uuid.uuid4())
+        thread_id = str(datetime.now().strftime("%Y%m%d%H%M%S"))+'_'+str(uuid.uuid4())
         return RunnableConfig(configurable={"thread_id": thread_id})
 
     print("\n" + "="*60)
-    print("🤖 Fiddler Agentic Chatbot (Human-in-the-Loop)")
+    print("🤖 Fiddler Agentic Chatbot")
     thread_config = get_thread_config()
-    session_id = thread_config.get("configurable", {}).get("thread_id", str(uuid.uuid4()))
+    session_id = thread_config.get("configurable", {}).get("thread_id",'NO_SESSION_ID_PROVIDED')
     print(f"Session ID: {session_id}\n")
     print("Type 'quit', 'exit', or 'q' to end the conversation.")
     print("="*60 + "\n")
@@ -270,7 +268,7 @@ def run_chatbot():
     
     set_conversation_id(chatbot_graph, session_id)  # for Fiddler monitoring
         
-    # Patch: Start with a HumanMessage if automation_messages is not empty
+    # Start with a HumanMessage if automation_messages is not empty
     if automation_messages:
         exec_state = ChatbotState(messages=[HumanMessage(content=automation_messages.pop(0))])
     else:
@@ -278,7 +276,8 @@ def run_chatbot():
 
     try:
         for yeilded_event in chatbot_graph.stream(exec_state, thread_config, stream_mode="values"):
-            logger.debug("Graph executed node, continuing...")
+            logger.info("Graph executed node, continuing... ")
+            logger.debug(f"RUN_CHATBOT: Debug - Yeilded Event: {try_pretty_foramtting(yeilded_event)}")
             
     except KeyboardInterrupt:
         print("\n\n👋 Interrupted. Goodbye!")
