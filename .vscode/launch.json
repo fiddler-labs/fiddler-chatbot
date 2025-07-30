@@ -1,20 +1,6 @@
 {
   "configurations": [
     {
-      "name": "Run Data-Generation-Workflow",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/data_generation.py",
-      // "args": [],
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
       "name": "Run AGENTIC Chatbot (Manual CLI chat)",
       "type": "debugpy",
       "request": "launch",
@@ -44,11 +30,11 @@
       }
     },
     {
-      "name": "Run AGENTIC Chatbot (Logged via test_logger.py)",
+      "name": "Run LEGACY Chatbot CLI",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/src/utils/test_logger.py",
-      "args": ["python ${workspaceFolder}/src/chatbot_agentic.py \"Hello\" \"What is the current time?\"", "src/chatbot_agentic.py"],
+      "program": "${workspaceFolder}/src/chatbot.py",
+      // "args": [],
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
@@ -58,10 +44,24 @@
       }
     },
     {
-      "name": "Run LEGACY Chatbot",
+      "name": "Run LEGACY Chatbot Streamlit",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/src/chatbot.py",
+      "module": "streamlit",
+      "args": ["run", "${workspaceFolder}/src/chatbot.py"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run Data-Generation-Workflow",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/data_generation.py",
       // "args": [],
       "console": "integratedTerminal",
       // "console": "externalTerminal",
@@ -71,77 +71,6 @@
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
-    },
-    {
-      "name": "Run LEGACY Chatbot (Logged via test_logger.py)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/utils/test_logger.py",
-      "args": ["python ${workspaceFolder}/src/chatbot.py", "src/chatbot.py"],
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Run Data-Generation (Logged via test_logger.py)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/utils/test_logger.py",
-      "args": ["python ${workspaceFolder}/src/data_generation.py", "src/data_generation.py"],
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Run Pytest (Logged via test_logger.py)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/utils/test_logger.py",
-      "args": ["python -m pytest tests/ -v", "tests/"],
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Custom Command (Logged via test_logger.py)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/utils/test_logger.py",
-      "args": ["${input:customCommand}", "${input:testFilePath}"],
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "preLaunchTask": "Any Task",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    }
-  ],
-  "inputs": [
-    {
-      "id": "customCommand",
-      "description": "Enter the command to execute (e.g., 'uv run pipeline')",
-      "default": "python -c 'print(\"Hello World\")'",
-      "type": "promptString"
-    },
-    {
-      "id": "testFilePath",
-      "description": "Enter the test file path (e.g., 'src/app.py')",
-      "default": "test_file.py",
-      "type": "promptString"
     }
   ]
 }
