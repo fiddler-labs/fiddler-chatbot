@@ -3,7 +3,7 @@ name = "fiddler-chatbot"
 version = "0.1.0"
 description = "Fiddler AI Model Monitoring Chatbot"
 readme = "README.md"
-requires-python = "==3.11.10"
+requires-python = "==3.11.13"
 dependencies = [
     "fiddler-client>=3.9.2",
     "langchain>=0.3.26",
