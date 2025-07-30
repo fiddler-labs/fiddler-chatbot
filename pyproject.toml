@@ -41,3 +41,4 @@ authors = [
 maintainers = [
     {name = "Fiddler AI Team"},
 ]
+package-mode = false
