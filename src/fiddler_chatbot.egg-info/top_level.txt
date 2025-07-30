@@ -1,5 +1,0 @@
-chatbot
-chatbot_agentic
-data_generation
-utils
-vector_index_mgmt
