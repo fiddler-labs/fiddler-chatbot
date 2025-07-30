@@ -132,19 +132,7 @@ The legacy chatbot application also integrates with Fiddler AI's platform for:
 
 ---
 
-## Development Methodology
-
-This section outlines the development roadmap for building a sophisticated agentic chatbot application using LangGraph.
-The primary objective is to stress test Fiddler's agentic monitoring capabilities by building agentic applications using LangGraph and testing them on the Fiddler platform using the Fiddler LangGraph SDK.
-
-### Iterative Development Approach
-
-- **Small, Verifiable Units**: Start with the smallest possible functional component
-- **Continuous Validation**: Verify functionality at every development stage
-- **No Pseudocode**: All code must be tested and working before proceeding
-- **Incremental Building**: Each phase builds upon the previous verified foundation
-
-### Development Quality Standards for Risk Mitigation
+### Development Methodology for Risk Mitigation
 
 This project follows an iterative, verification-driven approach, emphasizing small, testable increments with validation at each stage,
 avoiding large-scale development without proper testing.

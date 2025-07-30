@@ -1,7 +1,6 @@
 """
 Fiddler Agentic Chatbot - CURRENT PHASE: Phase 2: RAG Integration
 A simple CLI chatbot using LangGraph with integrated Fiddler monitoring
-Part of the FiddleJam hackathon to stress test Fiddler's agentic monitoring capabilities
 """
 
 import os
