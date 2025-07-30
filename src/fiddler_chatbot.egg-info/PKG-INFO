@@ -103,7 +103,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    ```bash
    OPENAI_API_KEY=your_openai_api_key
    ASTRA_DB_APPLICATION_TOKEN=your_datastax_token
-   FIDDLER_API_TOKEN=your_fiddler_token
+   FIDDLER_API_KEY=your_fiddler_token
    FIDDLER_APP_ID=your_fiddler_app_id  # for chatbot_agentic.py
    ```
 
