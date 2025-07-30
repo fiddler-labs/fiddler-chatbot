@@ -1,5 +1,4 @@
 .DS_Store
-
 __pycache__/
 .ipynb_checkpoints/
 *.pyc
@@ -7,22 +6,19 @@ __pycache__/
 /.venv
 .venv/
 .venv_backup/
-
-build/
-
 uv.lock
 .ruff_cache
+build/
 
 .vscode/settings.json
 
 local_assets/*/*.md
 local_assets/vector_index_feed_*.csv
 
-logs/log_*.log
-logs/cursor_logs/test_run_*.log
-
-docs/private.md
 .env
 temp_ref/
-logs/cursor_logs/Archive
-logs/Archive
+
+logs/log_*.log
+logs/Archive/
+logs/cursor_logs/test_run_*.log
+logs/cursor_logs/Archive/
