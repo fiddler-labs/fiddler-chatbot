@@ -10,6 +10,7 @@
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
       "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
@@ -25,6 +26,7 @@
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
       "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
@@ -39,6 +41,7 @@
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
       "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
@@ -68,6 +71,7 @@
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
       "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
