@@ -3,7 +3,7 @@ name = "fiddler-chatbot"
 version = "0.1.0"
 description = "Fiddler AI Model Monitoring Chatbot"
 readme = "README.md"
-requires-python = "==3.11.13"
+requires-python = "==3.13.0"
 dependencies = [
     "fiddler-client>=3.9.2",
     "langchain>=0.3.26",
@@ -34,6 +34,7 @@ dependencies = [
     "langgraph>=0.5.1",
     "langgraph-cli>=0.3.4",
     "cassio>=0.1.10",
+    "watchdog>=6.0.0",
 ]
 authors = [
     {name = "Fiddler AI Team"},
