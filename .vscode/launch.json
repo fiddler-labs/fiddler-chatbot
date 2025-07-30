@@ -75,6 +75,66 @@
       "env": {
         "PYTHONPATH": "${workspaceFolder}"
       }
-    }
+    },
+    {
+      "name": "Vector Index: UPDATE: Safe Mode (APPEND ONLY)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/vector_index_mgmt.py",
+      "args": [],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Vector Index: UPDATE: Replace Mode (OVERWRITE + TRUNCATE)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/vector_index_mgmt.py",
+      "args": ["--truncate"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Vector Index: PROD Mode : Skip Maintenance + UPDATE (Fast and destructive)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/vector_index_mgmt.py",
+      "args": ["--skip-maintenance", "--truncate"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Vector Index: Health Check",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/vector_index_mgmt.py",
+      "args": ["--health-check"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
   ]
 }
