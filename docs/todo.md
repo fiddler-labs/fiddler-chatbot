@@ -8,10 +8,7 @@
 - Tools implementation for agentic orchestration
   - P0 : Currently using a dummy tool to begin implementation. <!Ongoing!>
   - P1 : Will transition to using Fiddler Guardrails once the dummy tool setup is validated. <!Ongoing!>
-  - Overall Strategy:
-    - Keep tool calls simple and focused (avoid over-engineering with multiple agents)
-    - Focus on validation and correction rather than complex reasoning
-    - Enable tracking and monitoring through existing infrastructure
+  - Overall Strategy: Keep tool calls simple and focused (avoid over-engineering with multiple agents)
   - URL Validation Tool:
     - **Problem**: Generated URLs may lead to non-existent pages (hallucination)
     - **Solution**: Build URL validator that checks if links are accessible
@@ -86,4 +83,4 @@
 
 ## Side Notes
 
-- since we use notebooks from `fiddler-examples` , all the good stuff from cs-utils will automatically be inherited as reference assets
+- since we use notebooks from `fiddler-examples` , all the good stuff from *cs-utils* will automatically be inherited as reference assets
