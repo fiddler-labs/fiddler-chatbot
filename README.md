@@ -14,15 +14,8 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
 - **Vector Search**: Uses DataStax Cassandra for efficient similarity search
 - **Real-time Monitoring**: Integrates with Fiddler platform for response quality tracking
 - **Safety Guardrails**: Implements faithfulness and safety scoring
-- **Interactive UI**: Streamlit-based web interface with feedback collection
-
-## 🏛️ Architecture
-
-**WIP** - Detailed architecture diagram and component relationships will be added here.
-
-### Core Components
-
-**WIP** - Detailed lay out will be added here.
+- **Monitoring Integration**: Fiddler LangGraph SDK
+- **Interaction Interface**: CLI-based (Chainlit integration planned for later)
 
 ## 🚀 Installation
 
@@ -53,96 +46,118 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    # Using uv (recommended)
    uv sync
 
-   # Or using pip
+   # Or using pip / uv pip
    uv pip install .
    ```
 
 3. **Environment Configuration**
 
-    **WIP** - Detailed environment setup instructions will be added here.
-
-    Create a `.env` file with required API keys:
-
-   ```bash
-   OPENAI_API_KEY=your_openai_api_key
-   ASTRA_DB_APPLICATION_TOKEN=your_datastax_token
-   FIDDLER_API_TOKEN=your_fiddler_token
-   FIDDLER_APP_ID=your_fiddler_app_id  # for chatbot_agentic.py
-   ```
-
-   test the env
+   Create a `.env` file with required API keys by copying the `.env.template` file.
+   Test the env by running the following command:
 
    ```bash
    uv run src/utils/test_agentic_env.py
    ```
 
-4. **Run the application**
+4. **Run the new agentic application**
 
    ```bash
    python src/chatbot_agentic.py "hello" "what is the current time?" "quit"
    ```
 
-   Log the application run to local file
+5. **Running the older Streamlit Application**
+   The application will be available at `http://localhost:8501`
 
    ```bash
-   uv run src/utils/test_logger.py "uv run python src/chatbot_agentic.py \"Hello\" \"What is the current time?\"" "src/chatbot_agentic.py"
+   streamlit run chatbot.py
    ```
 
-## 🔧 Local Development
+---
 
-### Running the Application
+## Fiddler Agentic Monitoring Integration
 
-```bash
-# Start the Streamlit application
-streamlit run chatbot.py
-```
+The agentic chatbot application is fully integrated with Fiddler monitoring from the foundation phase:
 
-The application will be available at `http://localhost:8501`
+- **Application Name**: "Agentic Documentation Chatbot - APP1"
+- **Platform**: Fiddler Cloud Pre-production (`preprod.cloud.fiddler.ai`)
+- **Monitoring Components**:
+  - LangGraph workflow execution spans
+  - ChatOpenAI LLM invocation tracking
+  - Chatbot node execution monitoring
+- **Session Tracking**: UUID-based conversation tracking with context preservation
+- **Real-time Visibility**: All interactions visible in Fiddler web UI dashboard
 
-### Development Workflow
+### Expected Web UI Behavior
 
-**WIP** - Development best practices, testing procedures, and contribution guidelines.
+Based on current implementation, developers should expect to see:
 
-## 📊 Usage
+- Three primary span types: `LangGraph`, `ChatOpenAI`, and `chatbot`
+- Session IDs in shortened UUID format (e.g., `bf246607`, `b6a4fa2`, `528d3fe`)
+- Event ingestion counts per span
+- Agent classification showing named agents and unknown agents
+- Real-time span status (Active/Inactive)
 
-### Basic Chat Interface
+### Spans and Traces in Fiddler Web UI
 
-1. Open the Streamlit application in your browser
-2. Enter your question about Fiddler documentation
-3. Review the generated response with source citations
-4. Provide feedback using thumbs up/down buttons
-5. Add comments for additional context
+Based on the monitoring dashboard, the following span types are automatically generated:
 
-### Advanced Features
+#### 1. **chatbot** Span
 
-**WIP** - Advanced usage patterns, API integration, and customization options.
+- **Purpose**: Tracks the main chatbot node execution
+- **Session ID Format**: `528d3fe` (shortened UUID)
+- **Represents**: The core chatbot logic flow
 
-## 📁 Project Structure
+#### 2. **ChatOpenAI** Span
 
-```bash-tree
-fiddler-chatbot/
-** WIP **
-```
+- **Purpose**: Tracks OpenAI API calls and responses
+- **Session ID Format**: `b6a4fa2` (shortened UUID)
+- **Represents**: LLM invocations and responses
 
-## 📊 Monitoring
+#### 3. **LangGraph** Span
 
-The application integrates with Fiddler AI's platform for:
+- **Purpose**: Tracks the overall LangGraph workflow execution
+- **Session ID Format**: `bf246607` (shortened UUID)
+- **Represents**: State transitions and graph execution
+
+---
+
+## Legacy Monitoring
+
+The legacy chatbot application also integrates with Fiddler AI's platform for:
 
 - **Response Quality**: Faithfulness scoring against source documents
 - **Safety Monitoring**: Jailbreak attempt detection
 - **Performance Metrics**: Response latency and token usage
 - **User Feedback**: Like/dislike ratings and comments
 
-**WIP** - Detailed monitoring setup and dashboard configuration.
+---
 
-## 🔧 Troubleshooting
+## Development Methodology
 
-### Common Issues **WIP**
+This section outlines the development roadmap for building a sophisticated agentic chatbot application using LangGraph.
+The primary objective is to stress test Fiddler's agentic monitoring capabilities by building agentic applications using LangGraph and testing them on the Fiddler platform using the Fiddler LangGraph SDK.
 
-- Comprehensive troubleshooting guide.
-  - Database Connection Issues ( WIP )
-  - OpenAI API Issues ( WIP )
-  - Vector Search Problems ( WIP )
+### Iterative Development Approach
+
+- **Small, Verifiable Units**: Start with the smallest possible functional component
+- **Continuous Validation**: Verify functionality at every development stage
+- **No Pseudocode**: All code must be tested and working before proceeding
+- **Incremental Building**: Each phase builds upon the previous verified foundation
+
+### Development Quality Standards for Risk Mitigation
+
+This project follows an iterative, verification-driven approach, emphasizing small, testable increments with validation at each stage,
+avoiding large-scale development without proper testing.
+
+- Each phase must be fully functional before proceeding
+- All features must be tested and verified
+- **Testing**: Mandatory verification at each major development milestone
+- **Integration Issues**: Continuous integration testing with green-streamlit
+- **Monitoring Failures**: Early integration of Fiddler monitoring to identify issues
+- **Platform Compatibility**: Regular validation of Fiddler LangGraph SDK compatibility
+- **Data Visibility**: Continuous monitoring of data flow to Fiddler platform
+
+---
 
 ## 📄 License
 
