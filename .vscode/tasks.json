@@ -2,6 +2,20 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Load Environment Variables",
+      "type": "shell",
+      "command": "source ${workspaceFolder}/load_env.sh",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Example Task",
       "type": "shell",
       "command": "source ${workspaceFolder}/any_script.sh",
