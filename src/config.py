@@ -1,8 +1,7 @@
 CONFIG_CHATBOT_OLD = {
     "PROJECT_NAME": "fiddler_chatbot_v3",
     "MODEL_NAME": "fiddler_rag_chatbot",
-    "URL": "https://preprod.cloud.fiddler.ai",
-    "ORG_NAME": "preprod",
+    "URL": "https://demo.fiddler.ai",
     
     "ASTRA_DB_SECURE_BUNDLE_PATH": "datastax_auth/secure-connect-fiddlerai.zip",
     "ASTRA_DB_KEYSPACE": "fiddlerai",
@@ -15,7 +14,7 @@ CONFIG_CHATBOT_OLD = {
     "GR__FAITHFULNESS_SCORE": 0.0,
     "GR__JAILBREAK_SCORE": 0.0,
     "GR__SAFETY_LATENCY": 0.0,
-    "GR__REQUESTS_TIMEOUT": 30
+    "GR__REQUESTS_TIMEOUT": 60
 }
 
 CONFIG_CHATBOT_NEW = {
@@ -24,5 +23,5 @@ CONFIG_CHATBOT_NEW = {
     "GR__FAITHFULNESS_SCORE": 0.0,
     "GR__JAILBREAK_SCORE": 0.0,
     "GR__SAFETY_LATENCY": 0.0,
-    "GR__REQUESTS_TIMEOUT": 30
+    "GR__REQUESTS_TIMEOUT": 60
 }
