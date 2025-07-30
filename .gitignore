@@ -11,14 +11,12 @@ uv.lock
 build/
 
 .vscode/settings.json
+.env
 
 local_assets/*/*.md
 local_assets/vector_index_feed_*.csv
-
-.env
-temp_ref/
+local_assets/*_output_pandas.csv
 
 logs/log_*.log
-logs/Archive/
-logs/cursor_logs/test_run_*.log
-logs/cursor_logs/Archive/
+
+temp_ref/
