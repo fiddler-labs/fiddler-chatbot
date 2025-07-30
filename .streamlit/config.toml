@@ -1,2 +1,8 @@
 [theme]
 base="light"
+
+[server]
+headless = true
+
+[experimental]
+installCommand = "uv sync"
