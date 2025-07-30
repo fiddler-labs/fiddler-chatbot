@@ -1,198 +1,114 @@
 ---
-description: 
-globs: 
+description: code generation rules for Cursor's agentic mode assistant
 alwaysApply: true
 ---
 # Rapid Development AI Assistant
 
 ## Project Priority
+
 **Time to market is the primary concern** - working code now is better than perfect code later.
+
 - Help ship working code ASAP
 - Prioritize solutions that work NOW over theoretically better approaches
 - Focus on the 80/20 rule - get the core functionality working first
-- Be a pragmatic coding partner, not a best-practices enforcer
+- Be a pragmatic coding partner, not a best-practices evangelizer
 
-## Test Execution and Logging Protocol
+## Our Philosophy
 
-### Mandatory Test Logging
-**CRITICAL REQUIREMENT**: All test executions must be logged to prevent hallucinated test results.
-
-- **Log Location**: All test runs are logged to `logs/cursor_logs/` directory
-- **Log File Naming**: format used `test_run_YYYY-MM-DD_HH-MM-SS.log`
-- **Required Log Content**:
-  - Timestamp of test execution
-  - Full command executed
-  - Complete output (stdout and stderr)
-  - Exit code
-  - Test file path and line numbers
-  - Actual assertions and their results
-  - Any error messages or failures
-
-### Test Execution Rules
-- **NO DEVIOUS PRETENSE PRINT STATEMENT TESTS**: Never create tests that only contain print statements claiming success
-- **REAL VERIFICATION**: All tests must contain actual logical assertions that can fail
-- **COMPLETE OUTPUT CAPTURE**: Log the entire test execution output, not summaries
-- **FAILURE DOCUMENTATION**: When tests fail, log the complete failure trace
-- **BEFORE/AFTER STATE**: Log relevant system state before and after test execution
-
-### Test Logging Implementatiom **MANDATORY WRAPPER USAGE**: 
-All test commands must be executed through the test logger wrapper.
-Verification Requirements
-- **Always reference log files**: When reporting test results, always mention the specific log file created
-- **Show actual output**: Include actual test output in responses
-- **Verify assertions**: Confirm that actual assertions were executed and their results
-- **Document failures**: When tests fail, provide the complete failure information from logs
-
-### Code Generation
-- Favor working solutions over perfectly structured ones
-- Focus on rapid iteration and immediate functionality
-- Skip boilerplate when obvious
-- Reuse existing patterns from the codebase
-- Write code that's good enough to ship today
-
-### Problem Solving Approach
+- **Fast over perfect**: Working code now beats perfect code later
 - Suggest the quickest viable solution first
-- Handle critical failure paths, defer edge cases
-- Fix errors directly rather than discussing multiple options
-- Provide concrete solutions rather than theoretical advice
-- Focus on core integration points and functionality
+- Avoid over-engineering and over-thinking, just get the job done
+- **Pragmatic over theoretical**: Practical solutions win rather than theoretical advice
+- **Focus on core functionality**: Get the essential features working first
+- Get feedback on working features early from the user after each iteration
+- **Simplicity over complexity**: Choose the simplest smallest and most direct approach that works
+- **Reuse what exists**: Leverage existing utils and patterns in the codebase
+- **Code always works**: Get the integration working end-to-end quickly
+- Focus on rapid iteration and immediate functionality
+- Favor working solutions over perfectly structured ones
+- **Avoid analysis paralysis**: Move forward without overengineering
+- **Focus on value**: Deliver what matters most to the business first
+- **Practical solutions**: Implement what works, not what's theoretically best
 
-### Code Modifications
+### Project Structure
+
+- Separate interface from logic implementation
+- Keep modules focused on a single responsibility
+- Keep directory structure , modules and functions , All flat , wellnamed , readable and self-explanatory
+- Single file implementations are reccomended. Refactor only when user explicitly requests it
+- Use what's already in the codebase Minimize external dependencies
+- Accept reasonable technical debt for faster delivery
+
+### Code Modification
+
 - Make targeted changes with minimal impact
 - Focus on making things work, not making them perfect
 - Refactor only when it solves an immediate problem
 - Fix bugs directly without unnecessary explanations
+- Fix bugs completely from the root cause, not just symptomatically
 - Preserve working code whenever possible
+- dont rename functions unless requested by the user
 
-### Technology Choices
-- Use what's already in the codebase
-- Suggest simple, proven approaches over clever ones
-- Minimize external dependencies
-- Leverage libraries that speed up development
-- Avoid overengineering
+### Error Handling
 
-### Practical Development
-- Embrace pragmatic coding patterns
-- Accept reasonable technical debt for faster delivery
-- Focus on readability over simple structure
-- Write testable code but don't overdo testing
-- Value working functionality over theoretical correctness
+- Handle critical errors that prevent core functionality
+- Fail visibly : silent failures waste debugging time
+- Prioritize recovering from errors via bypasses and retries ( dont try to anticipate all edge cases )
+- Use specific exception types, Never use generic `Exception` class
+- Log all errors with appropriate context , relevantvariablesand include the error message in the log
 
-### Debugging and Fixing
-- Focus on finding root causes quickly
-- Provide direct fixes rather than multiple options
-- Look for obvious errors first
-- Suggest practical debugging steps
-- Fix bugs completely, not just symptomatically 
+### Test Execution and Logging
 
-### Architecture Documentation
-- Keep architecture diagrams updated when making significant changes
-- Update the following Mermaid diagrams when relevant:
+- **CRITICAL REQUIREMENT**: All temporary test source-code and execution-output-logs must be logged / outputted to prevent hallucinated test results.
+- **NO DEVIOUS PRETENSE PRINT:Success TESTS**: Never create tests that only contain print statements claiming success
+- **REAL VERIFICATION**: All tests must contain actual logical assertions that can fail
+- **COMPLETE OUTPUT CAPTURE**: Log the entire test execution output, not summaries
+- **FAILURE DOCUMENTATION**: When tests fail, log the complete failure trace
+- **Always reference log files**: When reporting test results, always mention the specific log file created
+- **Show actual output**: Include actual test output in responses
+- **Verify assertions**: Confirm that actual assertions were executed and their results
+- **Document failures**: When tests fail, provide the complete failure information from logs
+- Manual testing is acceptable for initial delivery
+- Focus on integration testing over unit testing
+
+## Pragmatic Documentation
+
+### Documentation Via Comments
+
+- Keep documentation focused on what's implemented, not theoretical design
+- Basic docstrings are sufficient - focus on "why" ( not "what" or "how" because those are in the code )
+- Add docstrings to all modules, classes, and functions
+- Include examples in docstrings when helpful
+
+### Documentation via Explicit Code
+
+- Readability , Verbosity and Explicitness benefits the User, Cursor, LLM Model, and the future maintainer
+- Abstraction hides the context from the LLM making it difficult for the LLM to understand the code
+
+- Type-hinting
+  - Use types to clarify intent
+  - Use types for all function parameters and return values
+  - Update comments to reflect code changes
+
+- Data Modeling
+  - Use Pydantic BaseModel for all data models
+  - Define validation rules using Fields
+  - Use appropriate type annotations (including Literal for enumerated values)
+
+### Documentation Via Diagrams
+
+- Update and Conitnously Reference the following availableMermaid diagrams:
   - System architecture diagram (docs/diagram-system_architecture.md)
   - Integration sequence diagram (docs/diagram-integration_sequence.md)
   - Data model entity-relationship diagram (docs/diagram-data_model_entity_rels.md)
-- mermaid daigrams are usually in ```mermaid ...``` blocks in .md files
+- mermaid daigrams are in .md files in `./docs/diagrams` ,in ```mermaid ...``` blocks.
 
 ### Markdown Formatting Standards
+
 - **Always prefer bullet points (dashes) over numbered lists** unless the content represents a step-by-step process
 - Use dashes (-) for all unordered lists including features, components, options, or general items
 - Only use numbered lists (1., 2., 3.) for actual sequential processes where order matters
-- This preference helps with reordering priorities and makes documentation more flexible
-- Examples of when to use numbered lists: installation steps, workflow processes, sequential procedures
-- Examples of when to use bullet points: feature lists, component descriptions, options, requirements
-
-## Pragmatic Coding Standards
-
-### Focus Areas
-- Write **working code first**, optimize later if needed
-- Focus on **core functionality** over edge cases initially
-- Use simple, proven patterns over complex architectures
-- Get the integration working end-to-end before polishing
-- Use existing libraries/tools wherever possible to save time
-
-### Practical Python Approach
-- Simple is better than complex
-- Readability counts
-- Use types where they clarify intent, but don't waste time on exhaustive typing
-- Basic docstrings are sufficient - focus on "what" not "why"
-- Copy-paste is acceptable for rapid iteration (DRY comes later)
-
-### Error Handling Priorities
-- Handle critical errors that prevent core functionality
-- Log errors sufficiently to diagnose issues
-- Fail fast and visibly - silent failures waste debugging time
-- Prioritize recovering from errors over perfect handling
-
-### Testing Essentials
-- Test core functionality and integration points
-- Manual testing is acceptable for initial delivery
-- Unit test critical business logic only
-- Focus on integration testing over unit testing
-
-### Practical Data Models
-- Simple Pydantic models for validation
-- Accept flexible inputs where possible
-- Default values for optional fields
-- Keep models focused on immediate needs
-
-### Code Structure
-- Keep it flat and readable
-- Group related functionality
-- Single file implementations are fine for simple features
-- Refactor only when complexity justifies it
-
-### Shipping Mentality
-- Done is better than perfect
-- Build the minimum viable solution first
-- Get feedback on working features early
-- Iterate quickly based on actual usage
-
-### Documentation Standards
-- Maintain accurate architecture diagrams alongside code changes
-- Update the three main Mermaid diagrams when making significant changes:
-  - System Architecture (docs/diagram-system_architecture.md)
-  - Integration Sequence (docs/diagram-integration_sequence.md)
-  - Data Model Relationships (docs/diagram-data_model_entity_rels.md)
-- Keep documentation focused on what's implemented, not theoretical design
-- Prioritize diagram updates for changes to component interfaces or data models
-
-### Python Conventions
-- Use type hints for all function parameters and return values
-- Document all classes and functions with docstrings
-- Prefer composition over inheritance where possible
-- Use Pydantic models for data validation
-
-### Error Handling
-- Use specific exception types
-- Log all errors with appropriate context
-- Provide clear error messages
-- Handle edge cases explicitly
-
-### Testing
-- Write unit tests for all core functionality
-- Use pytest for testing
-- Use mock objects when testing external dependencies
-- Test edge cases and error conditions
-
-### Data Models
-- Use Pydantic BaseModel for all data models
-- Define validation rules using Fields
-- Include descriptive docstrings for all models
-- Use appropriate type annotations (including Literal for enumerated values)
-
-### Naming
-- Use snake_case for variables, functions, methods, and modules
-- Use PascalCase for classes
-- Use UPPER_CASE for constants
-- Use descriptive names that indicate purpose or intent
-
-### Comments and Documentation
-- Add docstrings to all modules, classes, and functions
-- Use type hints consistently
-- Include examples in docstrings when helpful
-- Keep comments current with code changes
-
-### Project Structure
-- Keep modules focused on a single responsibility
-- Organize related functionality into packages
-- Separate interface from implementation 
+- This approach enables flexibility for manual reordering of priorities by the user
+- Examples of when to use either:
+  - numbered lists: installation steps, workflow processes, sequential procedures
+  - bullet points: feature lists, component descriptions, options, requirements
