@@ -10,15 +10,15 @@ graph LR
 
 """
 
+import glob
 import os
 import sys
 import logging
 import time
-import functools
 import pandas as pd
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import Optional, Any, Callable, Dict, List, Tuple, Union
+from typing import Optional, Any, Callable, Dict, List, Tuple, Union # noqa: F401
 from contextlib import contextmanager
 from enum import Enum
 
@@ -73,7 +73,7 @@ class ValidationResult:
     total_rows: int = 0
 
 # ==================== CONFIGURATION ====================
-# Centralized configuration to avoid hardcoding throughout the file
+
 CONFIG = { # todo - follow this pattern in the chatbot.py file too
     "secure_bundle_path": "datastax_auth/secure-connect-fiddlerai.zip",
     "keyspace": "fiddlerai",
@@ -81,7 +81,6 @@ CONFIG = { # todo - follow this pattern in the chatbot.py file too
     "embedding_model": "text-embedding-3-large",
     "embedding_dimensions": 1536,
     "temperature": 0,
-    "default_csv_path": "./local_assets/vector_index_feed_20250701011105.csv",
     "squad_table": "squad",
     "chatbot_history_table": "fiddler_chatbot_history",
     "backup_chunk_size": 1000,  # For backup operations
@@ -115,7 +114,6 @@ def cassandra_connection():
     delay = CONFIG["retry_delay"]
     backoff = CONFIG["retry_backoff"]
     current_delay = delay
-    last_exception = None
     
     for attempt in range(max_attempts):
         try:
@@ -156,7 +154,6 @@ def cassandra_connection():
             return  # Success, exit retry loop
             
         except Exception as e:
-            last_exception = e
             if attempt == max_attempts - 1:
                 logger.error(f"❌ Failed to connect to Cassandra after {max_attempts} attempts")
                 raise e
@@ -208,13 +205,25 @@ def setup_llm_and_embeddings():
 
 # ==================== DATA LOADING AND VECTOR STORE ====================
 
-def validate_and_load_documentation_data(csv_path: Optional[str] = None) -> Tuple[ValidationResult, Optional[pd.DataFrame]]:
+def fetch_latest_csv_path() -> str:
+    """
+    Fetch the latest CSV file path from the local_assets folder
+    Returns: str
+
+    use glob matching and max() to find the latest file
+    return the path
+    """
+    csv_files = glob.glob("./local_assets/vector_index_feed_*.csv")
+    if not csv_files:
+        raise FileNotFoundError("No CSV files found in local_assets folder")
+    return max(csv_files, key=os.path.getctime)
+
+
+def validate_and_load_documentation_data(csv_path: str) -> Tuple[ValidationResult, Optional[pd.DataFrame]]:
     """
     Load  and Validate documentation data from CSV file
     Returns: (validation_result, dataframe) tuple
     """
-    if csv_path is None:
-        csv_path = CONFIG["default_csv_path"]
     
     # At this point csv_path is guaranteed to be a string
     assert isinstance(csv_path, str), "csv_path must be a string at this point"
@@ -308,15 +317,15 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
         """
         try:
             # Get the table definition from system schema
-            table_def_query = """
+            table_def_query = f"""--sql
             SELECT table_name, bloom_filter_fp_chance, caching, comment, compaction, compression,
                 crc_check_chance, default_time_to_live, gc_grace_seconds, max_index_interval,
                 memtable_flush_period_in_ms, min_index_interval, read_repair, speculative_retry
             FROM system_schema.tables 
-            WHERE keyspace_name = %s AND table_name = %s
+            WHERE keyspace_name = '{CONFIG['keyspace']}' AND table_name = '{source_table}'
             """
             
-            table_info = session.execute(table_def_query, (CONFIG["keyspace"], source_table))
+            table_info = session.execute(table_def_query)
             table_row = list(table_info)
             
             if not table_row:
@@ -324,14 +333,14 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
                 return False
             
             # Get column definitions
-            columns_query = """
+            columns_query = f"""--sql
             SELECT column_name, type, kind, position, clustering_order
             FROM system_schema.columns 
-            WHERE keyspace_name = %s AND table_name = %s
+            WHERE keyspace_name = '{CONFIG['keyspace']}' AND table_name = '{source_table}'
             ORDER BY position
             """
             
-            columns_info = session.execute(columns_query, (CONFIG["keyspace"], source_table))
+            columns_info = session.execute(columns_query)
             columns = list(columns_info)
             
             if not columns:
@@ -359,7 +368,7 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
             else:
                 primary_key_clause = f"PRIMARY KEY ({', '.join(primary_keys)})"
             
-            create_table_sql = f"""
+            create_table_sql = f"""--sql
             CREATE TABLE {CONFIG["keyspace"]}.{backup_table} (
                 {', '.join(regular_columns)},
                 {primary_key_clause}
@@ -389,7 +398,7 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
             logger.info(f"Copying data from {source_table} to {backup_table}...")
             
             # Use INSERT INTO ... SELECT approach for efficient copying
-            copy_query = f"""
+            copy_query = f"""--sql
             INSERT INTO {CONFIG["keyspace"]}.{backup_table} 
             SELECT * FROM {CONFIG["keyspace"]}.{source_table}
             """
@@ -549,7 +558,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
                     # Copy data to backup
                     copy_result = _copy_table_data_chunked(session, table_name, backup_table)
                     if not copy_result:
-                        raise ValueError("Failed to backup existing data")
+                        raise ValueError(f"Failed to backup existing data from {table_name} to {backup_table}. Check logs for detailed error information.")
                     
                     logger.info(f"✅ Backup completed: {backup_table}")
                     
@@ -567,7 +576,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
             logger.info(f"Copying data from staging to target table '{table_name}'...")
             copy_result = _copy_table_data_chunked(session, staging_table, table_name)
             if not copy_result:
-                raise ValueError("Failed to copy data from staging to target table")
+                raise ValueError(f"Failed to copy data from staging table {staging_table} to target table {table_name}. Check logs for detailed error information.")
             
             # 7. Verify target table
             verify_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{table_name}"
@@ -593,10 +602,15 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
         )
         
     except Exception as e:
-        logger.error(f"❌ Failed to populate vector store: {e}")
+        logger.error(f"❌ Failed to populate vector store: {repr(e)}")
         logger.error(f"   Error type: {type(e).__name__}")
+        logger.error(f"   Error args: {repr(e.args)}")
         logger.error(f"   Table name: {table_name}")
         logger.error(f"   Replace existing: {replace_existing}")
+        if hasattr(e, '__cause__') and e.__cause__:
+            logger.error(f"   Caused by: {repr(e.__cause__)}")
+        if hasattr(e, '__context__') and e.__context__:
+            logger.error(f"   Context: {repr(e.__context__)}")
         
         # Clean up staging table if it exists
         try:
@@ -679,9 +693,13 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
         
         # Process data in chunks using token-based pagination
         # First, get all row IDs to process
-        select_ids_query = f"SELECT row_id FROM {CONFIG['keyspace']}.{source_table}"
-        id_rows = session.execute(select_ids_query)
-        row_ids = [row.row_id for row in id_rows]
+        try:
+            select_ids_query = f"SELECT row_id FROM {CONFIG['keyspace']}.{source_table}"
+            id_rows = session.execute(select_ids_query)
+            row_ids = [row.row_id for row in id_rows]
+        except Exception as e:
+            logger.error(f"❌ Error getting row IDs from {source_table}: {repr(e)}")
+            raise
         
         logger.info(f"Found {len(row_ids)} rows to copy")
         
@@ -692,23 +710,41 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
             
             # Get full row data for this chunk
             for row_id in chunk_ids:
-                select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {CONFIG['keyspace']}.{source_table} WHERE row_id = ?"
-                row_result = session.execute(select_query, (row_id,))
-                row_data = list(row_result)
+                try:
+                    select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {CONFIG['keyspace']}.{source_table} WHERE row_id = '{row_id}'"
+                    row_result = session.execute(select_query)
+                    row_data = list(row_result)
+                except Exception as e:
+                    # Use % formatting instead of f-strings to avoid issues with % characters in exception messages
+                    logger.error(f"❌ Error selecting data for query {select_query}")
+                    logger.error(f"   Error row_id: {row_id}")
+                    logger.error(f"   Error row_result: {row_result}")
+                    logger.error(f"   Error row_data: {row_data}")
+                    logger.error(f"   Error type: {type(e).__name__}")
+                    logger.error(f"   Error args: {repr(e.args)}")
+                    raise
                 
                 if row_data:
                     row = row_data[0]
                     # Insert with timeout handling
                     try:
+                        # Add debugging to see which data might be causing issues
+                        if rows_copied % 50 == 0:  # Log every 50th row for debugging
+                            logger.info(f"Processing row {rows_copied}: row_id={repr(row.row_id[:50])}...")
+                        
                         session.execute(prepared_statement, (row.row_id, row.vector, row.body_blob, row.metadata_s))
                         rows_copied += 1
                     except Exception as e:
                         if "timeout" in str(e).lower():
-                            logger.warning(f"⚠️  Timeout on row {row_id}, retrying...")
+                            logger.warning(f"⚠️  Timeout on row {repr(row_id)}, retrying...")
                             time.sleep(1)
                             session.execute(prepared_statement, (row.row_id, row.vector, row.body_blob, row.metadata_s))
                             rows_copied += 1
                         else:
+                            # Add detailed error information for debugging
+                            logger.error(f"❌ Error processing row {repr(row_id)}: {repr(e)}")
+                            logger.error(f"   Error type: {type(e).__name__}")
+                            logger.error(f"   Row data preview: row_id={repr(row.row_id)}, body_blob_preview={repr(str(row.body_blob)[:100])}")
                             raise e
                 
                 # Log progress for large datasets
@@ -719,7 +755,10 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
         return True
         
     except Exception as e:
-        logger.error(f"❌ Failed to copy data from {source_table} to {target_table}: {e}")
+        # Use repr() to safely handle data that might contain % characters
+        logger.error(f"❌ Failed to copy data from {source_table} to {target_table}: {repr(e)}")
+        logger.error(f"   Exception type: {type(e).__name__}")
+        logger.error(f"   Exception args: {repr(e.args)}")
         return False
 
 def test_vector_store(vector_store, query: str = "What is Fiddler?", k: int = 2):
@@ -759,25 +798,25 @@ def inspect_table_structure_safe(session, table_name: str, keyspace: Optional[st
         try:
             # Check table structure using system schema queries
             logger.info("\n=== TABLE INFORMATION ===")
-            table_info_query = """
+            table_info_query = f"""--sql
             SELECT table_name, bloom_filter_fp_chance, caching, comment, compaction, compression 
             FROM system_schema.tables 
-            WHERE keyspace_name = %s AND table_name = %s
+            WHERE keyspace_name = '{keyspace}' AND table_name = '{table_name}'
             """
             
-            rows = inspect_session.execute(table_info_query, (keyspace, table_name))
+            rows = inspect_session.execute(table_info_query)
             for row in rows:
                 logger.info(f"Table: {row.table_name} ; \nCompaction: {row.compaction} ; \nCompression: {row.compression} ; \nCaching: {row.caching}")
             
             # Get column info
             logger.info("\n=== COLUMN INFORMATION ===")
-            columns_query = """
+            columns_query = f"""--sql
             SELECT column_name, type, kind, position 
             FROM system_schema.columns 
-            WHERE keyspace_name = %s AND table_name = %s
+            WHERE keyspace_name = '{keyspace}' AND table_name = '{table_name}'
             """
             
-            rows = inspect_session.execute(columns_query, (keyspace, table_name))
+            rows = inspect_session.execute(columns_query)
             for row in rows:
                 logger.info(f"Column: {row.column_name}, Type: {row.type}, Kind: {row.kind}")
             
@@ -799,7 +838,9 @@ def inspect_table_structure_safe(session, table_name: str, keyspace: Optional[st
                 logger.info(f"\nSample row {i+1}:")
                 logger.info(f"  Row ID: {getattr(row, 'row_id', 'N/A')}")
                 if hasattr(row, 'body_blob'):
-                    logger.info(f"  Content preview: {str(row.body_blob)[:100]}...")
+                    # Use repr() to safely handle content that might contain % characters
+                    content_preview = repr(str(row.body_blob)[:100])
+                    logger.info(f"  Content preview: {content_preview}...")
                 if hasattr(row, 'vector') and row.vector:
                     logger.info(f"  Vector dimensions: {len(row.vector)}")
                 if hasattr(row, 'metadata_s'):
@@ -827,13 +868,15 @@ def query_and_display_rows_safe(session, table_name: str, limit: int = 10) -> No
             if hasattr(row, 'row_id'):
                 logger.info(f'    row_id:      {row.row_id}')
                 logger.info(f'    vector:      {str(row.vector)[:64]}...')
-                logger.info(f'    body_blob:   {row.body_blob[:64]}...')
+                logger.info(f'    body_blob:   {repr(row.body_blob[:64])}...')  # Use repr() to safely handle content that might contain % characters
+                # Use repr() to safely handle content that might contain % characters
+
                 logger.info(f'    metadata_s:  {row.metadata_s}')
             else:
                 # Legacy format
                 logger.info(f'    document_id:      {getattr(row, "document_id", "N/A")}')
                 logger.info(f'    embedding_vector: {str(getattr(row, "embedding_vector", ""))[:64]}...')
-                logger.info(f'    document:         {getattr(row, "document", "")[:64]}...')
+                logger.info(f'    document:         {repr(getattr(row, "document", "")[:64])}...')
                 logger.info(f'    metadata_blob:    {getattr(row, "metadata_blob", "N/A")}')
                 
         logger.info('\n...')
@@ -849,7 +892,7 @@ def export_table_to_csv(session, table_name: str, output_file: Optional[str] = N
     Returns the path to the created CSV file
     """
     if output_file is None:
-        output_file = f'{table_name}_output_pandas.csv'
+        output_file = f'local_assets/{table_name}_output_pandas.csv'
         
     try:
         cql_query = f'SELECT * FROM {CONFIG["keyspace"]}.{table_name};'
@@ -896,10 +939,10 @@ def create_chatbot_history_table(session) -> None:
         )
         -- WITH additional_write_policy = '99p'
             --     AND bloom_filter_fp_chance = 0.01
-            --     AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+            --     AND caching = {{'keys': 'ALL', 'rows_per_partition': 'NONE'}}
             --     AND comment = ''
-            --     AND compaction = {'class': 'org.apache.cassandra.db.compaction.UnifiedCompactionStrategy'}
-            --     AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+            --     AND compaction = {{'class': 'org.apache.cassandra.db.compaction.UnifiedCompactionStrategy'}}
+            --     AND compression = {{'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}}
             --     AND crc_check_chance = 1.0
             --     AND default_time_to_live = 0
             --     AND gc_grace_seconds = 864000
@@ -1009,7 +1052,7 @@ def validate_environment() -> ValidationResult:
     
     return result
 
-def load_vector_data(replace_existing: bool = False, csv_path: Optional[str] = None) -> LoadResult:
+def load_vector_data(csv_path:str, replace_existing: bool = False) -> LoadResult:
     """
     Core function to load vector data into Cassandra
     
@@ -1033,6 +1076,9 @@ def load_vector_data(replace_existing: bool = False, csv_path: Optional[str] = N
     
     # 1. Load and validate data first (for both dry-run and normal mode)
     logger.info("\n1. Loading and validating documentation data...")
+
+    logger.info(f"Using CSV file: {csv_path}")
+
     validation_result, df = validate_and_load_documentation_data(csv_path)
     if not validation_result.is_valid:
         logger.error("❌ Data validation failed:")
@@ -1127,7 +1173,7 @@ def perform_maintenance_operations(session) -> None:
         logger.error(f"❌ Maintenance operations failed: {e}")
         # Don't raise here, as these are optional operations
 
-def main(truncate_first: bool = False, skip_maintenance: bool = False, csv_path: Optional[str] = None):
+def main(truncate_first: bool = False, skip_maintenance: bool = False):
     """
     Main execution function for the vector index loader
     
@@ -1147,6 +1193,8 @@ def main(truncate_first: bool = False, skip_maintenance: bool = False, csv_path:
     """
     logger.info("=== Cassandra Vector Index Loader ===")
     logger.info(f"Target table: {TABLE_NAME} \nKeyspace: {CONFIG['keyspace']} \nEmbedding model: {CONFIG['embedding_model']}")
+    
+    csv_path = fetch_latest_csv_path()
     
     # 1. Core operation: Load vector data
     load_result = load_vector_data(replace_existing=truncate_first, csv_path=csv_path)
@@ -1279,8 +1327,6 @@ if __name__ == "__main__":
                        help='Replace existing data with backup (DESTRUCTIVE)')
     parser.add_argument('--skip-maintenance', action='store_true', 
                        help='Skip optional maintenance operations')
-    parser.add_argument('--csv-path', type=str, 
-                       help='Path to CSV file (optional, uses default if not provided)')
     parser.add_argument('--health-check', action='store_true', 
                        help='Perform comprehensive health check only')
     
@@ -1317,5 +1363,5 @@ if __name__ == "__main__":
         if args.truncate:
             print("⚠️  REPLACE mode enabled: existing data will be backed up to a secondary timestamped table and replaced")
         
-        main(truncate_first=args.truncate, skip_maintenance=args.skip_maintenance, csv_path=args.csv_path)
+        main(truncate_first=args.truncate, skip_maintenance=args.skip_maintenance)
 
