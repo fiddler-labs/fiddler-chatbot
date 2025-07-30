@@ -52,7 +52,7 @@ from streamlit.logger import get_logger
 
 from agentic_tools.fiddler_gaurdrails import get_safety_guardrail_results, get_faithfulness_guardrail_results
 
-from ..config import CONFIG_CHATBOT_OLD as config
+from config import CONFIG_CHATBOT_OLD as config
 
 FIDDLER_CHATBOT_PROJECT_NAME = config["PROJECT_NAME"]
 FIDDLER_CHATBOT_MODEL_NAME   = config["MODEL_NAME"]
