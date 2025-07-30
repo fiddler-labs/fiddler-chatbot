@@ -116,14 +116,14 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 logger = get_logger(__name__)
 
-FIDDLER_API_TOKEN          = os.environ.get( "FIDDLER_API_TOKEN"          )
+FIDDLER_API_KEY            = os.environ.get( "FIDDLER_API_KEY"          )
 OPENAI_API_KEY             = os.environ.get( "OPENAI_API_KEY"             )
 ASTRA_DB_APPLICATION_TOKEN = os.environ.get( "ASTRA_DB_APPLICATION_TOKEN" )
 
 # Connect to DataStax Cassandra
 cloud_config = {"secure_connect_bundle": ASTRA_DB_SECURE_BUNDLE_PATH}
 
-embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL, model_kwargs={"dimensions": 1536})
+embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL, dimensions=1536)
 
 non_stream_llm = ChatOpenAI(model=LLM_MODEL, temperature=0)
 memory = ConversationSummaryBufferMemory(
@@ -261,9 +261,9 @@ def publish_and_store(
     trace_df["ts"] = pd.Timestamp.today()
 
     # get Fiddler client
-    if FIDDLER_API_TOKEN is None:
-        raise ValueError("FIDDLER_API_TOKEN environment variable is required")
-    fdl.init(url=FIDDLER_URL, token=FIDDLER_API_TOKEN)
+    if FIDDLER_API_KEY is None:
+        raise ValueError("FIDDLER_API_KEY environment variable is required")
+    fdl.init(url=FIDDLER_URL, token=FIDDLER_API_KEY)
 
     # Publish the trace/event to Fiddler
     project = fdl.Project.from_name(name=FIDDLER_CHATBOT_PROJECT_NAME)
