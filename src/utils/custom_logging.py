@@ -57,12 +57,11 @@ def setup_logging(log_level: str = "INFO"):
     def configure_third_party_logging():
         """
         Configure logging for common third-party libraries to reduce noise.
-        Call this after setup_logging() if needed.
         """
         # Suppress verbose third-party library logs
         logging.getLogger( 'httpx'     ).setLevel(logging. WARNING )
         logging.getLogger( 'httpcore'  ).setLevel(logging. WARNING )
-        logging.getLogger( 'cassandra' ).setLevel(logging. WARNING )
+        logging.getLogger( 'cassandra' ).setLevel(logging. ERROR   )
         logging.getLogger( 'cassio'    ).setLevel(logging. WARNING )
         logging.getLogger( 'openai'    ).setLevel(logging. WARNING )
         logging.getLogger( 'langgraph' ).setLevel(logging. INFO    )
