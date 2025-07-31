@@ -2,9 +2,6 @@
 
 ## Pending action items listed in planned order of execution and priority
 
-- Vector Index Data Refresh Bug
-  - The vector index is not refreshing correctly shows 25.9
-
 - RAG Debugging
   - ensure the Cassandra RAG retriever tool-node is working correctly.
 
@@ -60,6 +57,10 @@
 - Dev and Prod environments currently mixed : Implement config-driven environment switching : Clean separation of development vs production data/settings
 - GitHub Actions workflow for test automation : Immediate feedback on breaking changes
 - duplicate sri's MCP server to have a docs RAG server
+
+- add a prompt optimization step in the langgraph app
+
+- python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
 
 ## Better coding practices
 
