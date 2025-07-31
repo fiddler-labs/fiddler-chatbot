@@ -73,5 +73,5 @@ CONFIG_CHATBOT_NEW = {
     "GR__SAFETY_LATENCY": 0.0,
     "GR__REQUESTS_TIMEOUT": 60,
 
-    "TOP_K_RETRIEVAL": 6, #todo - use setting
+    "TOP_K_RETRIEVAL": 6,
     }
