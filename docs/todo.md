@@ -2,6 +2,9 @@
 
 ## Pending action items listed in planned order of execution and priority
 
+- Vector Index Data Refresh Bug
+  - The vector index is not refreshing correctly shows 25.9
+
 - RAG Debugging
   - ensure the Cassandra RAG retriever tool-node is working correctly.
 
