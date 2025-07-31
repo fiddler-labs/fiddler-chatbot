@@ -350,7 +350,7 @@ def main():
             qa = ConversationalRetrievalChain(
                 combine_docs_chain=doc_chain,
                 question_generator=question_generator,
-                retriever=docsearch_preexisting.as_retriever(search_kwargs={"k": 3}),
+                retriever=docsearch_preexisting.as_retriever(search_kwargs={"k": config["TOP_K_RETRIEVAL"]}),
                 memory=st.session_state[CHAT_INSTANCE__MEMORY],
                 max_tokens_limit=8000,
                 return_source_documents=True,

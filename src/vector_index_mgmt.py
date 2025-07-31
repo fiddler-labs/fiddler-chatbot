@@ -41,6 +41,8 @@ from langchain_community.vectorstores import Cassandra
 from langchain_openai import OpenAI
 from langchain_openai import OpenAIEmbeddings
 
+from config import CONFIG_VECTOR_INDEX_MGMT as config
+
 from utils.custom_logging import setup_logging
 
 setup_logging(log_level="DEBUG")
@@ -72,26 +74,6 @@ class ValidationResult:
     valid_rows: int = 0
     total_rows: int = 0
 
-# ==================== CONFIGURATION ====================
-
-CONFIG = { # todo - follow this pattern in the chatbot.py file too
-    "secure_bundle_path": "datastax_auth/secure-connect-fiddlerai.zip",
-    "keyspace": "fiddlerai",
-    "llm_provider": "openai", # 'GCP_VertexAI', 'Azure_OpenAI'
-    "embedding_model": "text-embedding-3-large",
-    "embedding_dimensions": 1536,
-    "temperature": 0,
-    "squad_table": "squad",
-    "chatbot_history_table": "fiddler_chatbot_history",
-    "backup_chunk_size": 1000,  # For backup operations
-    "embedding_batch_size": 100,  # For processing embeddings in batches to avoid token limits
-    "max_retry_attempts": 3,
-    "retry_delay": 2.0,
-    "retry_backoff": 2.0
-    }
-
-# Computed values
-TABLE_NAME = f'fiddler_doc_snippets_{CONFIG["llm_provider"]}'
 
 # ==================== DATABASE CONNECTION ====================
 
@@ -110,9 +92,9 @@ def cassandra_connection():
     session = None
     
     # Retry logic for connection establishment
-    max_attempts = CONFIG["max_retry_attempts"]
-    delay = CONFIG["retry_delay"]
-    backoff = CONFIG["retry_backoff"]
+    max_attempts = config["max_retry_attempts"]
+    delay = config["retry_delay"]
+    backoff = config["retry_backoff"]
     current_delay = delay
     
     for attempt in range(max_attempts):
@@ -123,11 +105,11 @@ def cassandra_connection():
                 raise ValueError("ASTRA_DB_APPLICATION_TOKEN environment variable not set")
             
             # Check file existence
-            if not os.path.exists(CONFIG["secure_bundle_path"]):
-                raise FileNotFoundError(f"Secure bundle file not found: {CONFIG['secure_bundle_path']}")
+            if not os.path.exists(config["secure_bundle_path"]):
+                raise FileNotFoundError(f"Secure bundle file not found: {config['secure_bundle_path']}")
             
             # Establish connection to DataStax Cassandra
-            cloud_config = {'secure_connect_bundle': CONFIG["secure_bundle_path"]}
+            cloud_config = {'secure_connect_bundle': config["secure_bundle_path"]}
             auth_provider = PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
             
             # Use the selected connection class if available, otherwise default
@@ -137,9 +119,9 @@ def cassandra_connection():
                 cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
             
             session = cluster.connect()
-            session.set_keyspace(CONFIG["keyspace"])
+            session.set_keyspace(config["keyspace"])
             
-            logger.info(f"✅ Connected to Cassandra keyspace: {CONFIG['keyspace']}")
+            logger.info(f"✅ Connected to Cassandra keyspace: {config['keyspace']}")
             
             try:
                 yield cluster, session
@@ -185,15 +167,15 @@ def setup_llm_and_embeddings():
     Returns: (llm, embedding) tuple
     """
     try:
-        llm = OpenAI(temperature=CONFIG["temperature"])
+        llm = OpenAI(temperature=config["temperature"])
         
         # Explicitly use the desired model and configure its dimension size
         embedding = OpenAIEmbeddings(
-            model=CONFIG["embedding_model"],
-            dimensions=CONFIG["embedding_dimensions"]
+            model=config["embedding_model"],
+            dimensions=config["embedding_dimensions"]
             )
         
-        logger.info(f"✅ LLM and Embeddings configured: {embedding.model} with {CONFIG['embedding_dimensions']} dimensions")
+        logger.info(f"✅ LLM and Embeddings configured: {embedding.model} with {config['embedding_dimensions']} dimensions")
         return llm, embedding
         
     except Exception as e:
@@ -217,7 +199,6 @@ def fetch_latest_csv_path() -> str:
     if not csv_files:
         raise FileNotFoundError("No CSV files found in local_assets folder")
     return max(csv_files, key=os.path.getctime)
-
 
 def validate_and_load_documentation_data(csv_path: str) -> Tuple[ValidationResult, Optional[pd.DataFrame]]:
     """
@@ -322,7 +303,7 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
                 crc_check_chance, default_time_to_live, gc_grace_seconds, max_index_interval,
                 memtable_flush_period_in_ms, min_index_interval, read_repair, speculative_retry
             FROM system_schema.tables 
-            WHERE keyspace_name = '{CONFIG['keyspace']}' AND table_name = '{source_table}'
+            WHERE keyspace_name = '{config['keyspace']}' AND table_name = '{source_table}'
             """
             
             table_info = session.execute(table_def_query)
@@ -336,7 +317,7 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
             columns_query = f"""--sql
             SELECT column_name, type, kind, position, clustering_order
             FROM system_schema.columns 
-            WHERE keyspace_name = '{CONFIG['keyspace']}' AND table_name = '{source_table}'
+            WHERE keyspace_name = '{config['keyspace']}' AND table_name = '{source_table}'
             ORDER BY position
             """
             
@@ -369,7 +350,7 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
                 primary_key_clause = f"PRIMARY KEY ({', '.join(primary_keys)})"
             
             create_table_sql = f"""--sql
-            CREATE TABLE {CONFIG["keyspace"]}.{backup_table} (
+            CREATE TABLE {config["keyspace"]}.{backup_table} (
                 {', '.join(regular_columns)},
                 {primary_key_clause}
             )
@@ -399,8 +380,8 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
             
             # Use INSERT INTO ... SELECT approach for efficient copying
             copy_query = f"""--sql
-            INSERT INTO {CONFIG["keyspace"]}.{backup_table} 
-            SELECT * FROM {CONFIG["keyspace"]}.{source_table}
+            INSERT INTO {config["keyspace"]}.{backup_table} 
+            SELECT * FROM {config["keyspace"]}.{source_table}
             """
             
             session.execute(copy_query)
@@ -418,7 +399,7 @@ def safe_truncate_table(session, table_name: str, force: bool = False, create_ba
     if not force:
         # First, check if table has data
         try:
-            count_result = session.execute(f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{table_name}")
+            count_result = session.execute(f"SELECT COUNT(*) FROM {config['keyspace']}.{table_name}")
             current_count = list(count_result)[0].count
             
             if current_count > 0:
@@ -483,12 +464,12 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
         staging_vector_store = Cassandra(
             embedding=embedding,
             session=session,
-            keyspace=CONFIG["keyspace"],
+            keyspace=config["keyspace"],
             table_name=staging_table,
         )
         
         # 3. Add documents to staging table in batches to avoid token limits
-        batch_size = CONFIG["embedding_batch_size"]  # Process documents in batches to stay within token limits
+        batch_size = config["embedding_batch_size"]  # Process documents in batches to stay within token limits
         total_documents = len(documents)
         logger.info(f"Adding {total_documents} chunks to staging table in batches of {batch_size}. This may take a few minutes...")
         
@@ -501,8 +482,8 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
             logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch_documents)} documents)...")
             
             # Add batch with retry logic for token limits
-            max_retries = CONFIG["max_retry_attempts"]
-            retry_delay = CONFIG["retry_delay"]
+            max_retries = config["max_retry_attempts"]
+            retry_delay = config["retry_delay"]
             
             for attempt in range(max_retries):
                 try:
@@ -529,7 +510,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
                         raise e
         
         # 4. Verify staging table has expected number of rows
-        verify_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{staging_table}"
+        verify_query = f"SELECT COUNT(*) FROM {config['keyspace']}.{staging_table}"
         result = session.execute(verify_query)
         staging_count = list(result)[0].count
         
@@ -542,7 +523,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
         if replace_existing:
             # Create backup of existing table if it exists
             try:
-                check_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{table_name}"
+                check_query = f"SELECT COUNT(*) FROM {config['keyspace']}.{table_name}"
                 result = session.execute(check_query)
                 existing_count = list(result)[0].count
                 
@@ -563,7 +544,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
                     logger.info(f"✅ Backup completed: {backup_table}")
                     
                     # Truncate original table
-                    session.execute(f"TRUNCATE TABLE {CONFIG['keyspace']}.{table_name}")
+                    session.execute(f"TRUNCATE TABLE {config['keyspace']}.{table_name}")
                     logger.info(f"✅ Truncated original table: {table_name}")
                 
             except Exception as e:
@@ -579,7 +560,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
                 raise ValueError(f"Failed to copy data from staging table {staging_table} to target table {table_name}. Check logs for detailed error information.")
             
             # 7. Verify target table
-            verify_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{table_name}"
+            verify_query = f"SELECT COUNT(*) FROM {config['keyspace']}.{table_name}"
             result = session.execute(verify_query)
             target_count = list(result)[0].count
             
@@ -590,7 +571,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
             
             # 8. Clean up staging table
             logger.info(f"Cleaning up staging table '{staging_table}'...")
-            session.execute(f"DROP TABLE IF EXISTS {CONFIG['keyspace']}.{staging_table}")
+            session.execute(f"DROP TABLE IF EXISTS {config['keyspace']}.{staging_table}")
         
         logger.info("\n✅ Success! All document chunks have been embedded and stored in Cassandra.")
         
@@ -614,7 +595,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
         
         # Clean up staging table if it exists
         try:
-            session.execute(f"DROP TABLE IF EXISTS {CONFIG['keyspace']}.{staging_table}")
+            session.execute(f"DROP TABLE IF EXISTS {config['keyspace']}.{staging_table}")
             logger.info(f"Cleaned up staging table: {staging_table}")
         except Exception as cleanup_error:
             logger.warning(f"Failed to clean up staging table: {cleanup_error}")
@@ -639,9 +620,9 @@ def _create_backup_table_safe(session, source_table: str, backup_table: str) -> 
         
         # Create the backup table by copying the structure
         create_sql = f"""
-        CREATE TABLE {CONFIG["keyspace"]}.{backup_table} (
+        CREATE TABLE {config["keyspace"]}.{backup_table} (
             row_id text PRIMARY KEY,
-            vector vector<float, {CONFIG["embedding_dimensions"]}>,
+            vector vector<float, {config["embedding_dimensions"]}>,
             body_blob text,
             metadata_s map<text, text>
         )
@@ -660,11 +641,11 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
     Copy data from source table to target table in chunks to handle large datasets
     """
     if chunk_size is None:
-        chunk_size = CONFIG["backup_chunk_size"]
+        chunk_size = config["backup_chunk_size"]
     
     try:
         # Get total count first
-        count_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{source_table}"
+        count_query = f"SELECT COUNT(*) FROM {config['keyspace']}.{source_table}"
         result = session.execute(count_query)
         total_rows = list(result)[0].count
         
@@ -684,7 +665,7 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
         
         # Insert data into target table
         insert_query = f"""
-        INSERT INTO {CONFIG["keyspace"]}.{target_table} (row_id, vector, body_blob, metadata_s)
+        INSERT INTO {config["keyspace"]}.{target_table} (row_id, vector, body_blob, metadata_s)
         VALUES (?, ?, ?, ?)
         """
         prepared_statement = session.prepare(insert_query)
@@ -694,7 +675,7 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
         # Process data in chunks using token-based pagination
         # First, get all row IDs to process
         try:
-            select_ids_query = f"SELECT row_id FROM {CONFIG['keyspace']}.{source_table}"
+            select_ids_query = f"SELECT row_id FROM {config['keyspace']}.{source_table}"
             id_rows = session.execute(select_ids_query)
             row_ids = [row.row_id for row in id_rows]
         except Exception as e:
@@ -711,7 +692,7 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
             # Get full row data for this chunk
             for row_id in chunk_ids:
                 try:
-                    select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {CONFIG['keyspace']}.{source_table} WHERE row_id = '{row_id}'"
+                    select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {config['keyspace']}.{source_table} WHERE row_id = '{row_id}'"
                     row_result = session.execute(select_query)
                     row_data = list(row_result)
                 except Exception as e:
@@ -761,7 +742,11 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
         logger.error(f"   Exception args: {repr(e.args)}")
         return False
 
-def test_vector_store(vector_store, query: str = "What is Fiddler?", k: int = 2):
+def test_vector_store(
+        vector_store, 
+        query: str = "What is the latest release versionof Fiddler?", 
+        k: int = 10
+        ):
     """
     Quick test of the vector store functionality
     """
@@ -784,7 +769,7 @@ def inspect_table_structure_safe(session, table_name: str, keyspace: Optional[st
     Uses a local session approach to avoid row factory concurrency issues
     """
     if keyspace is None:
-        keyspace = CONFIG["keyspace"]
+        keyspace = config["keyspace"]
         
     logger.info(f"\n=== INSPECTING TABLE: {keyspace}.{table_name} ===")
     
@@ -858,7 +843,7 @@ def query_and_display_rows_safe(session, table_name: str, limit: int = 10) -> No
     Thread-safe query and display rows from a table with proper formatting
     """
     try:
-        cql_select = f'SELECT * FROM {CONFIG["keyspace"]}.{table_name} LIMIT {limit};'
+        cql_select = f'SELECT * FROM {config["keyspace"]}.{table_name} LIMIT {limit};'
         rows = session.execute(cql_select)
         
         logger.info(f"\n=== DISPLAYING {limit} ROWS FROM {table_name} ===")
@@ -895,7 +880,7 @@ def export_table_to_csv(session, table_name: str, output_file: Optional[str] = N
         output_file = f'local_assets/{table_name}_output_pandas.csv'
         
     try:
-        cql_query = f'SELECT * FROM {CONFIG["keyspace"]}.{table_name};'
+        cql_query = f'SELECT * FROM {config["keyspace"]}.{table_name};'
         logger.info("Executing query and loading data into pandas DataFrame...")
         rows = session.execute(cql_query)
         
@@ -923,15 +908,15 @@ def create_chatbot_history_table(session) -> None:
     """
     try:
         create_table_sql = f"""--sql
-        CREATE TABLE IF NOT EXISTS {CONFIG["chatbot_history_table"]}
+        CREATE TABLE IF NOT EXISTS {config["chatbot_history_table"]}
         (
             row_id text PRIMARY KEY,
             response text,
-            response_vector vector<float, {CONFIG['embedding_dimensions']}>,
+            response_vector vector<float, {config['embedding_dimensions']}>,
             source_docs text,
-            source_docs_vector vector<float, {CONFIG['embedding_dimensions']}>,
+            source_docs_vector vector<float, {config['embedding_dimensions']}>,
             question text,
-            question_vector vector<float, {CONFIG['embedding_dimensions']}>,
+            question_vector vector<float, {config['embedding_dimensions']}>,
             comment text,
             feedback int,
             metadata_s map<text, text>,
@@ -954,7 +939,7 @@ def create_chatbot_history_table(session) -> None:
         """
         
         session.execute(create_table_sql)
-        logger.info(f"✅ Created table '{CONFIG['chatbot_history_table']}' successfully.")
+        logger.info(f"✅ Created table '{config['chatbot_history_table']}' successfully.")
         
     except Exception as e:
         logger.error(f"❌ Failed to create chatbot history table: {e}")
@@ -970,11 +955,11 @@ def test_openai_embeddings(text: str = "Test text: Tell me about yourself") -> N
         # Using the new OpenAI client API
         client = OpenAIClient()
         response = client.embeddings.create(
-            model=CONFIG["embedding_model"],
+            model=config["embedding_model"],
             input=text,
-            dimensions=CONFIG["embedding_dimensions"]
+            dimensions=config["embedding_dimensions"]
         )
-        logger.info(f"✅ Embedding retrieval successful. Model: {CONFIG['embedding_model']}")
+        logger.info(f"✅ Embedding retrieval successful. Model: {config['embedding_model']}")
         logger.info(f"   Embedding dimensions: {len(response.data[0].embedding)}")
         logger.info(f"   Generated embedding for: '{text}'")
         logger.info(f"   Embedding: {response.data[0].embedding[:80]}...")
@@ -986,9 +971,7 @@ def test_openai_embeddings(text: str = "Test text: Tell me about yourself") -> N
 # ==================== SQUAD TABLE UTILITIES ====================
 
 def query_squad_table(session) -> pd.DataFrame:
-    """
-    Query and process data from the squad table
-    """
+    """Query and process data from the squad table"""
     # Save original row factory to restore later
     original_row_factory = session.row_factory
     
@@ -999,7 +982,7 @@ def query_squad_table(session) -> pd.DataFrame:
         # Temporarily set pandas factory
         session.row_factory = pandas_factory
         
-        rows = session.execute(f'SELECT * from {CONFIG["squad_table"]}')
+        rows = session.execute(f'SELECT * from {config["squad_table"]}')
         df_baseline = rows._current_rows
         
         logger.info(f"✅ Retrieved {len(df_baseline)} rows from squad table")
@@ -1039,8 +1022,8 @@ def validate_environment() -> ValidationResult:
         result.is_valid = False
     
     # Check file existence
-    if not os.path.exists(CONFIG["secure_bundle_path"]):
-        result.errors.append(f"Secure bundle file not found: {CONFIG['secure_bundle_path']}")
+    if not os.path.exists(config["secure_bundle_path"]):
+        result.errors.append(f"Secure bundle file not found: {config['secure_bundle_path']}")
         result.is_valid = False
     
     if result.is_valid:
@@ -1111,7 +1094,7 @@ def load_vector_data(csv_path:str, replace_existing: bool = False) -> LoadResult
             if replace_existing:
                 logger.warning("⚠️  REPLACE MODE: Will replace existing data with backup")
             
-            load_result = populate_vector_store_safely(df, session, myEmbedding, TABLE_NAME, replace_existing=replace_existing)
+            load_result = populate_vector_store_safely(df, session, myEmbedding, config["TABLE_NAME"], replace_existing=replace_existing)
             
             if load_result.result == OperationResult.SUCCESS:
                 logger.info("\n3. Testing vector store...")
@@ -1119,9 +1102,9 @@ def load_vector_data(csv_path:str, replace_existing: bool = False) -> LoadResult
                 vector_store = Cassandra(
                     embedding=myEmbedding,
                     session=session,
-                    keyspace=CONFIG["keyspace"],
-                    table_name=TABLE_NAME,
-                )
+                    keyspace=config["keyspace"],
+                    table_name=config["TABLE_NAME"],
+                    )
                 test_result = test_vector_store(vector_store)
                 logger.info(test_result)
             
@@ -1133,7 +1116,7 @@ def load_vector_data(csv_path:str, replace_existing: bool = False) -> LoadResult
             result=OperationResult.FAILURE,
             message=f"Loading failed: {str(e)}",
             errors=[str(e)]
-        )
+            )
 
 def perform_maintenance_operations(session) -> None:
     """
@@ -1144,15 +1127,15 @@ def perform_maintenance_operations(session) -> None:
     try:
         # 1. Inspect table structure
         logger.info("\n1. Inspecting table structure...")
-        inspect_table_structure_safe(session, TABLE_NAME)
+        inspect_table_structure_safe(session, config["TABLE_NAME"])
         
         # 2. Query and display sample rows
         logger.info("\n2. Displaying sample rows...")
-        query_and_display_rows_safe(session, TABLE_NAME, limit=5)
+        query_and_display_rows_safe(session, config["TABLE_NAME"], limit=5)
         
         # 3. Export to CSV
         logger.info("\n3. Exporting data to CSV...")
-        csv_file = export_table_to_csv(session, TABLE_NAME)
+        csv_file = export_table_to_csv(session, config["TABLE_NAME"])
         logger.info(f"✅ Exported data to CSV: {csv_file}")
         
         # 4. Create chatbot history table
@@ -1173,6 +1156,107 @@ def perform_maintenance_operations(session) -> None:
         logger.error(f"❌ Maintenance operations failed: {e}")
         # Don't raise here, as these are optional operations
 
+def comprehensive_health_check(session, table_name: str) -> dict:
+    """
+    Perform comprehensive health checks on the vector store
+    
+    Returns:
+        dict: Health check results
+    """
+    health_results = {
+        "overall_health": "unknown",
+        "checks": {},
+        "warnings": [],
+        "errors": []
+    }
+    
+    try:
+        # 1. Basic connectivity check
+        health_results["checks"]["connectivity"] = "passed"
+        
+        # 2. Table existence check
+        try:
+            count_query = f"SELECT COUNT(*) FROM {config['keyspace']}.{table_name}"
+            result = session.execute(count_query)
+            row_count = list(result)[0].count
+            health_results["checks"]["table_exists"] = "passed"
+            health_results["checks"]["row_count"] = row_count
+        except Exception as e:
+            health_results["checks"]["table_exists"] = "failed"
+            health_results["errors"].append(f"Table check failed: {e}")
+            health_results["overall_health"] = "failed"
+            return health_results
+        
+        # 3. Sample data integrity check
+        try:
+            sample_query = f"SELECT * FROM {config['keyspace']}.{table_name} LIMIT 5"
+            rows = session.execute(sample_query)
+            sample_rows = list(rows)
+            
+            if len(sample_rows) > 0:
+                health_results["checks"]["sample_data"] = "passed"
+                
+                # Check vector dimensions
+                for row in sample_rows:
+                    if hasattr(row, 'vector') and row.vector:
+                        vector_dim = len(row.vector)
+                        if vector_dim != config["embedding_dimensions"]:
+                            health_results["warnings"].append(f"Vector dimension mismatch: expected {config['embedding_dimensions']}, got {vector_dim}")
+                        break
+                
+                # Check for required fields
+                required_fields = ['row_id', 'vector', 'body_blob']
+                for field in required_fields:
+                    if not hasattr(sample_rows[0], field):
+                        health_results["errors"].append(f"Missing required field: {field}")
+                        
+            else:
+                health_results["warnings"].append("No sample data found in table")
+                
+        except Exception as e:
+            health_results["checks"]["sample_data"] = "failed"
+            health_results["errors"].append(f"Sample data check failed: {e}")
+        
+        # 4. Vector store functionality check
+        try:
+            from langchain_community.vectorstores import Cassandra
+            from langchain_openai import OpenAIEmbeddings
+            
+            # Create a minimal embedding for testing
+            embedding = OpenAIEmbeddings(
+                model=config["embedding_model"],
+                dimensions=config["embedding_dimensions"]
+            )
+            
+            vector_store = Cassandra(
+                embedding=embedding,
+                session=session,
+                keyspace=config["keyspace"],
+                table_name=table_name,
+            )
+            
+            # Test similarity search
+            test_results = vector_store.similarity_search("test query", k=1)
+            health_results["checks"]["vector_search"] = "passed"
+            health_results["checks"]["search_result_count"] = len(test_results)
+            
+        except Exception as e:
+            health_results["checks"]["vector_search"] = "failed"
+            health_results["errors"].append(f"Vector search check failed: {e}")
+        
+        # 5. Overall health assessment
+        if len(health_results["errors"]) == 0:
+            health_results["overall_health"] = "healthy"
+        elif len(health_results["errors"]) > 0:
+            health_results["overall_health"] = "unhealthy"
+            
+    except Exception as e:
+        health_results["overall_health"] = "failed"
+        health_results["errors"].append(f"Health check failed: {e}")
+    
+    return health_results
+
+
 def main(truncate_first: bool = False, skip_maintenance: bool = False):
     """
     Main execution function for the vector index loader
@@ -1192,7 +1276,7 @@ def main(truncate_first: bool = False, skip_maintenance: bool = False):
         python vector_index_mgmt.py --skip-maintenance # Skip optional operations
     """
     logger.info("=== Cassandra Vector Index Loader ===")
-    logger.info(f"Target table: {TABLE_NAME} \nKeyspace: {CONFIG['keyspace']} \nEmbedding model: {CONFIG['embedding_model']}")
+    logger.info(f"Target table: {config['TABLE_NAME']} \nKeyspace: {config['keyspace']} \nEmbedding model: {config['embedding_model']}")
     
     csv_path = fetch_latest_csv_path()
     
@@ -1218,106 +1302,6 @@ def main(truncate_first: bool = False, skip_maintenance: bool = False):
             logger.error(f"❌ Maintenance operations failed: {e}")
             # Don't raise here, as these are optional operations
 
-def comprehensive_health_check(session, table_name: str) -> dict:
-    """
-    Perform comprehensive health checks on the vector store
-    
-    Returns:
-        dict: Health check results
-    """
-    health_results = {
-        "overall_health": "unknown",
-        "checks": {},
-        "warnings": [],
-        "errors": []
-    }
-    
-    try:
-        # 1. Basic connectivity check
-        health_results["checks"]["connectivity"] = "passed"
-        
-        # 2. Table existence check
-        try:
-            count_query = f"SELECT COUNT(*) FROM {CONFIG['keyspace']}.{table_name}"
-            result = session.execute(count_query)
-            row_count = list(result)[0].count
-            health_results["checks"]["table_exists"] = "passed"
-            health_results["checks"]["row_count"] = row_count
-        except Exception as e:
-            health_results["checks"]["table_exists"] = "failed"
-            health_results["errors"].append(f"Table check failed: {e}")
-            health_results["overall_health"] = "failed"
-            return health_results
-        
-        # 3. Sample data integrity check
-        try:
-            sample_query = f"SELECT * FROM {CONFIG['keyspace']}.{table_name} LIMIT 5"
-            rows = session.execute(sample_query)
-            sample_rows = list(rows)
-            
-            if len(sample_rows) > 0:
-                health_results["checks"]["sample_data"] = "passed"
-                
-                # Check vector dimensions
-                for row in sample_rows:
-                    if hasattr(row, 'vector') and row.vector:
-                        vector_dim = len(row.vector)
-                        if vector_dim != CONFIG["embedding_dimensions"]:
-                            health_results["warnings"].append(f"Vector dimension mismatch: expected {CONFIG['embedding_dimensions']}, got {vector_dim}")
-                        break
-                
-                # Check for required fields
-                required_fields = ['row_id', 'vector', 'body_blob']
-                for field in required_fields:
-                    if not hasattr(sample_rows[0], field):
-                        health_results["errors"].append(f"Missing required field: {field}")
-                        
-            else:
-                health_results["warnings"].append("No sample data found in table")
-                
-        except Exception as e:
-            health_results["checks"]["sample_data"] = "failed"
-            health_results["errors"].append(f"Sample data check failed: {e}")
-        
-        # 4. Vector store functionality check
-        try:
-            from langchain_community.vectorstores import Cassandra
-            from langchain_openai import OpenAIEmbeddings
-            
-            # Create a minimal embedding for testing
-            embedding = OpenAIEmbeddings(
-                model=CONFIG["embedding_model"],
-                dimensions=CONFIG["embedding_dimensions"]
-            )
-            
-            vector_store = Cassandra(
-                embedding=embedding,
-                session=session,
-                keyspace=CONFIG["keyspace"],
-                table_name=table_name,
-            )
-            
-            # Test similarity search
-            test_results = vector_store.similarity_search("test query", k=1)
-            health_results["checks"]["vector_search"] = "passed"
-            health_results["checks"]["search_result_count"] = len(test_results)
-            
-        except Exception as e:
-            health_results["checks"]["vector_search"] = "failed"
-            health_results["errors"].append(f"Vector search check failed: {e}")
-        
-        # 5. Overall health assessment
-        if len(health_results["errors"]) == 0:
-            health_results["overall_health"] = "healthy"
-        elif len(health_results["errors"]) > 0:
-            health_results["overall_health"] = "unhealthy"
-            
-    except Exception as e:
-        health_results["overall_health"] = "failed"
-        health_results["errors"].append(f"Health check failed: {e}")
-    
-    return health_results
-
 if __name__ == "__main__":
     import sys
     import argparse
@@ -1336,7 +1320,7 @@ if __name__ == "__main__":
         logger.info("=== Performing Health Check ===")
         try:
             with cassandra_connection() as (cluster, session):
-                health_results = comprehensive_health_check(session, TABLE_NAME)
+                health_results = comprehensive_health_check(session, config["TABLE_NAME"])
                 
                 logger.info(f"Overall Health: {health_results['overall_health'].upper()}")
                 
