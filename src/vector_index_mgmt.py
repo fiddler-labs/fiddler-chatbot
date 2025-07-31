@@ -32,7 +32,6 @@ try:
 except Exception as e:
     print(f"❌ Failed to setup Cassandra compatibility: {e}")
     sys.exit(1)
-
 # Cassandra imports are now handled in the compatibility section above
 
 from openai import OpenAI as OpenAIClient

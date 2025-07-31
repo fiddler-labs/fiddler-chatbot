@@ -62,7 +62,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
 4. **Run the new agentic application**
 
    ```bash
-   python src/chatbot_agentic.py "hello" "what is the current time?" "quit"
+   uv run src/chatbot_agentic.py "hello" "what is the current time?" "quit"
    ```
 
 5. **Running the older Streamlit Application**
