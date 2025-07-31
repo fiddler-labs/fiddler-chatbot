@@ -35,6 +35,7 @@ dependencies = [
     "langgraph-cli>=0.3.4",
     "cassio>=0.1.10",
     "watchdog>=6.0.0",
+    "ipykernel>=6.30.0",
 ]
 authors = [
     {name = "Fiddler AI Team"},
