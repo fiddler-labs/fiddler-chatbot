@@ -12,7 +12,7 @@ from langchain_core.tools import Tool
 from langchain.tools.retriever import create_retriever_tool
 from fiddler_langgraph.tracing.instrumentation import set_llm_context
 
-from vector_index_mgmt import cassandra_connection, setup_llm_and_embeddings, CONFIG, TABLE_NAME
+from vector_index_mgmt import cassandra_connection, setup_llm_and_embeddings, config, TABLE_NAME
 from agentic_tools.state_data_model import ChatbotState
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,7 @@ def make_cassandra_rag_retriever_tool() -> Tool:
         vector_store = CassandraVectorStore(
             embedding=embedding,
             session=cassandra_session,
-            keyspace=CONFIG["keyspace"],
+            keyspace=config["keyspace"],
             table_name=TABLE_NAME
             )
     
@@ -96,7 +96,7 @@ def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
             vector_store = CassandraVectorStore(
                 embedding=embedding,
                 session=cassandra_session,
-                keyspace=CONFIG["keyspace"],
+                keyspace=config["keyspace"],
                 table_name=TABLE_NAME
             )
         
