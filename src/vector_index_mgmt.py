@@ -711,7 +711,7 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
             # Get full row data for this chunk
             for row_id in chunk_ids:
                 try:
-                        select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {CONFIG['keyspace']}.{source_table} WHERE row_id = '{row_id}'"
+                    select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {CONFIG['keyspace']}.{source_table} WHERE row_id = '{row_id}'"
                     row_result = session.execute(select_query)
                     row_data = list(row_result)
                 except Exception as e:

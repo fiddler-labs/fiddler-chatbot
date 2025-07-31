@@ -1,3 +1,7 @@
+# Vector Index Process
+
+## Diagram
+
 ```mermaid
 graph TD
     A[CSV File<br/>vector_index_feed_v25.10.csv] --> B[loader_cassandra_vector_index.py]
