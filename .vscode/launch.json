@@ -61,7 +61,7 @@
       }
     },
     {
-      "name": "Run Data-Generation-Workflow",
+      "name": "Data Generation: Run Workflow",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/data_generation.py",
