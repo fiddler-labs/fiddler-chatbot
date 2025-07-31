@@ -169,13 +169,23 @@ def clone_or_pull_repo(repo_url: str, repo_location: str) -> None:
                 # Fetch latest remote information first
                 fetch_result = subprocess.run([
                     "git", "-C", repo_location, "fetch"
-                ], check=True, capture_output=True, text=True)
+                    ], check=True, capture_output=True, text=True)
                 logger.info(f"Fetched remote updates: {fetch_result.stdout.strip()}")
                 
                 result = subprocess.run([
                     "git", "-C", repo_location, "pull"
-                ], check=True, capture_output=True, text=True)
+                    ], check=True, capture_output=True, text=True)
                 logger.info(f"Successfully pulled latest changes: {result.stdout.strip()}")
+
+                try :
+                    result = subprocess.run([
+                        "git", "-C", repo_location, "lfs", "pull"
+                        ], check=True, capture_output=True, text=True)
+                    logger.info(f"Successfully pulled latest LFS changes: {result.stdout.strip()}")
+                
+                except subprocess.CalledProcessError as e:
+                    logger.warning(f"Failed to pull LFS changes (if any) : {e.stderr}. Continuing...")
+
                 return
             except subprocess.CalledProcessError as e:
                 logger.warning(f"Pull failed: {e.stderr}. Will re-clone repository.")
