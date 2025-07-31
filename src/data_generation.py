@@ -30,6 +30,7 @@ import re
 import feedparser
 from bs4 import BeautifulSoup
 import requests
+from tqdm import tqdm
 from datetime import datetime, timezone
 from typing import List, Tuple, Optional
 from langchain.text_splitter import RecursiveCharacterTextSplitter , MarkdownHeaderTextSplitter
@@ -500,7 +501,7 @@ def crawl_rss_feeds() -> None:
             logger.info(f"Found {len(feed.entries)} {content_type} entries")
             
             # Process each entry in the feed
-            for i, entry in enumerate(feed.entries):
+            for i, entry in tqdm(enumerate(feed.entries), total=len(feed.entries), desc="Processing RSS Feed Entries"):
                 try:
                     # Get the URL of the article (ensure it's a string)
                     article_url = str(entry.link) if hasattr(entry, 'link') else None
@@ -619,10 +620,7 @@ def split_text_with_markdown_headers(text: str) -> List[str]:
     Args: text: Input text to split
     Returns: List of text chunks
     """
-    # Split corpus into chunks using MarkdownHeaderTextSplitter
-    splitter_method = "MarkdownHeaderTextSplitter" if USE_MARKDOWN_HEADER_SPLITTER else "RecursiveCharacterTextSplitter"
-    logger.info(f"Splitting corpus into chunks using {splitter_method}...")
-
+    
     # Fallback to original RecursiveCharacterTextSplitter
     recursive_text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=RECURSIVE_SPLITTER_CHUNK_SIZE,
@@ -641,7 +639,6 @@ def split_text_with_markdown_headers(text: str) -> List[str]:
         if USE_MARKDOWN_HEADER_SPLITTER:
             # Split by markdown headers first
             md_header_splits = markdown_splitter.split_text(text)
-            content_with_context = ""
             final_chunks: List[str] = []
 
             for doc in md_header_splits:
@@ -653,18 +650,17 @@ def split_text_with_markdown_headers(text: str) -> List[str]:
                     metadata_prefix = f"[CONTEXT: {header_context}]\n\n"
                 
                 # If the content is already small enough, keep it as-is
-                if len(content_with_context) <= RECURSIVE_SPLITTER_CHUNK_SIZE:
+                if len(doc.page_content) <= RECURSIVE_SPLITTER_CHUNK_SIZE:
                     # Add metadata context to the content
-                    content_with_context = metadata_prefix + doc.page_content
-                    final_chunks.append(content_with_context)
+                    final_chunks.append( metadata_prefix + doc.page_content )
                 else:
                     # Split large sections further
-                    sub_chunks = recursive_text_splitter.split_text(content_with_context)
-                    sub_chunks = [metadata_prefix + chunk for chunk in sub_chunks]
+                    sub_chunks = recursive_text_splitter.split_text(doc.page_content)
+                    sub_chunks = [ metadata_prefix + chunk for chunk in sub_chunks ]
                     final_chunks.extend(sub_chunks)
-                    logger.debug(f"Successfully split a big chunk ({len(content_with_context)} chars) into {len(sub_chunks)} sub-chunks")
+                    logger.debug(f"    successfully split a big chunk ({len(doc.page_content)} chars) into > {len(sub_chunks)} sub-chunks")
             
-            logger.debug(f"Successfully split {len(final_chunks)} chunks")
+            logger.debug(f"Successfully split 1 MD FILE into > {len(md_header_splits)} H1 documents into > {len(final_chunks)} chunks")
             return final_chunks
             
         elif not USE_MARKDOWN_HEADER_SPLITTER:
@@ -776,27 +772,20 @@ def generate_corpus_from_sources() -> Path:
     source_docs_trimmed = [item.strip() for item in source_docs if item.strip()]
     logger.info(f"Cleaned corpus contains {len(source_docs_trimmed)} documents")
     
-    
-    if USE_MARKDOWN_HEADER_SPLITTER:
-        logger.info("Markdown header splitting configuration:")
-        logger.info(f"  - Headers to split on: {MARKDOWN_HEADERS_TO_SPLIT_ON}")
-        logger.info(f"  - Strip headers: {MARKDOWN_STRIP_HEADERS}")
-        logger.info(f"  - Return each line: {MARKDOWN_RETURN_EACH_LINE}")
-    
+    splitter_method = "MarkdownHeaderTextSplitter" if USE_MARKDOWN_HEADER_SPLITTER else "RecursiveCharacterTextSplitter"
+    logger.info(f"Splitting corpus into chunks using {splitter_method}...")
+
     corpus_chunks = []
-    for i, doc in enumerate(source_docs_trimmed):
+    for i, doc in tqdm(enumerate(source_docs_trimmed), total=len(source_docs_trimmed), desc="Processing MD Documents"):
         try:
             texts = split_text_with_markdown_headers(doc)
             corpus_chunks.extend(texts)
-            
-            if (i + 1) % 100 == 0:
-                logger.info(f"Processed {i + 1}/{len(source_docs_trimmed)} documents, generated {len(corpus_chunks)} chunks so far")
                 
         except Exception as e:
             logger.error(f"Failed to split document {i + 1}: {str(e)}")
             continue
     
-    logger.info(f"Generated {len(corpus_chunks)} text chunks")
+    logger.debug(f"Successfully split {len(source_docs_trimmed)} MD documents into > {len(corpus_chunks)} chunks")
     
     if not corpus_chunks:
         logger.error("No chunks generated from corpus")
