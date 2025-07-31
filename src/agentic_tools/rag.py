@@ -1,22 +1,40 @@
-import glob
 import logging
-import pandas as pd
-from typing import Dict, Any
 
-from langchain_core.documents import Document
-from langchain_core.messages import AIMessage, HumanMessage
 from langchain_openai import OpenAIEmbeddings
-from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_community.vectorstores import Cassandra as CassandraVectorStore
 from langchain_core.tools import Tool
 from langchain.tools.retriever import create_retriever_tool
-from fiddler_langgraph.tracing.instrumentation import set_llm_context
 
-from vector_index_mgmt import cassandra_connection, setup_llm_and_embeddings, config, TABLE_NAME
-from agentic_tools.state_data_model import ChatbotState
+from config import CONFIG_VECTOR_INDEX_MGMT as config_vector_index_mgmt
 
 logger = logging.getLogger(__name__)
 
+def make_cassandra_rag_retriever_tool(cassandra_session) -> Tool:
+    embedding = OpenAIEmbeddings()
+
+    vector_store = CassandraVectorStore(
+        embedding=embedding,
+        session=cassandra_session,
+        keyspace=config_vector_index_mgmt["keyspace"],
+        table_name=config_vector_index_mgmt["TABLE_NAME"]
+        )
+
+    retriever = vector_store.as_retriever(
+        search_type="similarity_score_threshold", 
+        search_kwargs={"score_threshold": 0.5, "k": 5}
+        )
+    
+    retriever_tool = create_retriever_tool(
+        retriever,
+        "retrieval_tool",
+        "Search and return information from the cassandra data corpus.",
+        # document_prompt=RAG_PROMPT
+        )
+
+    return retriever_tool
+
+
+"""
 def make_local_rag_retriever_tool() -> Tool:
     glob_pattern = "local_assets/vector_index_feed_*.csv"
     latest_file = max(glob.glob(glob_pattern))
@@ -40,40 +58,24 @@ def make_local_rag_retriever_tool() -> Tool:
         )
 
     return retriever_tool
+"""
 
-def make_cassandra_rag_retriever_tool() -> Tool:
-    embedding = OpenAIEmbeddings()
 
-    with cassandra_connection() as (cassandra_cluster, cassandra_session):
-        vector_store = CassandraVectorStore(
-            embedding=embedding,
-            session=cassandra_session,
-            keyspace=config["keyspace"],
-            table_name=TABLE_NAME
-            )
-    
-    retriever = vector_store.as_retriever(
-        search_type="similarity_score_threshold", 
-        search_kwargs={"score_threshold": 0.5, "k": 5}
-        )
-    
-    retriever_tool = create_retriever_tool(
-        retriever,
-        "retrieval_tool",
-        "Search and return information from the cassandra data corpus.",
-        # document_prompt=RAG_PROMPT
-        )
-    
-    return retriever_tool
-
+"""
+import glob
+import pandas as pd
+from typing import Dict, Any
+from langchain_core.documents import Document
+from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.vectorstores import InMemoryVectorStore
+from agentic_tools.state_data_model import ChatbotState
+from fiddler_langgraph.tracing.instrumentation import set_llm_context
 
 def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
-    """
-    Retrieve relevant documents from the Cassandra vector database using RAG.
+    # Retrieve relevant documents from the Cassandra vector database using RAG.
     
-    Args: state: Current conversation state containing messages
-    Returns: Dictionary with updated messages including retrieved context
-    """
+    # Args: state: Current conversation state containing messages
+    # Returns: Dictionary with updated messages including retrieved context
     try:
         # Get the last user message for retrieval
         last_message = None
@@ -96,8 +98,8 @@ def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
             vector_store = CassandraVectorStore(
                 embedding=embedding,
                 session=cassandra_session,
-                keyspace=config["keyspace"],
-                table_name=TABLE_NAME
+                keyspace=config_vector_index_mgmt["keyspace"],
+                table_name=config_vector_index_mgmt["TABLE_NAME"]
             )
         
             
@@ -147,3 +149,4 @@ def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
         return {"messages": [AIMessage(content=error_message)]}
 
 
+"""

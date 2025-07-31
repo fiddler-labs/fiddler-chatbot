@@ -34,10 +34,11 @@ from langgraph.checkpoint.memory import MemorySaver
 from fiddler_langgraph import FiddlerClient
 from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set_conversation_id, set_llm_context
 
+from vector_index_mgmt import cassandra_connection
 from utils.custom_logging import setup_logging
 
 from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import make_local_rag_retriever_tool #, make_cassandra_rag_retriever_tool #, LEGACY_cassandra_rag_node
+from agentic_tools.rag import make_cassandra_rag_retriever_tool #, make_local_rag_retriever_tool #, LEGACY_cassandra_rag_node
 
 from config import CONFIG_CHATBOT_NEW as config
 
@@ -106,9 +107,7 @@ tools : List[Tool] = [
     ]
 logger.info("✓ tools initialized successfully")
 
-
-rag_retriever_tool_node = ToolNode([make_local_rag_retriever_tool()], name="retrieval_tool")
-# rag_retriever_tool = ToolNode([make_cassandra_rag_retriever_tool() ], name="retrieval_tool"),
+rag_retriever_tool_node = ToolNode([make_cassandra_rag_retriever_tool(cassandra_session) ], name="retrieval_tool")
 
 all_tools = tools #+ [make_local_rag_retriever_tool() , make_cassandra_rag_retriever_tool()]
 
@@ -182,6 +181,7 @@ def chatbot_node(state: ChatbotState) -> ChatbotState:
     logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_foramtting(response.content)}")
 
     return {"messages": [ai_message]}
+
 
 def force_rag_tool_call_node(state: ChatbotState) -> ChatbotState:
     """
