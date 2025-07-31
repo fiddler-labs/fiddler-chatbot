@@ -38,7 +38,6 @@ CONFIG_VECTOR_INDEX_MGMT = {
     "temperature": 0,
     "squad_table": "squad",
     "chatbot_history_table": "fiddler_chatbot_history",
-    "backup_chunk_size": 1000,  # For backup operations
     "embedding_batch_size": 100,  # For processing embeddings in batches to avoid token limits
     "max_retry_attempts": 3,
     "retry_delay": 2.0,
@@ -64,7 +63,7 @@ CONFIG_CHATBOT_OLD = {
     "GR__JAILBREAK_SCORE": 0.0,
     "GR__SAFETY_LATENCY": 0.0,
     "GR__REQUESTS_TIMEOUT": 60
-}
+    }
 
 CONFIG_CHATBOT_NEW = {
     "FIDDLER_URL": "https://preprod.cloud.fiddler.ai",
@@ -75,5 +74,4 @@ CONFIG_CHATBOT_NEW = {
     "GR__REQUESTS_TIMEOUT": 60,
 
     "TOP_K_RETRIEVAL": 6, #todo - use setting
-
-}
+    }
