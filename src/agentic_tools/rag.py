@@ -3,35 +3,64 @@ import logging
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Cassandra as CassandraVectorStore
 from langchain_core.tools import Tool
-from langchain.tools.retriever import create_retriever_tool
+# from langchain.tools.retriever import create_retriever_tool
 
-from config import CONFIG_VECTOR_INDEX_MGMT as config_vector_index_mgmt
+from vector_index_mgmt import cassandra_connection
+
+from config import CONFIG_VECTOR_INDEX_MGMT , CONFIG_CHATBOT_NEW
 
 logger = logging.getLogger(__name__)
 
-def make_cassandra_rag_retriever_tool(cassandra_session) -> Tool:
-    embedding = OpenAIEmbeddings()
 
-    vector_store = CassandraVectorStore(
-        embedding=embedding,
-        session=cassandra_session,
-        keyspace=config_vector_index_mgmt["keyspace"],
-        table_name=config_vector_index_mgmt["TABLE_NAME"]
-        )
+def _cassandra_search_function(query: str) -> str:
+    """
+    Internal function to perform Cassandra vector search with fresh connection.
+    This ensures the connection is active when the search is performed.
+    """
+    try:
+        embedding = OpenAIEmbeddings()
+        
+        with cassandra_connection() as (cassandra_cluster, cassandra_session):
+            vector_store = CassandraVectorStore(
+                embedding=embedding,
+                session=cassandra_session,
+                keyspace=CONFIG_VECTOR_INDEX_MGMT["keyspace"],
+                table_name=CONFIG_VECTOR_INDEX_MGMT["TABLE_NAME"]
+                )
+            
+            # Perform similarity search
+            documents = vector_store.similarity_search( query, k=CONFIG_CHATBOT_NEW['TOP_K_RETRIEVAL'] )
+            
+            if not documents:
+                return "No relevant documents found in the knowledge base."
+            
+            # Format results
+            formatted_results = []
+            for i, doc in enumerate(documents, 1):
+                content = doc.page_content
+                metadata = doc.metadata if doc.metadata else {}
+                formatted_results.append(f"Document {i}:{metadata}\n{content}\n")
+                
+            return "\n".join(formatted_results)
+            
+    except Exception as e:
+        logger.error(f"Error in Cassandra search: {e}")
+        return f"Error: {str(e)}\n Please fix your mistakes."
 
-    retriever = vector_store.as_retriever(
-        search_type="similarity_score_threshold", 
-        search_kwargs={"score_threshold": 0.5, "k": 5}
-        )
+def make_cassandra_rag_retriever_tool() -> Tool:
+    """
+    Creates a RAG retrieval tool that opens a fresh Cassandra connection for each query.
+    This avoids the 'Pool is shutdown' error by ensuring connections are active when used.
+    """
     
-    retriever_tool = create_retriever_tool(
-        retriever,
-        "retrieval_tool",
-        "Search and return information from the cassandra data corpus.",
-        # document_prompt=RAG_PROMPT
-        )
-
+    retriever_tool = Tool(
+        name="retrieval_tool",
+        description="Search and return information from the cassandra data corpus.",
+        func=_cassandra_search_function
+    )
+    
     return retriever_tool
+
 
 
 """
@@ -98,8 +127,8 @@ def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
             vector_store = CassandraVectorStore(
                 embedding=embedding,
                 session=cassandra_session,
-                keyspace=config_vector_index_mgmt["keyspace"],
-                table_name=config_vector_index_mgmt["TABLE_NAME"]
+                keyspace=CONFIG_VECTOR_INDEX_MGMT["keyspace"],
+                table_name=CONFIG_VECTOR_INDEX_MGMT["TABLE_NAME"]
             )
         
             
