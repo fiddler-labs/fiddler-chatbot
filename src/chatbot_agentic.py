@@ -34,7 +34,6 @@ from langgraph.checkpoint.memory import MemorySaver
 from fiddler_langgraph import FiddlerClient
 from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set_conversation_id, set_llm_context
 
-from vector_index_mgmt import cassandra_connection
 from utils.custom_logging import setup_logging
 
 from agentic_tools.state_data_model import ChatbotState
@@ -107,7 +106,7 @@ tools : List[Tool] = [
     ]
 logger.info("✓ tools initialized successfully")
 
-rag_retriever_tool_node = ToolNode([make_cassandra_rag_retriever_tool(cassandra_session) ], name="retrieval_tool")
+rag_retriever_tool_node = ToolNode([make_cassandra_rag_retriever_tool() ], name="retrieval_tool")
 
 all_tools = tools #+ [make_local_rag_retriever_tool() , make_cassandra_rag_retriever_tool()]
 
