@@ -32,7 +32,7 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime, timezone
 from typing import List, Tuple, Optional
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter , MarkdownHeaderTextSplitter
 from pathlib import Path
 from packaging import version
 
@@ -40,18 +40,12 @@ from utils.notebook_to_md import convert_notebooks_jupyter_nbconvert, convert_no
 from utils.flatten_folders import flatten_all_files_individually, concatenate_files_in_leaf_folders
 from utils.custom_logging import setup_logging
 
+from config import CONFIG_DATA_GENERATION as config
+
 # Setup logging with default values
 setup_logging(log_level="DEBUG")
 logger = logging.getLogger(__name__)
 
-
-# Repo URLs
-FIDDLER_MAIN_REPO_URL     = "https://github.com/fiddler-labs/fiddler.git"
-FIDDLER_EXAMPLES_REPO_URL = "https://github.com/fiddler-labs/fiddler-examples.git"
-
-# RSS Feed URLs
-FIDDLER_WEBSITE_BLOG_URL      = 'https://www.fiddler.ai/blog/'
-FIDDLER_WEBSITE_RESOURCES_URL = 'https://www.fiddler.ai/resources/'
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/data_generation.py to project root ./
 LOCAL_DATA_ASSETS_DIR = os.path.join(PROJECT_ROOT, "local_assets")
@@ -65,20 +59,30 @@ FIDDLER_MD_NOTEBOOKS_DIR = os.path.join(LOCAL_DATA_ASSETS_DIR, "md-notebooks")
 FIDDLER_MD_BLOGS_DIR     = os.path.join(LOCAL_DATA_ASSETS_DIR, "md-blogs")
 FIDDLER_MD_RESOURCES_DIR = os.path.join(LOCAL_DATA_ASSETS_DIR, "md-resources")
 
+
+FIDDLER_MAIN_REPO_URL     = config["FIDDLER_MAIN_REPO_URL"]
+FIDDLER_EXAMPLES_REPO_URL = config["FIDDLER_EXAMPLES_REPO_URL"]
+FIDDLER_WEBSITE_BLOG_URL      = config["FIDDLER_WEBSITE_BLOG_URL"]
+FIDDLER_WEBSITE_RESOURCES_URL = config["FIDDLER_WEBSITE_RESOURCES_URL"]
+
 # Text splitting configuration
-CHUNK_SIZE = 2000
-CHUNK_OVERLAP = 300
+RECURSIVE_SPLITTER_CHUNK_SIZE    = config["RECURSIVE_SPLITTER_CHUNK_SIZE"]
+RECURSIVE_SPLITTER_CHUNK_OVERLAP = config["RECURSIVE_SPLITTER_CHUNK_OVERLAP"]
+
+# MarkdownHeaderTextSplitter configuration
+USE_MARKDOWN_HEADER_SPLITTER = config["USE_MARKDOWN_HEADER_SPLITTER"]
+MARKDOWN_HEADERS_TO_SPLIT_ON = config["MARKDOWN_HEADERS_TO_SPLIT_ON"]
+MARKDOWN_STRIP_HEADERS = config["MARKDOWN_STRIP_HEADERS"]
+MARKDOWN_RETURN_EACH_LINE = config["MARKDOWN_RETURN_EACH_LINE"]
+
+KEEP_REPOS = config["KEEP_REPOS"]
+KEEP_CSV_FILES = config["KEEP_CSV_FILES"]
 
 # Notebook conversion method configuration
-# Options: 'jupyter_nbconvert' or 'native_regex'
-NOTEBOOK_CONVERSION_METHOD = 'native_regex'
+NOTEBOOK_CONVERSION_METHOD = config["NOTEBOOK_CONVERSION_METHOD"]
 
 # Markdown flattening method configuration
-# Options: 'individual' or 'concatenated'
-MARKDOWN_FLATTENING_METHOD = 'individual'
-
-KEEP_REPOS = True
-KEEP_CSV_FILES = True
+MARKDOWN_FLATTENING_METHOD = config["MARKDOWN_FLATTENING_METHOD"]
 
 
 def reset_local_data_assets(keep_repos: bool = True, keep_csv_files: bool = True) -> None:
@@ -609,6 +613,80 @@ def crawl_rss_feeds() -> None:
     else:
         logger.info("RSS feed crawling phase completed (some feeds may have failed, but process continues)")
 
+def split_text_with_markdown_headers(text: str) -> List[str]:
+    """
+    Split text using MarkdownHeaderTextSplitter with optional hybrid approach.
+    Args: text: Input text to split
+    Returns: List of text chunks
+    """
+    # Split corpus into chunks using MarkdownHeaderTextSplitter
+    splitter_method = "MarkdownHeaderTextSplitter" if USE_MARKDOWN_HEADER_SPLITTER else "RecursiveCharacterTextSplitter"
+    logger.info(f"Splitting corpus into chunks using {splitter_method}...")
+
+    # Fallback to original RecursiveCharacterTextSplitter
+    recursive_text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=RECURSIVE_SPLITTER_CHUNK_SIZE,
+        chunk_overlap=RECURSIVE_SPLITTER_CHUNK_OVERLAP,
+        length_function=len
+        )
+    
+    # Initialize MarkdownHeaderTextSplitter
+    markdown_splitter = MarkdownHeaderTextSplitter(
+        headers_to_split_on=MARKDOWN_HEADERS_TO_SPLIT_ON,
+        return_each_line=MARKDOWN_RETURN_EACH_LINE,
+        strip_headers=MARKDOWN_STRIP_HEADERS
+        )
+
+    try:
+        if USE_MARKDOWN_HEADER_SPLITTER:
+            # Split by markdown headers first
+            md_header_splits = markdown_splitter.split_text(text)
+            content_with_context = ""
+            final_chunks: List[str] = []
+
+            for doc in md_header_splits:
+                # Split large sections further while preserving header metadata in content
+                metadata_prefix = ""
+                if doc.metadata:
+                    # Create a context prefix from header metadata
+                    header_context = " | ".join([f"{k}: {v}" for k, v in doc.metadata.items()])
+                    metadata_prefix = f"[CONTEXT: {header_context}]\n\n"
+                
+                # If the content is already small enough, keep it as-is
+                if len(content_with_context) <= RECURSIVE_SPLITTER_CHUNK_SIZE:
+                    # Add metadata context to the content
+                    content_with_context = metadata_prefix + doc.page_content
+                    final_chunks.append(content_with_context)
+                else:
+                    # Split large sections further
+                    sub_chunks = recursive_text_splitter.split_text(content_with_context)
+                    sub_chunks = [metadata_prefix + chunk for chunk in sub_chunks]
+                    final_chunks.extend(sub_chunks)
+                    logger.debug(f"Successfully split a big chunk ({len(content_with_context)} chars) into {len(sub_chunks)} sub-chunks")
+            
+            logger.debug(f"Successfully split {len(final_chunks)} chunks")
+            return final_chunks
+            
+        elif not USE_MARKDOWN_HEADER_SPLITTER:
+            logger.info("Using RecursiveCharacterTextSplitter for text splitting")
+            recursive_text_splits = recursive_text_splitter.split_text(text)
+            logger.debug(f"Successfully split {len(recursive_text_splits)} chunks")
+            return recursive_text_splits
+        
+        else:
+            raise RuntimeError("Invalid text splitting method")
+
+    except RuntimeError as e:
+        logger.error(f"SELECTED splitting strategy failed, attempting to fall back to character splitting: {str(e)}")
+        logger.info("FALLBACK: RecursiveCharacterTextSplitter for text splitting")
+        try:
+            return recursive_text_splitter.split_text(text)
+        
+        except Exception as e:
+            logger.error(f"FATAL ERROR: Error splitting text via FALLBACK method: {str(e)}")
+            raise RuntimeError("FATAL ERROR: Error splitting text via FALLBACK method")
+
+
 def generate_corpus_from_sources() -> Path:
     """
     Generate a corpus by combining all markdown content and splitting it into chunks.
@@ -698,22 +776,24 @@ def generate_corpus_from_sources() -> Path:
     source_docs_trimmed = [item.strip() for item in source_docs if item.strip()]
     logger.info(f"Cleaned corpus contains {len(source_docs_trimmed)} documents")
     
-    # Initialize text splitter
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP,
-        length_function=len
-        )
     
-    # Split corpus into chunks
-    logger.info("Splitting corpus into chunks...")
+    if USE_MARKDOWN_HEADER_SPLITTER:
+        logger.info("Markdown header splitting configuration:")
+        logger.info(f"  - Headers to split on: {MARKDOWN_HEADERS_TO_SPLIT_ON}")
+        logger.info(f"  - Strip headers: {MARKDOWN_STRIP_HEADERS}")
+        logger.info(f"  - Return each line: {MARKDOWN_RETURN_EACH_LINE}")
+    
     corpus_chunks = []
-    for doc in source_docs_trimmed:
+    for i, doc in enumerate(source_docs_trimmed):
         try:
-            texts = text_splitter.split_text(doc)
+            texts = split_text_with_markdown_headers(doc)
             corpus_chunks.extend(texts)
+            
+            if (i + 1) % 100 == 0:
+                logger.info(f"Processed {i + 1}/{len(source_docs_trimmed)} documents, generated {len(corpus_chunks)} chunks so far")
+                
         except Exception as e:
-            logger.error(f"Failed to split document: {str(e)}")
+            logger.error(f"Failed to split document {i + 1}: {str(e)}")
             continue
     
     logger.info(f"Generated {len(corpus_chunks)} text chunks")
