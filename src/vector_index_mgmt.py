@@ -15,6 +15,7 @@ import os
 import sys
 import logging
 import time
+from tqdm import tqdm
 import pandas as pd
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -473,7 +474,7 @@ def populate_vector_store_safely(df: pd.DataFrame, session, embedding, table_nam
         total_documents = len(documents)
         logger.info(f"Adding {total_documents} chunks to staging table in batches of {batch_size}. This may take a few minutes...")
         
-        for i in range(0, total_documents, batch_size):
+        for i in tqdm(range(0, total_documents, batch_size), total=total_documents, desc=f"Adding documents to staging table {staging_table} in batches"):
             batch_end = min(i + batch_size, total_documents)
             batch_documents = documents[i:batch_end]
             batch_num = (i // batch_size) + 1
@@ -636,13 +637,10 @@ def _create_backup_table_safe(session, source_table: str, backup_table: str) -> 
         logger.error(f"❌ Failed to create backup table: {e}")
         return False
 
-def _copy_table_data_chunked(session, source_table: str, target_table: str, chunk_size: Optional[int] = None) -> bool:
+def _copy_table_data_chunked(session, source_table: str, target_table: str) -> bool:
     """
     Copy data from source table to target table in chunks to handle large datasets
     """
-    if chunk_size is None:
-        chunk_size = config["backup_chunk_size"]
-    
     try:
         # Get total count first
         count_query = f"SELECT COUNT(*) FROM {config['keyspace']}.{source_table}"
@@ -653,15 +651,10 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
             logger.info(f"Source table {source_table} is empty, nothing to copy")
             return True
         
-        logger.info(f"Copying {total_rows} rows from {source_table} to {target_table} in chunks of {chunk_size}")
-        
         # Cassandra doesn't support INSERT INTO ... SELECT syntax
         # We need to read data and insert it row by row
         logger.info(f"Copying {total_rows} rows from {source_table} to {target_table}")
         
-        # Read data in chunks and process them to avoid timeout
-        effective_chunk_size = min(chunk_size if chunk_size is not None else 500, 500)  # Limit chunk size for data copy operations
-        logger.info(f"Reading data in chunks of {effective_chunk_size} rows to avoid timeout...")
         
         # Insert data into target table
         insert_query = f"""
@@ -682,55 +675,41 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str, chun
             logger.error(f"❌ Error getting row IDs from {source_table}: {repr(e)}")
             raise
         
-        logger.info(f"Found {len(row_ids)} rows to copy")
-        
-        # Process in chunks
-        for i in range(0, len(row_ids), effective_chunk_size):
-            chunk_end = min(i + effective_chunk_size, len(row_ids))
-            chunk_ids = row_ids[i:chunk_end]
+        logger.info(f"Found {len(row_ids)} rows to copy from source table : {source_table} > to > target table : {target_table}")
+
+        # Get full row data for this chunk
+        for row_id in tqdm(row_ids, total=len(row_ids), desc=f"Copy-Inserting rows into target table {target_table} 1by1" ):
+            try:
+                select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {config['keyspace']}.{source_table} WHERE row_id = '{row_id}'"
+                row_result = session.execute(select_query)
+                row_data = list(row_result)
+            except Exception as e:
+                logger.error(f"❌ Error selecting data for query {select_query}")
+                logger.error(f"   Error row_id: {row_id}")
+                logger.error(f"   Error row_result: {row_result}")
+                logger.error(f"   Error row_data: {row_data}")
+                logger.error(f"   Error type: {type(e).__name__}")
+                logger.error(f"   Error args: {repr(e.args)}")
+                raise
             
-            # Get full row data for this chunk
-            for row_id in chunk_ids:
+            if row_data:
+                row = row_data[0]
+                # Insert with timeout handling
                 try:
-                    select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {config['keyspace']}.{source_table} WHERE row_id = '{row_id}'"
-                    row_result = session.execute(select_query)
-                    row_data = list(row_result)
+                    session.execute(prepared_statement, (row.row_id, row.vector, row.body_blob, row.metadata_s))
+                    rows_copied += 1
                 except Exception as e:
-                    # Use % formatting instead of f-strings to avoid issues with % characters in exception messages
-                    logger.error(f"❌ Error selecting data for query {select_query}")
-                    logger.error(f"   Error row_id: {row_id}")
-                    logger.error(f"   Error row_result: {row_result}")
-                    logger.error(f"   Error row_data: {row_data}")
-                    logger.error(f"   Error type: {type(e).__name__}")
-                    logger.error(f"   Error args: {repr(e.args)}")
-                    raise
-                
-                if row_data:
-                    row = row_data[0]
-                    # Insert with timeout handling
-                    try:
-                        # Add debugging to see which data might be causing issues
-                        if rows_copied % 50 == 0:  # Log every 50th row for debugging
-                            logger.info(f"Processing row {rows_copied}: row_id={repr(row.row_id[:50])}...")
-                        
+                    if "timeout" in str(e).lower():
+                        logger.warning(f"⚠️  Timeout on row {repr(row_id)}, retrying...")
+                        time.sleep(1)
                         session.execute(prepared_statement, (row.row_id, row.vector, row.body_blob, row.metadata_s))
                         rows_copied += 1
-                    except Exception as e:
-                        if "timeout" in str(e).lower():
-                            logger.warning(f"⚠️  Timeout on row {repr(row_id)}, retrying...")
-                            time.sleep(1)
-                            session.execute(prepared_statement, (row.row_id, row.vector, row.body_blob, row.metadata_s))
-                            rows_copied += 1
-                        else:
-                            # Add detailed error information for debugging
-                            logger.error(f"❌ Error processing row {repr(row_id)}: {repr(e)}")
-                            logger.error(f"   Error type: {type(e).__name__}")
-                            logger.error(f"   Row data preview: row_id={repr(row.row_id)}, body_blob_preview={repr(str(row.body_blob)[:100])}")
-                            raise e
-                
-                # Log progress for large datasets
-                if rows_copied % 100 == 0:
-                    logger.info(f"Copied {rows_copied}/{total_rows} rows...")
+                    else:
+                        # Add detailed error information for debugging
+                        logger.error(f"❌ Error processing row {repr(row_id)}: {repr(e)}")
+                        logger.error(f"   Error type: {type(e).__name__}")
+                        logger.error(f"   Row data preview: row_id={repr(row.row_id)}, body_blob_preview={repr(str(row.body_blob)[:100])}")
+                        raise e
         
         logger.info(f"✅ Copied {rows_copied} rows from {source_table} to {target_table}")
         return True
@@ -947,7 +926,7 @@ def create_chatbot_history_table(session) -> None:
 
 # ==================== OPENAI EMBEDDING UTILITIES ====================
 
-def test_openai_embeddings(text: str = "Test text: Tell me about yourself") -> None:
+def test_openai_embeddings(text: str = "What is the latest release version of Fiddler?") -> None:
     """
     Test OpenAI embeddings using the new API
     """
