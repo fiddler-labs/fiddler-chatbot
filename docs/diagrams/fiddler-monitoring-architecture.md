@@ -1,89 +1,140 @@
 # Fiddler Monitoring Architecture Diagrams
 
-## Code to Web UI Mapping
+## Code to Web UI Mapping - LangGraph Implementation
 
 ```mermaid
 graph TB
-    subgraph "Python Code Implementation"
+    subgraph "Python Code Implementation (chatbot_agentic.py)"
         A["`**chatbot_agentic.py**
-        Main Application`"]
+        CLI Application with LangGraph`"]
         B["`**chatbot_node()**
-        Function Execution`"]
+        LLM Response Generation`"]
         C["`**llm.invoke()**
-        OpenAI API Call`"]
-        D["`**app.invoke()**
-        LangGraph Workflow`"]
+        ChatOpenAI gpt-4o-mini`"]
+        D["`**chatbot_graph.stream()**
+        LangGraph Workflow Execution`"]
         E["`**set_conversation_id()**
-        Session Management`"]
+        Thread-based Session Management`"]
         F["`**set_llm_context()**
-        Context Tracking`"]
+        Unified Context for Monitoring`"]
+        G["`**LangGraphInstrumentor**
+        Fiddler Integration`"]
     end
     
     subgraph "Fiddler Web UI Dashboard"
-        G["`**Application**
+        H["`**Application**
         Agentic Documentation Chatbot - APP1`"]
-        H["`**chatbot Span**
-        47d5200 | Events: 5`"]
-        I["`**ChatOpenAI Span**
-        b1ad4fa2 | Events: 5`"]
-        J["`**LangGraph Span**
-        bf246607 | Events: 5`"]
-        K["`**Agents Tab**
-        Named & Unknown Agents`"]
-        L["`**Enrichments Tab**
-        Data Processing Metrics`"]
+        I["`**chatbot Span**
+        Node Execution Tracking`"]
+        J["`**ChatOpenAI Span**
+        LLM Invocation Tracking`"]
+        K["`**LangGraph Span**
+        Workflow Execution Tracking`"]
+        L["`**RAG Retrieval Span**
+        Vector Search Tracking`"]
+        M["`**Tool Execution Span**
+        Tool Call Tracking`"]
+    end
+    
+    A --> H
+    B --> I
+    C --> J
+    D --> K
+    F --> L
+    G --> M
+    
+    style A fill:#e1f5fe
+    style H fill:#c8e6c9
+    style I fill:#ffecb3
+    style J fill:#ffecb3
+    style K fill:#ffecb3
+```
+
+## Code to Web UI Mapping - Streamlit Implementation
+
+```mermaid
+graph TB
+    subgraph "Python Code Implementation (chatbot.py)"
+        A["`**chatbot.py**
+        Streamlit Web Application`"]
+        B["`**main()**
+        UI Orchestration`"]
+        C["`**ChatOpenAI**
+        gpt-4-turbo with Streaming`"]
+        D["`**ConversationalRetrievalChain**
+        RAG Pipeline`"]
+        E["`**publish_and_store()**
+        Event Publishing to Fiddler`"]
+        F["`**Guardrails**
+        Safety & Faithfulness Checks`"]
+    end
+    
+    subgraph "Fiddler Platform Monitoring"
+        G["`**Project**
+        fiddler_chatbot_v3`"]
+        H["`**Model**
+        fiddler_rag_chatbot`"]
+        I["`**Event Tracking**
+        Row-based Event Publishing`"]
+        J["`**Metrics**
+        Token Counts & Latency`"]
+        K["`**Feedback**
+        User Ratings & Comments`"]
     end
     
     A --> G
     B --> H
-    C --> I
-    D --> J
-    E --> K
-    F --> L
+    E --> I
+    E --> J
+    F --> K
     
     style A fill:#e1f5fe
     style G fill:#c8e6c9
-    style H fill:#ffecb3
     style I fill:#ffecb3
-    style J fill:#ffecb3
 ```
 
-## Session Flow Architecture
+## Session Flow Architecture - LangGraph Implementation
 
 ```mermaid
 sequenceDiagram
     participant User as User Input
-    participant App as Chatbot App
+    participant App as chatbot_agentic.py
     participant LG as LangGraph
-    participant CB as Chatbot Node
+    participant HN as human_node
+    participant FRT as force_rag_tool_call_node
+    participant RAG as rag_retrieval ToolNode
+    participant CB as chatbot_node
     participant OpenAI as ChatOpenAI
+    participant Cass as Cassandra
     participant Fiddler as Fiddler Platform
-    participant UI as Web UI Dashboard
     
-    User->>App: "Hello, how are you?"
-    App->>App: Generate session_id: uuid4()
+    User->>App: CLI Input or Automated Message
+    App->>App: Generate thread_id: datetime + uuid4()
     App->>LG: set_conversation_id(session_id)
     
-    App->>LG: app.invoke({"messages": [HumanMessage]})
-    LG->>Fiddler: Create LangGraph Span (bf246607)
-    LG->>UI: Display LangGraph Span
+    App->>LG: chatbot_graph.stream(state, thread_config)
+    LG->>HN: Execute human_node
+    HN-->>LG: HumanMessage
+    
+    LG->>FRT: force_rag_tool_call_node
+    FRT-->>LG: AIMessage with tool_call
+    
+    LG->>RAG: Execute rag_retrieval
+    RAG->>Cass: similarity_search(query, k=6)
+    Cass-->>RAG: Retrieved documents
+    RAG-->>LG: ToolMessage with documents
     
     LG->>CB: chatbot_node(state)
-    CB->>Fiddler: Create chatbot Span (47d5200)
-    CB->>UI: Display chatbot Span
-    
-    CB->>OpenAI: llm.invoke(messages)
-    OpenAI->>Fiddler: Create ChatOpenAI Span (b1ad4fa2)
-    OpenAI->>UI: Display ChatOpenAI Span
-    
+    CB->>CB: Build context from messages + tool outputs
+    CB->>CB: set_llm_context() for monitoring
+    CB->>OpenAI: llm.invoke(messages + system_prompt)
     OpenAI-->>CB: AI Response
-    CB-->>LG: Updated State
-    LG-->>App: Final Response
+    CB-->>LG: AIMessage
     
-    Fiddler->>UI: Update Event Counts (5 events each)
-    UI->>UI: Show Active/Inactive Status
+    LG->>Fiddler: Auto-instrumented spans
+    Fiddler-->>User: Display response
     
-    App->>User: "I'm doing well, thank you!"
+    App->>User: "🤖 Assistant: [Response]"
 ```
 
 ## Web UI Components Breakdown
@@ -152,47 +203,49 @@ graph LR
 flowchart TD
     subgraph "Application Layer"
         A["`**User Input**
-        CLI Interface`"]
-        B["`**Session Creation**
-        UUID Generation`"]
+        CLI Interface / Automated Args`"]
+        B["`**Thread Config**
+        Session ID: datetime + uuid4()`"]
         C["`**State Management**
-        ChatbotState`"]
+        ChatbotState with Messages`"]
     end
     
     subgraph "LangGraph Workflow"
-        D["`**Workflow Compilation**
-        app = workflow.compile()`"]
-        E["`**Node Execution**
-        chatbot_node()`"]
-        F["`**LLM Invocation**
-        llm.invoke()`"]
+        D["`**StateGraph Builder**
+        workflow_builder.compile()`"]
+        E["`**Node Chain**
+        human→force_rag→retrieval→chatbot`"]
+        F["`**Conditional Edges**
+        tools_condition`"]
+        G["`**Memory Checkpointer**
+        MemorySaver`"]
+    end
+    
+    subgraph "RAG System"
+        H["`**Retrieval Tool**
+        make_cassandra_rag_retriever_tool()`"]
+        I["`**Vector Search**
+        CassandraVectorStore`"]
+        J["`**OpenAI Embeddings**
+        text-embedding-3-large`"]
     end
     
     subgraph "Fiddler Instrumentation"
-        G["`**LangGraphInstrumentor**
-        instrumentor.instrument()`"]
-        H["`**Span Creation**
-        Auto-generated spans`"]
-        I["`**Event Ingestion**
-        Real-time streaming`"]
+        K["`**LangGraphInstrumentor**
+        Auto-instrumentation`"]
+        L["`**Context Tracking**
+        set_llm_context()`"]
+        M["`**Conversation ID**
+        set_conversation_id()`"]
     end
     
-    subgraph "Fiddler Platform"
-        J["`**Data Processing**
-        Event aggregation`"]
-        K["`**Storage**
-        Span persistence`"]
-        L["`**Analytics**
-        Performance metrics`"]
-    end
-    
-    subgraph "Web UI Dashboard"
-        M["`**Real-time Display**
-        Live span updates`"]
-        N["`**Agent Classification**
-        Named/Unknown agents`"]
-        O["`**Event Counts**
-        Ingestion metrics`"]
+    subgraph "External Services"
+        N["`**Cassandra DB**
+        fiddler_doc_snippets_openai`"]
+        O["`**OpenAI API**
+        gpt-4o-mini`"]
+        P["`**Fiddler Platform**
+        preprod.cloud.fiddler.ai`"]
     end
     
     A --> B
@@ -200,25 +253,24 @@ flowchart TD
     C --> D
     D --> E
     E --> F
-    
-    G --> H
-    H --> I
     D --> G
-    E --> G
-    F --> G
     
+    E --> H
+    H --> I
     I --> J
-    J --> K
-    K --> L
+    I --> N
     
+    K --> L
     L --> M
-    L --> N
-    L --> O
+    D --> K
+    
+    E --> O
+    K --> P
     
     style A fill:#e3f2fd
-    style G fill:#fff3e0
-    style J fill:#e8f5e8
-    style M fill:#fce4ec
+    style H fill:#fff3e0
+    style K fill:#e8f5e8
+    style N fill:#fce4ec
 ```
 
 ## Environment Configuration Mapping
@@ -227,51 +279,62 @@ flowchart TD
 graph TB
     subgraph "Environment Variables"
         A["`**FIDDLER_API_KEY**
-        Authentication`"]
+        Authentication for both chatbots`"]
         B["`**FIDDLER_APP_ID**
-        Application Identity`"]
+        Application ID for LangGraph`"]
         C["`**OPENAI_API_KEY**
-        LLM Access`"]
+        LLM & Embeddings Access`"]
+        D["`**ASTRA_DB_APPLICATION_TOKEN**
+        Cassandra Authentication`"]
     end
     
-    subgraph "Application Configuration"
-        D["`**FiddlerClient**
-        Client initialization`"]
-        E["`**Application Name**
-        'Agentic Documentation Chatbot - APP1'`"]
-        F["`**Platform URL**
+    subgraph "LangGraph Configuration (chatbot_agentic.py)"
+        E["`**FiddlerClient**
+        API Key + App ID + URL`"]
+        F["`**ChatOpenAI**
+        gpt-4o-mini, temp=0.7`"]
+        G["`**Platform URL**
         preprod.cloud.fiddler.ai`"]
     end
     
-    subgraph "Web UI Display"
-        G["`**Dashboard Title**
-        Shows application name`"]
-        H["`**Span Organization**
-        Groups by application`"]
-        I["`**Session Tracking**
-        UUID-based identification`"]
+    subgraph "Streamlit Configuration (chatbot.py)"
+        H["`**Fiddler Project**
+        fiddler_chatbot_v3`"]
+        I["`**Fiddler Model**
+        fiddler_rag_chatbot`"]
+        J["`**ChatOpenAI**
+        gpt-4-turbo, temp=0`"]
+        K["`**Platform URL**
+        demo.fiddler.ai`"]
     end
     
-    A --> D
-    B --> D
-    C --> D
+    subgraph "Shared Configuration"
+        L["`**Cassandra Keyspace**
+        fiddlerai`"]
+        M["`**Vector Table**
+        fiddler_doc_snippets_openai`"]
+        N["`**Embedding Model**
+        text-embedding-3-large`"]
+    end
     
-    D --> E
-    D --> F
+    A --> E
+    A --> H
+    B --> E
+    C --> F
+    C --> J
+    D --> L
     
     E --> G
-    E --> H
-    F --> I
+    H --> K
+    L --> M
     
     style A fill:#ffebee
     style B fill:#ffebee
     style C fill:#ffebee
-    style D fill:#e0f2f1
+    style D fill:#ffebee
     style E fill:#e0f2f1
-    style F fill:#e0f2f1
-    style G fill:#e8eaf6
-    style H fill:#e8eaf6
-    style I fill:#e8eaf6
+    style H fill:#e0f2f1
+    style L fill:#e8eaf6
 ```
 
 ---
