@@ -102,15 +102,16 @@ tools : List[Tool] = [
         name="get_system_time",
         description="Get the current system time",
         func=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        )
+        ),
+    make_cassandra_rag_retriever_tool()
     ]
 logger.info("✓ tools initialized successfully")
 
+
 rag_retriever_tool_node = ToolNode([make_cassandra_rag_retriever_tool() ], name="retrieval_tool")
 
-all_tools = tools #+ [make_local_rag_retriever_tool() , make_cassandra_rag_retriever_tool()]
 
-llm.bind_tools(all_tools)
+llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
 
 
