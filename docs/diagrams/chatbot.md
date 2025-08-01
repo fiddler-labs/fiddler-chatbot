@@ -1,29 +1,31 @@
 # Fiddler Chatbot Diagrams
 
-## Fiddler Chatbot System Architecture
+**Note**: This document describes the Streamlit-based chatbot implementation (`chatbot.py`). For the newer LangGraph-based implementation, see `chatbot_agentic.md`.
+
+## Fiddler Chatbot System Architecture (Streamlit Version)
 
 ```mermaid
 graph TB
-    A[User Input] --> B[Streamlit UI]
-    B --> C{Safety Check}
+    A[User Input] --> B[Streamlit UI<br/>chatbot.py]
+    B --> C{Jailbreak Detection<br/>get_safety_guardrail_results}
     C -->|Pass| D[RAG Pipeline]
-    C -->|Fail| E[Reject Query]
+    C -->|Fail| E[Reject Query<br/>Set prompt='Rejected']
     
-    D --> F[Question Generator]
-    F --> G[Vector Search]
-    G --> H[Retrieve Documents]
-    H --> I[LLM Processing]
-    I --> J[Generate Response]
+    D --> F[Question Generator<br/>LLMChain]
+    F --> G[Vector Search<br/>Cassandra]
+    G --> H[Retrieve Documents<br/>k=6]
+    H --> I[LLM Processing<br/>ChatOpenAI]
+    I --> J[Generate Response<br/>ConversationalRetrievalChain]
     
-    J --> K{Faithfulness Check}
-    K --> L[Display Response]
+    J --> K{Faithfulness Check<br/>get_faithfulness_guardrail_results}
+    K --> L[Display Response<br/>StreamHandler]
     
-    L --> M[User Feedback]
-    M --> N[Store Feedback]
+    L --> M[User Feedback<br/>👍 👎]
+    M --> N[Store Feedback<br/>store_feedback]
     
     subgraph "Data Storage"
-        O[(Cassandra DB)]
-        P[(Fiddler Platform)]
+        O[(Cassandra DB<br/>fiddler_chatbot_ledger)]
+        P[(Fiddler Platform<br/>fiddler_chatbot_v3)]
     end
     
     G -.-> O
@@ -43,15 +45,15 @@ style P fill:#bbf,stroke:#333,stroke-width:2px
 ```mermaid
 graph LR
     subgraph "RAG Stack Components"
-        A[OpenAI Embeddings<br/>text-embedding-3-large] --> B[Vector Store<br/>Cassandra]
+        A[OpenAI Embeddings<br/>text-embedding-3-large<br/>dimensions=1536] --> B[Vector Store<br/>Cassandra<br/>fiddler_doc_snippets_openai]
         C[LangChain Framework] --> D[ConversationalRetrievalChain]
-        D --> E[Question Generator<br/>LLMChain]
-        D --> F[Document Chain<br/>load_qa_chain]
-        D --> G[Memory<br/>ConversationSummaryBufferMemory]
-        H[ChatOpenAI<br/>gpt-4-turbo] --> E
+        D --> E[Question Generator<br/>LLMChain<br/>CONDENSE_QUESTION_PROMPT]
+        D --> F[Document Chain<br/>load_qa_chain<br/>QA_CHAIN_PROMPT]
+        D --> G[Memory<br/>ConversationSummaryBufferMemory<br/>max_token_limit=50]
+        H[ChatOpenAI<br/>gpt-4-turbo<br/>temperature=0] --> E
         H --> F
         H --> G
-        B --> I[Retriever<br/>k=3 documents]
+        B --> I[Retriever<br/>k=6 documents<br/>as_retriever()]
         I --> D
     end
     
@@ -103,19 +105,20 @@ sequenceDiagram
 
 ---
 
-## Session State Managment : Attributes
+## Session State Management : Attributes
 
 ```mermaid
 graph LR
     A[st.session_state]
-    A --> B[UUID<br/>Unique conversation ID]
-    A --> C[SESSION_ID<br/>User session tracking]
-    A --> D[MEMORY<br/>Conversation history]
+    A --> B[uuid<br/>Unique conversation ID]
+    A --> C[session_id<br/>User session tracking]
+    A --> D[memory<br/>ConversationSummaryBufferMemory]
     A --> E[messages<br/>Chat display history]
-    A --> F[ANSWER<br/>Latest response]
-    A --> G[COMMENT<br/>User feedback text]
-    A --> H[THUMB_UP/DOWN<br/>Feedback buttons]
-    A --> I[DB_CONN<br/>Cassandra connection]
+    A --> F[answer<br/>Latest response]
+    A --> G[comment<br/>User feedback text]
+    A --> H[thumbs_up_button<br/>thumbs_down_button]
+    A --> I[db_conn<br/>Cassandra cluster connection]
+    A --> J[qa<br/>ConversationalRetrievalChain]
 style A fill:#f9f,stroke:#333,stroke-width:2px
 ```
 
@@ -178,4 +181,4 @@ style A fill:#f96,stroke:#333,stroke-width:2px
 style I fill:#bbf,stroke:#333,stroke-width:2px
 style J fill:#bbf,stroke:#333,stroke-width:2px
 style K fill:#bbf,stroke:#333,stroke-width:2px
-``
+```
