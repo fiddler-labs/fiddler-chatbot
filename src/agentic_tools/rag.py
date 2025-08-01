@@ -50,14 +50,13 @@ def _cassandra_search_function(query: str) -> str:
 def make_cassandra_rag_retriever_tool() -> Tool:
     """
     Creates a RAG retrieval tool that opens a fresh Cassandra connection for each query.
-    This avoids the 'Pool is shutdown' error by ensuring connections are active when used.
     """
     
     retriever_tool = Tool(
         name="retrieval_tool",
         description="Search and return information from the cassandra data corpus.",
         func=_cassandra_search_function
-    )
+        )
     
     return retriever_tool
 
