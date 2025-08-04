@@ -2,7 +2,7 @@ import logging
 
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Cassandra as CassandraVectorStore
-from langchain_core.tools import Tool
+from langchain_core.tools import Tool, tool  # noqa: F401
 # from langchain.tools.retriever import create_retriever_tool
 
 from vector_index_mgmt import cassandra_connection
@@ -11,11 +11,10 @@ from config import CONFIG_VECTOR_INDEX_MGMT , CONFIG_CHATBOT_NEW
 
 logger = logging.getLogger(__name__)
 
-
-def _cassandra_search_function(query: str) -> str:
+@tool
+def cassandra_search_function(query: str) -> str:
     """
-    Internal function to perform Cassandra vector search with fresh connection.
-    This ensures the connection is active when the search is performed.
+    Perform a search over a database of Fiddler documents and return the most relevant documents.
     """
     try:
         embedding = OpenAIEmbeddings()
@@ -47,18 +46,18 @@ def _cassandra_search_function(query: str) -> str:
         logger.error(f"Error in Cassandra search: {e}")
         return f"Error: {str(e)}\n Please fix your mistakes."
 
-def make_cassandra_rag_retriever_tool() -> Tool:
-    """
-    Creates a RAG retrieval tool that opens a fresh Cassandra connection for each query.
-    """
+# def make_cassandra_rag_retriever_tool() -> Tool:
+#     """
+#     Creates a RAG retrieval tool that opens a fresh Cassandra connection for each query.
+#     """
     
-    retriever_tool = Tool(
-        name="retrieval_tool",
-        description="Search and return information from the cassandra data corpus.",
-        func=_cassandra_search_function
-        )
+#     retriever_tool = Tool(
+#         name="retrieval_tool",
+#         description="Search and return information from the cassandra data corpus.",
+#         func=cassandra_search_function
+#         )
     
-    return retriever_tool
+#     return retriever_tool
 
 
 
