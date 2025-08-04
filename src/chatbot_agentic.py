@@ -9,21 +9,21 @@ import sys
 import uuid
 import logging
 from dotenv import load_dotenv
-from typing import Any, List
+from typing import Any #, List
 from datetime import datetime
 import argparse
 import traceback
-
-from langchain_core.prompts import PromptTemplate
 from pydantic import SecretStr
 
-from langchain_core.tools import Tool
+from langchain_core.prompts import PromptTemplate
+from langchain_core.tools import tool # , Tool
 from langchain_core.runnables.config import RunnableConfig
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage #, BaseMessage
+from langchain_core.messages import HumanMessage, ToolMessage #, SystemMessage, AIMessage, BaseMessage
 from langchain_openai import ChatOpenAI
 
 from langgraph.graph import StateGraph, START, END
-from langgraph.prebuilt import ToolNode, tools_condition
+from langgraph.types import Command
+# from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
 # from langgraph.graph.message import add_messages
 
@@ -32,12 +32,12 @@ from langgraph.checkpoint.memory import MemorySaver
     # response_model = init_chat_model("openai:gpt-4.1", temperature=0)
 
 from fiddler_langgraph import FiddlerClient
-from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set_conversation_id, set_llm_context
+from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set_conversation_id, set_llm_context # todo - ause this later  # noqa: F401
 
 from utils.custom_logging import setup_logging
 
 from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import make_cassandra_rag_retriever_tool #, make_local_rag_retriever_tool #, LEGACY_cassandra_rag_node
+from agentic_tools.rag import cassandra_search_function # , make_cassandra_rag_retriever_tool
 
 from config import CONFIG_CHATBOT_NEW as config
 
@@ -82,7 +82,6 @@ instrumentor = LangGraphInstrumentor(fdl_client)
 instrumentor.instrument()
 logger.info("✓ Fiddler monitoring initialized successfully")
 
-
 checkpointer = MemorySaver()
 
 # Read the system instructions template
@@ -90,32 +89,26 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go
 with open(os.path.join(PROJECT_ROOT, "src", "system_instructions.md"), "r") as f:
     SYSTEM_INSTRUCTIONS_PROMPT = PromptTemplate.from_template(f.read().strip())
 
-llm = ChatOpenAI(
+base_llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.7,
     api_key=SecretStr(OPENAI_API_KEY) if OPENAI_API_KEY else None,
     )
 logger.info("✓ language model initialized successfully")
 
-tools : List[Tool] = [
-    Tool(
-        name="get_system_time",
-        description="Get the current system time",
-        func=lambda: datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        ),
-    make_cassandra_rag_retriever_tool()
-    ]
-logger.info("✓ tools initialized successfully")
+@tool
+def get_system_time() -> str:
+    """
+    Get the current system time
+    """
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-
-rag_retriever_tool_node = ToolNode([make_cassandra_rag_retriever_tool() ], name="retrieval_tool")
-
-
-llm.bind_tools(tools)
+tools = [get_system_time, cassandra_search_function]
+llm = base_llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
 
 
-def human_node(state: ChatbotState) -> ChatbotState:
+def human_node(state: ChatbotState):
     """
     Human input node that uses interrupt to get user input and directs the flow.
     In automated mode, it takes messages from a list ( that was parsed via argparse).
@@ -133,71 +126,58 @@ def human_node(state: ChatbotState) -> ChatbotState:
     # Check for exit commands
     if user_input and user_input.lower() in ["quit", "exit", "q"]:
         print("👋 Goodbye! Thank you for chatting.\n")
-        sys.exit(0)
-        # return Command(update={"messages": [HumanMessage(content="Goodbye!")]}, goto=END)
+        return Command(update={"messages": [HumanMessage(content="USER EXITTED")]}, goto=END)
+        # sys.exit(0)
     
-    # return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="force_rag_tool_call" )
-    return {"messages": [HumanMessage(content=user_input)]}
+    return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="chatbot" )
 
 
-def chatbot_node(state: ChatbotState) -> ChatbotState:
+def chatbot_node(state: ChatbotState):
     """
     Processes the conversation state to generate a response using the LLM.
     It dynamically constructs a context from the conversation history and any retrieved documents from tool calls
     """
-    # Start with a base of messages from the current state
-    all_messages_in_State = list(state["messages"])
-
-    # Extract the most recent tool call outputs to build the context
-    tool_outputs = []
-    for msg in reversed(all_messages_in_State):
-        if isinstance(msg, ToolMessage):
-            tool_outputs.append(msg.content)
-
-    # Construct a unified context for both LLM and monitoring
-    fiddler_context_store = []
+    all_messages_in_State = state["messages"]
+    # last_message = all_messages_in_State[-1]
     
-    conversation_history = " | ".join([ f"{msg.__class__.__name__}: {msg.content[:100]}..." for msg in all_messages_in_State[-10:] ])
-    fiddler_context_store.append(f"Conversation: {conversation_history}")
-    logger.debug(f"CHATBOT_NODE: Debug - Conversation History: {try_pretty_foramtting(conversation_history)}")
-
-    if tool_outputs:
-        retrieved_docs = " | ".join(tool_outputs)
-        fiddler_context_store.append(f"Retrieved Docs: {retrieved_docs}")
-        logger.debug(f"CHATBOT_NODE: Debug - Retrieved Docs: {try_pretty_foramtting(retrieved_docs)}")
-
-        system_message = SystemMessage( content=SYSTEM_INSTRUCTIONS_PROMPT.format( context=retrieved_docs, question=all_messages_in_State[-1].content ) )
-        all_messages_in_State.insert(0, system_message)
-
-    # Set the unified context for Fiddler monitoring
-    set_llm_context(llm, " | ".join(fiddler_context_store))
+    # system_message = SystemMessage( content=SYSTEM_INSTRUCTIONS_PROMPT.format( context=last_message.content, question=last_human_message.content ) )
+    # all_messages_in_State.insert(0, system_message)
     
-    # Generate response from the LLM
     logger.debug(f"CHATBOT_NODE: Debug - All Messages in State: {try_pretty_foramtting(all_messages_in_State)}")
+    
     response = llm.invoke(all_messages_in_State)
-
-    ai_message = AIMessage(content=response.content)
     print(f"🤖 Assistant: {response.content}\n")
     logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_foramtting(response.content)}")
 
-    return {"messages": [ai_message]}
 
+    if hasattr(response, "tool_calls") and len(response.tool_calls) > 0:
+        print('Entering tools node')
+        return Command(update={"messages": [response]}, goto="tools")
+    else:
+        print('Entering human node')
+        return Command(update={"messages": [response]}, goto="human")
+    
 
-def force_rag_tool_call_node(state: ChatbotState) -> ChatbotState:
-    """
-    Node that takes the last HumanMessage and returns an AIMessage with a tool call for the RAG retriever.
-    """
-    if not state["messages"] or not isinstance(state["messages"][-1], HumanMessage):
-        raise ValueError("No HumanMessage found in state for tool call generation.")
-    user_msg = state["messages"][-1]
-    tool_call = {
-        "name": "retrieval_tool",
-        "args": {"query": user_msg.content},
-        "id": str(uuid.uuid4()),
-        "type": "tool_call"
-        }
-    ai_msg = AIMessage(content="", tool_calls=[tool_call])
-    return {"messages": [ai_msg]}
+def custom_tool_node(state: ChatbotState):
+    """Custom tool node to tackle tool calls"""
+    ai_message = state["messages"][-1]
+    tool_outputs = []
+    
+    for tool_call in (ai_message.tool_calls) or []:
+        if tool_call['name'] == "get_system_time": # todo - use a switch statement
+            output = get_system_time.invoke(tool_call['args'])
+        elif tool_call['name'] == "cassandra_search_function":
+            output = cassandra_search_function.invoke(tool_call['args'])
+            
+        tool_outputs.append(
+                ToolMessage(
+                    content=json.dumps(output),
+                    name=tool_call['name'],
+                    tool_call_id=tool_call['id'],
+                )
+            )
+    return Command(update={"messages": tool_outputs}, goto="chatbot")
+
 
 
 def build_chatbot_graph():
@@ -207,21 +187,17 @@ def build_chatbot_graph():
 
     # Component entities
     workflow_builder.add_node("human", human_node)
-    workflow_builder.add_node("force_rag_tool_call", force_rag_tool_call_node)
     workflow_builder.add_node("chatbot", chatbot_node)
-    workflow_builder.add_node("tools", ToolNode(tools=tools))
-    workflow_builder.add_node("rag_retrieval", rag_retriever_tool_node)
+    # workflow_builder.add_node("tools", ToolNode(tools))
+    workflow_builder.add_node("tools", custom_tool_node)
 
     # Define the graph flow
     workflow_builder.add_edge(START, "human")
-    workflow_builder.add_edge("human",END)
-    workflow_builder.add_edge("human", "force_rag_tool_call")
-    workflow_builder.add_edge("force_rag_tool_call", "rag_retrieval")
-    workflow_builder.add_edge("rag_retrieval", "chatbot")
-    workflow_builder.add_conditional_edges( "chatbot", tools_condition)
-    workflow_builder.add_edge("tools", "chatbot")
-    workflow_builder.add_edge("chatbot", "human")
-    workflow_builder.add_edge("chatbot", END)
+    # workflow_builder.add_edge("human", "chatbot")
+    # workflow_builder.add_edge("chatbot", "human")
+    # workflow_builder.add_edge("chatbot", "tools")
+    # workflow_builder.add_edge("tools", "chatbot")
+    # workflow_builder.add_edge("human", END)
 
     # Compile the graph with checkpointer
     chatbot_graph = workflow_builder.compile(checkpointer=checkpointer)
