@@ -2,9 +2,6 @@
 
 ## Pending action items listed in planned order of execution and priority
 
-- RAG Debugging
-  - ensure the Cassandra RAG retriever tool-node is working correctly.
-
 - Tools implementation for agentic orchestration
   - P0 : Currently using a dummy tool to begin implementation. <!Ongoing!>
   - P1 : Will transition to using Fiddler Guardrails once the dummy tool setup is validated. <!Ongoing!>
@@ -25,13 +22,6 @@
     - **Goal**: Reduce code hallucination and improve accuracy
     - **Architecture**: Can be wrapped as module-as-a-service or lightweight agent
   - Also explore the gitbook APIs : those can be a tool call ideas too
-
-- Chatbot ChainLit UI
-  - Current chatbot only available via CLI. Need to add ChainLit
-  - Would allow hosted visibly on the website , Required for demoing to customers.
-  - Will pursue this ChainLit interface after:
-    - Guardrails tools are fully integrated and tested.
-    - Core functionality is stable and demo-ready.
 
 - Demo Asset for Stakeholders (Sol. Eng.) . Once tools are integrated and tested, and the ChainLit UI is ready , the goal is to:
   - Create a demo asset usable by Max and Nick.
@@ -82,6 +72,13 @@
 - RAG Refactor
   - Goal is to ensure RAG content appears correctly, aligning with feedback from Robin.
   - involves converting the current RAG retriever wrapper node to instead use the langgraph Node(Tool(Retriever(RAGfunction))) pattern.
+
+- RAG Debugging
+  - ensure the Cassandra RAG retriever tool-node is working correctly.
+
+- Chatbot ChainLit UI
+  - Current chatbot only available via CLI. Need to add ChainLit
+  - Would allow hosted visibly on the website , Required for demoing to customers.
 
 ---
 
