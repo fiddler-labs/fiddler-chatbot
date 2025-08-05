@@ -12,7 +12,7 @@ from config import CONFIG_VECTOR_INDEX_MGMT , CONFIG_CHATBOT_NEW
 logger = logging.getLogger(__name__)
 
 @tool
-def cassandra_search_function(query: str) -> str:
+def rag_over_fiddler_knowledge_base(query: str) -> str:
     """
     Perform a search over a database of Fiddler documents and return the most relevant documents.
     """
