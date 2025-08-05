@@ -25,4 +25,4 @@ Simply start by asking me anything about Fiddler, AI monitoring, or model observ
 
 ---
 
-**Powered by Fiddler's AI Observability Platform**
+Powered by Fiddler's AI Observability Platform
