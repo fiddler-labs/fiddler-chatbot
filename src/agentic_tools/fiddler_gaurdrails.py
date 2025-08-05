@@ -4,6 +4,7 @@ import json
 import time
 import logging
 from langchain_core.tools import tool
+from langchain_core.documents import Document
 
 from config import CONFIG_CHATBOT_NEW as config
 
@@ -22,18 +23,13 @@ def get_faithfulness_guardrail_results(response: str, source_docs: list) -> tupl
 
     source_docs_list = []
     for document in source_docs:
-        source_docs_list.append(document.page_content)
-
-    response = response.replace("'", "''")
-    source_doc0 = source_docs_list[0].replace("'", "''")
-    source_doc1 = source_docs_list[1].replace("'", "''")
-    source_doc2 = source_docs_list[2].replace("'", "''")
+        source_docs_list.append(document.page_content if isinstance(document, Document) else document)
 
     payload = json.dumps(
         {
             "data": {
                 "response": response,
-                "context": source_doc0 + source_doc1 + source_doc2,
+                "context": source_docs_list,
             }
         }
         )
@@ -106,8 +102,8 @@ def tool_fiddler_guardrail_safety(query: str):
     Inputs: 
         - query(str): The query to check for safety.
     Outputs:
-        - safety_score(float): The safety score.
-        - latency(float): The latency in milliseconds.
+        - safety_score(float): The safety score. 0.0 to 1.0
+        - latency(float): The latency in seconds.
     """
     return get_safety_guardrail_results(query)
 
@@ -120,8 +116,8 @@ def tool_fiddler_guardrail_faithfulness(response: str, source_docs: list):
         - response(str): The response to check for faithfulness.
         - source_docs(list): The source documents to check for faithfulness.
     Outputs:
-        - faithfulness_score(float): The faithfulness score.
-        - latency(float): The latency in milliseconds.
+        - faithfulness_score(float): The faithfulness score. 0.0 to 1.0
+        - latency(float): The latency in seconds.
     """
     return get_faithfulness_guardrail_results(response, source_docs)
 
