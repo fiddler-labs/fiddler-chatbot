@@ -167,10 +167,17 @@ def tool_execution_node(state: ChatbotState):
     tool_outputs = []
     
     for tool_call in (ai_message.tool_calls) or []: # type: ignore
-        if tool_call['name'] == "get_system_time": # todo - use a switch statement
-            output = get_system_time.invoke(tool_call['args'])
-        elif tool_call['name'] == "rag_over_fiddler_knowledge_base":
-            output = rag_over_fiddler_knowledge_base.invoke(tool_call['args'])
+        match tool_call['name']:
+            case "get_system_time":
+                output = get_system_time.invoke(tool_call['args'])
+            case "rag_over_fiddler_knowledge_base":
+                output = rag_over_fiddler_knowledge_base.invoke(tool_call['args'])
+            case "tool_fiddler_guardrail_safety":
+                output = tool_fiddler_guardrail_safety.invoke(tool_call['args'])
+            case "tool_fiddler_guardrail_faithfulness":
+                output = tool_fiddler_guardrail_faithfulness.invoke(tool_call['args'])
+            case _:
+                raise ValueError(f"Unknown tool: {tool_call['name']}")
             
         tool_outputs.append(
                 ToolMessage(
