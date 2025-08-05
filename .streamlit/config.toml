@@ -1,8 +1,46 @@
-[theme]
-base="light"
+# Streamlit Configuration for Chainlit Deployment
+# This configuration ensures optimal settings for deploying Chainlit on Streamlit Cloud
 
 [server]
+# Set the default port (Streamlit Cloud will override this, but good to specify)
+port = 8501
+
+# Allow connections from any host (required for cloud deployment)
+address = "0.0.0.0"
+
+# Enable CORS for iframe embedding (if using approach 3)
+enableCORS = true
+
+# Increase upload limits for file handling
+maxUploadSize = 200
+
+# Disable automatic browser opening (handled by --headless in Chainlit)
 headless = true
+
+[client]
+# Show full error details for debugging
+showErrorDetails = "full"
+
+# Hide developer options in production
+toolbarMode = "minimal"
+
+[browser]
+# Use localhost for development, Streamlit Cloud will override for production
+serverAddress = "localhost"
+
+# Don't gather usage stats to avoid conflicts
+gatherUsageStats = false
+
+[theme]
+# Optional: Set a theme that works well with Chainlit
+primaryColor = "#FF6B6B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+
+[logger]
+# Set logging level for debugging
+level = "info"
 
 [experimental]
 installCommand = "uv sync"
