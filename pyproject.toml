@@ -36,6 +36,7 @@ dependencies = [
     "cassio>=0.1.10",
     "watchdog>=6.0.0",
     "ipykernel>=6.30.0",
+    "chainlit>=2.6.5",
 ]
 authors = [
     {name = "Fiddler AI Team"},
