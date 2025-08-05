@@ -72,6 +72,18 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    streamlit run chatbot.py
    ```
 
+6. **Running the new agentic chatbot with Chainlit**
+   The application will be available at `http://localhost:8000`
+
+   ```bash
+   chainlit run src/chatbot_chainlit.py -w
+   ```
+
+   Options:
+   - `-w`: Enable auto-reload on file changes
+   - `--port 8001`: Use a different port (default is 8000)
+   - `--host 0.0.0.0`: Allow external connections
+
 ---
 
 ## Fiddler Agentic Monitoring Integration
