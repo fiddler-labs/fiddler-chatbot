@@ -1,7 +1,7 @@
 {
   "configurations": [
     {
-      "name": "Run AGENTIC Chatbot (ChainLit Local)",
+      "name": "Run AGENTIC CHAINLIT Chatbot (Local)",
       "type": "debugpy",
       "request": "launch",
       "module": "chainlit",

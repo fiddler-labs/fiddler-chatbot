@@ -129,11 +129,11 @@ def chatbot_node(state: ChatbotState):
     logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_formatting(response.content)}")
 
     if hasattr(response, "tool_calls") and response.tool_calls and len(response.tool_calls) > 0: # type: ignore
-        logger.debug('Transferring to tool_execution node')
+        logger.debug('Tool calls detected - transferring to tool_execution node')
         return Command(update={"messages": [response]}, goto="tool_execution")
     else:
-        logger.debug('Transferring to human node - no tool calls')
-        return Command(update={"messages": [response]}, goto="human")
+        logger.debug('No tool calls - ending conversation turn')
+        return Command(update={"messages": [response]}, goto=END)
     
 def tool_execution_node(state: ChatbotState):
     """Custom tool node to execute tool calls"""
@@ -171,6 +171,12 @@ def build_chatbot_graph():
     workflow_builder.add_edge("chatbot", END)
     
     # LEGACY CODE - for reference only
+    """
+    Note: In Chainlit, we don't use static edges for conditional flow.
+    The chatbot_node and tool_execution_node use Command objects with goto
+    to control the flow dynamically, just like in the CLI version.
+    """
+    # This allows conditional routing based on whether tools are needed.
     # workflow_builder.add_edge(START, "human")
     # workflow_builder.add_edge("human", "chatbot")
     # workflow_builder.add_edge("chatbot", "human")
@@ -231,9 +237,8 @@ async def on_message(message: cl.Message):
         await cl.Message(content="❌ Error: Chat session not initialized").send()
         return
     
-    # Create initial state
+    # Create initial state with new user message
     exec_state = ChatbotState(messages=[HumanMessage(content=message.content)])
-    
     
     # Create a message for streaming
     msg = cl.Message(content="")
@@ -305,5 +310,5 @@ async def on_chat_end():
             raise e
 
 if __name__ == "__main__":
-    logger.error("❌ Error: run this file with chainlit using the command: uv run chainlit run src/chatbot_agentic.py")
+    logger.error("❌ Error: run this file with chainlit using the command: uv run chainlit run src/chatbot_chainlit.py")
     sys.exit(1)
