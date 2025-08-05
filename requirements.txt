@@ -40,8 +40,10 @@ fastapi==0.116.1
 fastjsonschema==2.21.1
 feedparser==6.0.11
 fiddler-client==3.9.2
-fiddler-langgraph @ https://test.pypi.org/simple/fiddler-langgraph/https://test-files.pythonhosted.org/packages/a3/2f/74a69cbe718829266ef6e2003c45855ab9f05f13efdd0abec87f4f22c26d/fiddler_langgraph-0.1.0a16.tar.gz#sha256=a5b7c6874e254565b6df1825c924943130e9d79a252a42a5849deb3c6b122b59
+# fiddler-langgraph @ https://test.pypi.org/simple/fiddler-langgraph/
 # https://test.pypi.org/simple/fiddler-langgraph/#fiddler-langgraph==0.1.0a16
+https://test-files.pythonhosted.org/packages/54/42/e78b841b312058446b24a55673869ec0ba5b7cdccd7e616585a65b26bef8/fiddler_langgraph-0.1.0a16-py3-none-any.whl#sha256=61230d1cc8572376630b2f3b1cb23a71e0e8560cc52006f5f628abffc2ecb841
+# https://test-files.pythonhosted.org/packages/a3/2f/74a69cbe718829266ef6e2003c45855ab9f05f13efdd0abec87f4f22c26d/fiddler_langgraph-0.1.0a16.tar.gz#sha256=a5b7c6874e254565b6df1825c924943130e9d79a252a42a5849deb3c6b122b59
 filelock==3.18.0
 filetype==1.2.0
 frozenlist==1.7.0
