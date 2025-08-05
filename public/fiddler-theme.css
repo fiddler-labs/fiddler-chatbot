@@ -3,129 +3,135 @@
 :root {
   /* Fiddler Brand Colors */
   --fiddler-blue: #2563eb;
-  --fiddler-blue-dark: #1d4ed8;
+  --fiddler-blue-hover: #1d4ed8;
   --fiddler-blue-light: #3b82f6;
-  --fiddler-dark: #0f172a;
-  --fiddler-dark-secondary: #1e293b;
-  --fiddler-gray: #64748b;
-  --fiddler-white: #ffffff;
   --fiddler-accent: #06b6d4;
+  
+  /* Light mode variables */
+  --fiddler-bg-primary: #ffffff;
+  --fiddler-bg-secondary: #f8fafc;
+  --fiddler-text-primary: #1e293b;
+  --fiddler-text-secondary: #64748b;
+  --fiddler-border: #e2e8f0;
+  --fiddler-border-accent: rgba(37, 99, 235, 0.2);
 }
 
-/* Main app styling */
+/* Dark mode variables */
+[data-theme="dark"] {
+  --fiddler-bg-primary: #0f172a;
+  --fiddler-bg-secondary: #1e293b;
+  --fiddler-text-primary: #f1f5f9;
+  --fiddler-text-secondary: #94a3b8;
+  --fiddler-border: #334155;
+  --fiddler-border-accent: rgba(59, 130, 246, 0.3);
+}
+
+/* Respect natural theme backgrounds - no forced overrides */
 .chainlit-app, #root, body {
-  background: linear-gradient(135deg, var(--fiddler-dark) 0%, var(--fiddler-dark-secondary) 100%) !important;
-  min-height: 100vh !important;
+  min-height: 100vh;
 }
 
-/* Override default Chainlit backgrounds */
-.cl-app, .cl-main, .cl-container {
-  background: transparent !important;
-}
+/* Let Chainlit handle its own backgrounds naturally */
 
 /* Header styling */
 .chainlit-header {
-  background: var(--fiddler-dark) !important;
-  border-bottom: 2px solid var(--fiddler-blue) !important;
+  border-bottom: 1px solid var(--fiddler-border);
 }
 
 /* Logo styling */
 .chainlit-header .chainlit-logo {
-  max-height: 40px !important;
-  width: auto !important;
+  max-height: 40px;
+  width: auto;
 }
 
-/* Chat container */
-.chainlit-chat-container {
-  background: transparent !important;
-}
-
-/* Message styling */
+/* Message styling - minimal and clean */
 .chainlit-message {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(37, 99, 235, 0.2) !important;
-  border-radius: 12px !important;
-  backdrop-filter: blur(10px) !important;
+  border: 1px solid var(--fiddler-border);
+  border-radius: 8px;
+  background: var(--fiddler-bg-secondary);
 }
 
 .chainlit-message.user {
-  background: linear-gradient(135deg, var(--fiddler-blue), var(--fiddler-blue-dark)) !important;
-  color: white !important;
+  background: var(--fiddler-blue);
+  color: white;
+  border-color: var(--fiddler-blue);
 }
 
 .chainlit-message.assistant {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: var(--fiddler-blue) !important;
+  background: var(--fiddler-bg-primary);
+  border-color: var(--fiddler-border);
+  color: var(--fiddler-text-primary);
 }
 
 /* Input styling */
 .chainlit-input-container {
-  background: var(--fiddler-dark-secondary) !important;
-  border-radius: 16px !important;
-  border: 2px solid var(--fiddler-blue) !important;
-  padding: 8px !important;
+  background: var(--fiddler-bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--fiddler-border);
+  padding: 8px;
 }
 
 .chainlit-input {
-  background: transparent !important;
-  color: var(--fiddler-white) !important;
-  border: none !important;
+  background: transparent;
+  color: var(--fiddler-text-primary);
+  border: none;
 }
 
 .chainlit-input::placeholder {
-  color: var(--fiddler-gray) !important;
+  color: var(--fiddler-text-secondary);
 }
 
 /* Send button */
 .chainlit-send-button {
-  background: var(--fiddler-blue) !important;
-  color: white !important;
-  border-radius: 12px !important;
-  transition: all 0.3s ease !important;
+  background: var(--fiddler-blue);
+  color: white;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  border: none;
 }
 
 .chainlit-send-button:hover {
-  background: var(--fiddler-blue-dark) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+  background: var(--fiddler-blue-hover);
 }
 
 /* Sidebar styling */
 .chainlit-sidebar {
-  background: var(--fiddler-dark) !important;
-  border-right: 2px solid var(--fiddler-blue) !important;
+  border-right: 1px solid var(--fiddler-border);
 }
 
 /* Code blocks */
-.chainlit-code {
-  background: var(--fiddler-dark-secondary) !important;
-  border: 1px solid var(--fiddler-blue) !important;
-  border-radius: 8px !important;
+.chainlit-code, pre, code {
+  background: var(--fiddler-bg-secondary);
+  border: 1px solid var(--fiddler-border);
+  border-radius: 6px;
+  color: var(--fiddler-text-primary);
 }
 
 /* Links and buttons */
 a, .chainlit-button {
-  color: var(--fiddler-blue-light) !important;
-  transition: color 0.3s ease !important;
+  color: var(--fiddler-blue);
+  transition: color 0.2s ease;
+  text-decoration: none;
 }
 
 a:hover, .chainlit-button:hover {
-  color: var(--fiddler-accent) !important;
+  color: var(--fiddler-blue-hover);
 }
 
 /* Tool execution steps */
 .chainlit-step {
-  background: rgba(6, 182, 212, 0.1) !important;
-  border-left: 4px solid var(--fiddler-accent) !important;
-  border-radius: 8px !important;
+  background: var(--fiddler-bg-secondary);
+  border-left: 3px solid var(--fiddler-blue);
+  border-radius: 6px;
+  padding: 12px;
 }
 
 /* Welcome message styling */
 .chainlit-welcome {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(6, 182, 212, 0.1)) !important;
-  border: 2px solid var(--fiddler-blue) !important;
-  border-radius: 16px !important;
-  backdrop-filter: blur(10px) !important;
+  background: var(--fiddler-bg-secondary);
+  border: 1px solid var(--fiddler-border-accent);
+  border-radius: 8px;
+  color: var(--fiddler-text-primary);
 }
 
 /* Scrollbar styling */
@@ -134,7 +140,7 @@ a:hover, .chainlit-button:hover {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--fiddler-dark);
+  background: var(--fiddler-bg-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -143,14 +149,14 @@ a:hover, .chainlit-button:hover {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--fiddler-blue-light);
+  background: var(--fiddler-blue-hover);
 }
 
 /* Animation for message appearance */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -159,117 +165,145 @@ a:hover, .chainlit-button:hover {
 }
 
 .chainlit-message {
-  animation: fadeInUp 0.3s ease-out !important;
+  animation: fadeInUp 0.2s ease-out;
 }
 
 /* Loading indicator */
 .chainlit-loading {
-  color: var(--fiddler-blue) !important;
+  color: var(--fiddler-blue);
 }
 
 /* Status indicators */
 .chainlit-status-online {
-  color: var(--fiddler-accent) !important;
+  color: var(--fiddler-accent);
 }
 
 .chainlit-status-error {
-  color: #ef4444 !important;
+  color: #dc2626;
 }
 
 /* Tool call styling */
 .chainlit-tool-call {
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(37, 99, 235, 0.1)) !important;
-  border: 1px solid var(--fiddler-accent) !important;
-  border-radius: 8px !important;
-  padding: 12px !important;
+  background: var(--fiddler-bg-secondary);
+  border: 1px solid var(--fiddler-border-accent);
+  border-radius: 6px;
+  padding: 12px;
 }
 
 /* Typography improvements */
 .chainlit-message-content {
-  line-height: 1.6 !important;
-  font-size: 14px !important;
+  line-height: 1.6;
+  font-size: 14px;
+  color: var(--fiddler-text-primary);
 }
 
 .chainlit-message-content h1,
 .chainlit-message-content h2,
 .chainlit-message-content h3 {
-  color: var(--fiddler-blue-light) !important;
-  margin-top: 16px !important;
-  margin-bottom: 8px !important;
+  color: var(--fiddler-blue);
+  margin-top: 16px;
+  margin-bottom: 8px;
 }
 
 /* Session ID styling */
-.chainlit-session-id, code {
-  background: rgba(37, 99, 235, 0.2) !important;
-  color: var(--fiddler-blue-light) !important;
-  padding: 4px 8px !important;
-  border-radius: 6px !important;
-  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
-  font-size: 12px !important;
+.chainlit-session-id {
+  background: var(--fiddler-bg-secondary);
+  color: var(--fiddler-blue);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  font-size: 12px;
+  border: 1px solid var(--fiddler-border);
 }
 
 /* Additional Chainlit-specific selectors */
 .cl-message, .cl-message-content, .cl-bubble, [data-testid="chat-message"] {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(37, 99, 235, 0.2) !important;
-  border-radius: 12px !important;
-  backdrop-filter: blur(10px) !important;
+  background: var(--fiddler-bg-secondary);
+  border: 1px solid var(--fiddler-border);
+  border-radius: 8px;
+  color: var(--fiddler-text-primary);
 }
 
 .cl-message-user, [data-testid="chat-message-user"] {
-  background: linear-gradient(135deg, var(--fiddler-blue), var(--fiddler-blue-dark)) !important;
-  color: white !important;
+  background: var(--fiddler-blue);
+  color: white;
+  border-color: var(--fiddler-blue);
 }
 
 .cl-message-assistant, [data-testid="chat-message-assistant"] {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border-color: var(--fiddler-blue) !important;
+  background: var(--fiddler-bg-primary);
+  border-color: var(--fiddler-border);
+  color: var(--fiddler-text-primary);
 }
 
 /* Input field enhancements */
 .cl-input, [data-testid="chat-input"], textarea, input {
-  background: var(--fiddler-dark-secondary) !important;
-  color: var(--fiddler-white) !important;
-  border: 2px solid var(--fiddler-blue) !important;
-  border-radius: 12px !important;
+  background: var(--fiddler-bg-primary);
+  color: var(--fiddler-text-primary);
+  border: 1px solid var(--fiddler-border);
+  border-radius: 6px;
 }
 
 .cl-input:focus, [data-testid="chat-input"]:focus, textarea:focus, input:focus {
-  border-color: var(--fiddler-blue-light) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
-  outline: none !important;
+  border-color: var(--fiddler-blue);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  outline: none;
 }
 
 /* Header and navigation */
 .cl-header, .cl-sidebar, [data-testid="header"], [data-testid="sidebar"] {
-  background: var(--fiddler-dark) !important;
-  border-color: var(--fiddler-blue) !important;
+  border-color: var(--fiddler-border);
 }
 
 /* Buttons and interactive elements */
 .cl-button, button {
-  background: var(--fiddler-blue) !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 8px !important;
-  transition: all 0.3s ease !important;
+  background: var(--fiddler-blue);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  padding: 8px 16px;
 }
 
 .cl-button:hover, button:hover {
-  background: var(--fiddler-blue-dark) !important;
-  transform: translateY(-1px) !important;
+  background: var(--fiddler-blue-hover);
 }
 
 /* Loading and status indicators */
 .cl-spinner, .cl-loading {
-  color: var(--fiddler-blue) !important;
+  color: var(--fiddler-blue);
 }
 
 /* Welcome screen and readme styling */
 .cl-readme, .cl-welcome {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 2px solid var(--fiddler-blue) !important;
-  border-radius: 16px !important;
-  backdrop-filter: blur(10px) !important;
-  color: var(--fiddler-white) !important;
+  background: var(--fiddler-bg-secondary);
+  border: 1px solid var(--fiddler-border-accent);
+  border-radius: 8px;
+  color: var(--fiddler-text-primary);
+  padding: 20px;
+}
+
+/* Ensure proper text colors throughout */
+.cl-text, .cl-markdown, p, span, div {
+  color: var(--fiddler-text-primary);
+}
+
+/* Focus states for accessibility */
+button:focus, input:focus, textarea:focus {
+  outline: 2px solid var(--fiddler-blue);
+  outline-offset: 2px;
+}
+
+/* Floating action buttons and scroll buttons */
+.cl-fab, .cl-floating-button, .cl-scroll-to-top, 
+[data-testid="scroll-to-top"], [data-testid="fab"],
+.MuiFab-root, .MuiSpeedDial-fab {
+  background: var(--fiddler-blue) !important;
+  color: white !important;
+}
+
+.cl-fab:hover, .cl-floating-button:hover, .cl-scroll-to-top:hover,
+[data-testid="scroll-to-top"]:hover, [data-testid="fab"]:hover,
+.MuiFab-root:hover, .MuiSpeedDial-fab:hover {
+  background: var(--fiddler-blue-hover) !important;
 }
