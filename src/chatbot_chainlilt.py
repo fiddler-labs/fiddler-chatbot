@@ -224,15 +224,7 @@ async def on_chat_start():
     
     # Send welcome message
     await cl.Message(
-        content=f"""🤖 **Welcome to Fiddler AI Assistant!**
-        
-        I'm your intelligent companion for AI observability, monitoring, and model insights. 
-        I can help you with Fiddler platform questions, ML monitoring best practices, and technical guidance.
-        
-        **Session ID:** `{session_id}`
-        
-        What would you like to explore today?
-        """
+        content=f"""🤖 **Welcome to Fiddler AI Assistant!**\n\nI'm your intelligent companion for AI observability, monitoring, and model insights. \n\nI can help you with Fiddler platform questions, ML monitoring best practices, and technical guidance.\n\n**Session ID:** `{session_id}`\n\nWhat would you like to explore today?"""
         ).send()
 
 @cl.on_message
