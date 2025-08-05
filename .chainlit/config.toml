@@ -18,15 +18,12 @@ unsafe_allow_html = false
 # Process and display mathematical expressions. This can clash with "$" characters in messages.
 latex = false
 
-# Autoscroll new user messages at the top of the window
-user_message_autoscroll = true
+user_message_autoscroll = false
 
 # Automatically tag threads with the current chat profile (if a chat profile is used)
 auto_tag_thread = true
 
-# Allow users to edit their own messages
 edit_message = true
-
 prompt_playground = true
 multi_modal = false
 
@@ -78,7 +75,7 @@ layout = "wide"
 description = "Intelligent AI assistant powered by Fiddler's monitoring and observability platform"
 
 # Chain of Thought (CoT) display mode. Can be "hidden", "tool_call" or "full".
-cot = "full"
+cot = "tool_call"
 
 # Specify a CSS file that can be used to customize the user interface.
 # The CSS file can be served from the public directory or via an external link.
