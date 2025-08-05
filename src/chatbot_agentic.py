@@ -37,7 +37,8 @@ from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set
 from utils.custom_logging import setup_logging
 
 from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import rag_over_fiddler_knowledge_base # , make_cassandra_rag_retriever_tool
+from agentic_tools.rag import rag_over_fiddler_knowledge_base
+from agentic_tools.fiddler_gaurdrails import tool_fiddler_guardrail_safety, tool_fiddler_guardrail_faithfulness
 
 from config import CONFIG_CHATBOT_NEW as config
 
@@ -103,7 +104,12 @@ def get_system_time() -> str:
     """
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-tools = [get_system_time, rag_over_fiddler_knowledge_base]
+tools = [
+    get_system_time, 
+    rag_over_fiddler_knowledge_base, 
+    tool_fiddler_guardrail_safety, 
+    tool_fiddler_guardrail_faithfulness,
+    ]
 llm = base_llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
 
