@@ -34,7 +34,7 @@ The chatbot has been extended to support Chainlit, a powerful UI framework for c
 
 ## Files Created/Modified
 
-- `src/chatbot_agentic.py` : Main Chatbot implementation file containing Chainlit decorators for chat lifecycle management
+- `src/chatbot_chainlit.py` : Main Chatbot implementation file containing Chainlit decorators for chat lifecycle management
 
 - `.chainlit/config.toml` : Configuration file for Chainlit with:
   - Project metadata (name, description)
@@ -63,8 +63,8 @@ When ready to test:
 1. Environment variables loaded (check `.env` file)
 2. Dependencies installed (`uv pip install -e .`)
 3. Cassandra connection available (check `src/agentic_tools/rag.py`)
-4. Fiddler monitoring accessible (check `src/chatbot_agentic.py`)
-5. Port 8000 available (check `src/chatbot_agentic.py`)
+4. Fiddler monitoring accessible (check `src/chatbot_chainlit.py`)
+5. Port 8000 available (check `src/chatbot_chainlit.py`)
 
 ---
 
