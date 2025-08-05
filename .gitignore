@@ -21,3 +21,4 @@ logs/log_*.log
 
 temp_ref/
 .chainlit/translations
+.chainlit/.langchain.db
