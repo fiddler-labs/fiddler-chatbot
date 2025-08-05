@@ -59,20 +59,20 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    uv run src/utils/test_agentic_env.py
    ```
 
-4. **Run the new agentic application**
+4. **Run the new agentic application CLI**
 
    ```bash
    uv run src/chatbot_agentic.py "hello" "what is the current time?" "quit"
    ```
 
-5. **Running the older Streamlit Application**
+5. **Running the older Streamlit Application (Legacy)**
    The application will be available at `http://localhost:8501`
 
    ```bash
    streamlit run chatbot.py
    ```
 
-6. **Running the new agentic chatbot with Chainlit**
+6. **Running the new chatbot with Chainlit (New)**
    The application will be available at `http://localhost:8000`
 
    ```bash
