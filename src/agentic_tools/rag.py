@@ -46,22 +46,18 @@ def cassandra_search_function(query: str) -> str:
         logger.error(f"Error in Cassandra search: {e}")
         return f"Error: {str(e)}\n Please fix your mistakes."
 
-# def make_cassandra_rag_retriever_tool() -> Tool:
-#     """
-#     Creates a RAG retrieval tool that opens a fresh Cassandra connection for each query.
-#     """
-    
-#     retriever_tool = Tool(
-#         name="retrieval_tool",
-#         description="Search and return information from the cassandra data corpus.",
-#         func=cassandra_search_function
-#         )
-    
-#     return retriever_tool
-
-
 
 """
+
+def make_cassandra_rag_retriever_tool() -> Tool:
+    retriever_tool = Tool(
+        name="retrieval_tool",
+        description="Search and return information from the cassandra data corpus.",
+        func=cassandra_search_function
+        )
+    
+    return retriever_tool
+
 def make_local_rag_retriever_tool() -> Tool:
     glob_pattern = "local_assets/vector_index_feed_*.csv"
     latest_file = max(glob.glob(glob_pattern))
@@ -85,10 +81,8 @@ def make_local_rag_retriever_tool() -> Tool:
         )
 
     return retriever_tool
-"""
 
 
-"""
 import glob
 import pandas as pd
 from typing import Dict, Any
