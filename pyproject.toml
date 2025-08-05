@@ -37,17 +37,8 @@ dependencies = [
     "watchdog>=6.0.0",
     "ipykernel>=6.30.0",
     "chainlit>=2.6.5",
-    "fiddler-langgraph>=0.1.0a16",
 ]
 
-[[tool.uv.index]]
-name = "test-pypi"
-url = "https://test.pypi.org/simple/"
-
-authors = [
-    {name = "Fiddler AI Team"},
-]
-maintainers = [
-    {name = "Fiddler AI Team"},
-]
+authors = [{name = "Fiddler AI Team"}]
+maintainers = [{name = "Fiddler AI Team"}]
 package-mode = false
