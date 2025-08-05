@@ -70,7 +70,7 @@ logger.info("✓ Fiddler monitoring initialized successfully")
 
 # Read the system instructions template
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
-with open(os.path.join(PROJECT_ROOT, "src", "system_instructions.md"), "r") as f:
+with open(os.path.join(PROJECT_ROOT, "src", "system_instructions_AGENTIC.md"), "r") as f:
     SYSTEM_INSTRUCTIONS_PROMPT = PromptTemplate.from_template(f.read().strip())
 
 base_llm = ChatOpenAI(

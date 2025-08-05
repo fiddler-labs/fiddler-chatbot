@@ -97,7 +97,7 @@ CHAT_INSTANCE__DB_CONN = "db_conn"
 
 # Read the system instructions template
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
-with open(os.path.join(PROJECT_ROOT, "src", "system_instructions.md"), "r") as f:
+with open(os.path.join(PROJECT_ROOT, "src", "system_instructions_LEGACY.md"), "r") as f:
     TEMPLATE = f.read().strip()
 
 QA_CHAIN_PROMPT = PromptTemplate.from_template(TEMPLATE)
