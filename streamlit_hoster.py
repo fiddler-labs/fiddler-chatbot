@@ -185,7 +185,7 @@ def main():
                 if st.button("🧪 Test Environment", use_container_width=True):
                     st.info("Re-running environment validation...")
                     validate_environment()
-                    st.experimental_rerun()
+                    st.rerun()
             
             with col2:
                 if st.button("📋 View Logs", use_container_width=True):
