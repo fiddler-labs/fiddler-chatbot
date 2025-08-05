@@ -30,7 +30,7 @@ from utils.custom_logging import setup_logging
 from utils.pretty_formatter import try_pretty_formatting
 
 from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import cassandra_search_function
+from agentic_tools.rag import rag_over_fiddler_knowledge_base
 
 # from langgraph.prebuilt import ToolNode, tools_condition
 # from langgraph.graph.message import add_messages
@@ -85,7 +85,7 @@ def get_system_time() -> str:
     """Get the current system time"""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-tools = [get_system_time, cassandra_search_function]
+tools = [get_system_time, rag_over_fiddler_knowledge_base]
 llm = base_llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
 
@@ -143,8 +143,8 @@ def tool_execution_node(state: ChatbotState):
     for tool_call in (ai_message.tool_calls) or []: # type: ignore
         if tool_call['name'] == "get_system_time": # todo - use a switch statement
             output = get_system_time.invoke(tool_call['args'])
-        elif tool_call['name'] == "cassandra_search_function":
-            output = cassandra_search_function.invoke(tool_call['args'])
+        elif tool_call['name'] == "rag_over_fiddler_knowledge_base":
+            output = rag_over_fiddler_knowledge_base.invoke(tool_call['args'])
             
         tool_outputs.append(
                 ToolMessage(
