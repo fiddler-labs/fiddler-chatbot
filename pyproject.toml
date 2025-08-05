@@ -44,8 +44,6 @@ dependencies = [
 name = "test-pypi"
 url = "https://test.pypi.org/simple/"
 
-[tool.uv.dependency-metadata]
-fiddler-langgraph = { index = "test-pypi" }
 authors = [
     {name = "Fiddler AI Team"},
 ]
