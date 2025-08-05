@@ -284,7 +284,7 @@ def render_running_state():
     # Import and run the Streamlit-native chatbot
     try:
         # Import the chatbot components we need
-        import streamlit_chatbot
+        from src import streamlit_chatbot
         
         # Initialize the chatbot session
         streamlit_chatbot.initialize_session()
@@ -346,11 +346,11 @@ def render_running_state():
                         
                         # Try to import ChatbotState with path adjustment
                         try:
-                            from agentic_tools.state_data_model import ChatbotState
+                            from src.agentic_tools.state_data_model import ChatbotState
                         except ImportError:
                             import sys
                             sys.path.append('src')
-                            from agentic_tools.state_data_model import ChatbotState
+                            from src.agentic_tools.state_data_model import ChatbotState
                         
                         # Create state for the conversation
                         exec_state = ChatbotState(messages=[HumanMessage(content=prompt)])
@@ -430,7 +430,7 @@ def main():
     if not errors:
         try:
             # Try to initialize the chatbot components
-            import streamlit_chatbot
+            from src import streamlit_chatbot
             streamlit_chatbot.initialize_session()
             
             if st.session_state.get('chatbot_graph'):
