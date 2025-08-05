@@ -37,7 +37,15 @@ dependencies = [
     "watchdog>=6.0.0",
     "ipykernel>=6.30.0",
     "chainlit>=2.6.5",
+    "fiddler-langgraph>=0.1.0a16",
 ]
+
+[[tool.uv.index]]
+name = "test-pypi"
+url = "https://test.pypi.org/simple/"
+
+[tool.uv.dependency-metadata]
+fiddler-langgraph = { index = "test-pypi" }
 authors = [
     {name = "Fiddler AI Team"},
 ]
