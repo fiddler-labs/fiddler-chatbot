@@ -2,6 +2,8 @@
 
 ## Pending action items listed in planned order of execution and priority
 
+- try deployment on streamlit public cloud
+
 - Tools implementation for agentic orchestration
   - P0 : Currently using a dummy tool to begin implementation. <!Ongoing!>
   - P1 : Will transition to using Fiddler Guardrails once the dummy tool setup is validated. <!Ongoing!>
