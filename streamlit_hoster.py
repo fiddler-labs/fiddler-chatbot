@@ -239,36 +239,98 @@ def render_starting_state():
             st.rerun()
 
 def render_running_state():
-    """Render the main running state with embedded Chainlit"""
+    """Render the main running state with Chainlit integration"""
     st.success("✅ **Fiddler AI Assistant is Ready**")
     
-    # Embed Chainlit using iframe
-    chainlit_url = f"http://localhost:{CHAINLIT_PORT}"
+    # For cloud deployment, we need a different approach than localhost iframe
+    # Check if we're running in Streamlit Cloud
+    is_cloud_deployment = os.getenv("STREAMLIT_SHARING_MODE") or "streamlit.app" in os.getenv("HOSTNAME", "")
     
-    # Create iframe HTML with professional styling
-    iframe_html = f"""
-    <iframe 
-        src="{chainlit_url}" 
-        width="100%" 
-        height="700" 
-        style="border: none; 
-               border-radius: 8px; 
-               box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-               background: white;"
-        title="Fiddler AI Assistant">
-    </iframe>
-    """
+    if is_cloud_deployment:
+        # Cloud deployment - show connection info and direct link
+        st.info("🌐 **Running in Streamlit Cloud** - Direct iframe embedding is not supported due to browser security restrictions.")
+        
+        st.markdown("""
+        ### 🚀 **Access Your Chatbot**
+        
+        Due to Streamlit Cloud's security policies, the chatbot needs to be accessed directly rather than embedded.
+        """)
+        
+        # Get the current domain but use port 8000
+        current_url = st.get_option("browser.serverAddress") or "unknown"
+        chainlit_url = f"https://{current_url.replace(':8501', ':8000').replace('http://', '').replace('https://', '')}"
+        
+        # Provide direct access buttons
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.markdown(f"""
+            <a href="{chainlit_url}" target="_blank" style="
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #FF6B6B;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: bold;
+                text-align: center;
+                width: 100%;
+                box-sizing: border-box;
+            ">🚀 Open Chatbot in New Tab</a>
+            """, unsafe_allow_html=True)
+        
+        with col2:
+            if st.button("📋 Copy Chatbot URL", use_container_width=True):
+                st.code(chainlit_url)
+                st.success("URL ready to copy!")
+        
+        # Show the URL for manual access
+        st.markdown("**Direct URL:**")
+        st.code(chainlit_url)
+        
+        # Troubleshooting section
+        with st.expander("🔧 Troubleshooting"):
+            st.markdown("""
+            **If the chatbot doesn't load:**
+            1. Wait 30-60 seconds for Chainlit to fully start
+            2. Check that all environment variables are set in Streamlit Cloud secrets
+            3. Try refreshing this page to restart the Chainlit process
+            4. Check the Streamlit Cloud logs for any error messages
+            
+            **Expected behavior:**
+            - The chatbot should open in a new tab
+            - You should see the Fiddler AI Assistant welcome message
+            - The interface should be fully interactive
+            """)
     
-    # Display the iframe
-    components.html(iframe_html, height=720)
+    else:
+        # Local development - iframe should work
+        chainlit_url = f"http://localhost:{CHAINLIT_PORT}"
+        
+        st.info("🖥️ **Local Development Mode** - Embedding chatbot via iframe")
+        
+        # Create iframe HTML with professional styling
+        iframe_html = f"""
+        <iframe 
+            src="{chainlit_url}" 
+            width="100%" 
+            height="700" 
+            style="border: none; 
+                   border-radius: 8px; 
+                   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                   background: white;"
+            title="Fiddler AI Assistant">
+        </iframe>
+        """
+        
+        # Display the iframe
+        components.html(iframe_html, height=720)
     
-    # Footer with helpful links
+    # Footer with helpful links (works for both modes)
     st.markdown("---")
     st.markdown(f"""
     <div style="text-align: center; color: #666; font-size: 14px;">
-        Having issues? 
-        <a href="{chainlit_url}" target="_blank" style="color: #FF6B6B;">Open Chainlit directly</a> | 
-        <a href="?refresh={time.time()}" style="color: #FF6B6B;">Force refresh</a>
+        <a href="?refresh={time.time()}" style="color: #FF6B6B;">Force refresh</a> | 
+        Status: Chainlit subprocess running
     </div>
     """, unsafe_allow_html=True)
 
