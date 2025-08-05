@@ -3,7 +3,7 @@
 ## Pending action items listed in planned order of execution and priority
 
 - Tools implementation for agentic orchestration
-  - P0 : Currently using a dummy tool to begin implementation. <!Ongoing!>
+  - P0 : Currently using a dummy tool to begin implementation. <!Done!>
   - P1 : Will transition to using Fiddler Guardrails once the dummy tool setup is validated. <!Ongoing!>
   - Overall Strategy: Keep tool calls simple and focused (avoid over-engineering with multiple agents)
   - URL Validation Tool:
