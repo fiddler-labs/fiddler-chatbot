@@ -40,7 +40,8 @@ fastapi==0.116.1
 fastjsonschema==2.21.1
 feedparser==6.0.11
 fiddler-client==3.9.2
-https://test.pypi.org/simple/fiddler-langgraph/#fiddler-langgraph==0.1.0a16
+fiddler-langgraph @ https://test.pypi.org/simple/fiddler-langgraph/
+# https://test.pypi.org/simple/fiddler-langgraph/#fiddler-langgraph==0.1.0a16
 filelock==3.18.0
 filetype==1.2.0
 frozenlist==1.7.0
