@@ -37,6 +37,7 @@ dependencies = [
     "watchdog>=6.0.0",
     "ipykernel>=6.30.0",
     "chainlit>=2.6.5",
+    "fiddler-langgraph @ https://test-files.pythonhosted.org/packages/54/42/e78b841b312058446b24a55673869ec0ba5b7cdccd7e616585a65b26bef8/fiddler_langgraph-0.1.0a16-py3-none-any.whl#sha256=61230d1cc8572376630b2f3b1cb23a71e0e8560cc52006f5f628abffc2ecb841",
 ]
 
 authors = [{name = "Fiddler AI Team"}]
