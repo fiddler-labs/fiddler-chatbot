@@ -83,7 +83,6 @@
 - try deployment on streamlit public cloud
   - FUNDANMENTALLY IMPOSSIBLE TO DEPLOY ON STREAMLIT PUBLIC CLOUD
 
-
 ## Side Notes
 
 - since we use notebooks from `fiddler-examples` , all the good stuff from *cs-utils* will automatically be inherited as reference assets
