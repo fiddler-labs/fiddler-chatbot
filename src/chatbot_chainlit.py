@@ -31,6 +31,7 @@ from utils.pretty_formatter import try_pretty_formatting
 
 from agentic_tools.state_data_model import ChatbotState
 from agentic_tools.rag import rag_over_fiddler_knowledge_base
+from agentic_tools.fiddler_gaurdrails import tool_fiddler_guardrail_safety, tool_fiddler_guardrail_faithfulness
 
 # from langgraph.prebuilt import ToolNode, tools_condition
 # from langgraph.graph.message import add_messages
@@ -85,7 +86,12 @@ def get_system_time() -> str:
     """Get the current system time"""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-tools = [get_system_time, rag_over_fiddler_knowledge_base]
+tools = [
+    get_system_time, 
+    rag_over_fiddler_knowledge_base, 
+    tool_fiddler_guardrail_safety, 
+    tool_fiddler_guardrail_faithfulness,
+    ]
 llm = base_llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
 

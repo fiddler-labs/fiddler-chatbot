@@ -421,7 +421,7 @@ def main():
                     key="thumbs_up_button",
                     on_click=store_feedback,
                     kwargs={"uuid": st.session_state[CHAT_INSTANCE__UUID], "feedback": 1},
-                )
+                    )
         with col2:
             if not st.session_state[CHAT_INSTANCE__THUMB_DOWN] or st.session_state[CHAT_INSTANCE__THUMB_DOWN] is None:
                 st.button(
@@ -429,7 +429,7 @@ def main():
                     key="thumbs_down_button",
                     on_click=store_feedback,
                     kwargs={"uuid": st.session_state[CHAT_INSTANCE__UUID], "feedback": 0},
-                )
+                    )
         with col3:
             st.button("Reset Chat History", on_click=erase_history)
 
