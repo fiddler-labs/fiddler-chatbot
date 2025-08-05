@@ -318,8 +318,8 @@ def erase_history():
 
 def main():
     """Main function to run the Streamlit chatbot application."""
-    # st.image('assets/poweredby.jpg', width=550)
-    st.title("Fiddler Chatbot")
+    st.image('public/poweredby.jpg', width=550)
+    st.title("Fiddler AI Assistant")
     if not st.session_state[CHAT_INSTANCE__UUID] or st.session_state[CHAT_INSTANCE__UUID] is None:
         st.session_state[CHAT_INSTANCE__UUID] = uuid_g.uuid4()
 
@@ -339,7 +339,7 @@ def main():
             old_prompt = prompt
             prompt = "Rejected"
 
-        with st.chat_message("assistant", avatar="assets/logo.png"):
+        with st.chat_message("assistant", avatar="public/logo.png"):
             callback = StreamHandler(st.empty())
             llm = ChatOpenAI(
                 model=LLM_MODEL, streaming=True, callbacks=[callback], temperature=0
