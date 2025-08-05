@@ -56,7 +56,7 @@ from config import CONFIG_CHATBOT_OLD as config
 
 FIDDLER_CHATBOT_PROJECT_NAME = config["PROJECT_NAME"]
 FIDDLER_CHATBOT_MODEL_NAME   = config["MODEL_NAME"]
-FIDDLER_URL                  = config["URL"]
+FIDDLER_URL                  = config["FIDDLER_URL"]
 
 ASTRA_DB_SECURE_BUNDLE_PATH = config["ASTRA_DB_SECURE_BUNDLE_PATH"]
 ASTRA_DB_KEYSPACE           = config["ASTRA_DB_KEYSPACE"]
@@ -65,10 +65,6 @@ ASTRA_DB_LEDGER_TABLE_NAME  = config["ASTRA_DB_LEDGER_TABLE_NAME"]
 
 EMBEDDING_MODEL = config["OPENAI_EMBEDDING_MODEL"]
 LLM_MODEL       = config["OPENAI_LLM_MODEL"]
-
-GR__FAITHFULNESS_SCORE = config["GR__FAITHFULNESS_SCORE"]
-GR__JAILBREAK_SCORE    = config["GR__JAILBREAK_SCORE"]
-GR__SAFETY_LATENCY     = config["GR__SAFETY_LATENCY"]
 
 # Chat instance Global state inits # todo - this is not the best pattern , to use global vars for state management as such
 CHAT_INSTANCE__PROMPT = "prompt"
