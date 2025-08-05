@@ -1,0 +1,275 @@
+/* Fiddler Chatbot Custom Theme */
+
+:root {
+  /* Fiddler Brand Colors */
+  --fiddler-blue: #2563eb;
+  --fiddler-blue-dark: #1d4ed8;
+  --fiddler-blue-light: #3b82f6;
+  --fiddler-dark: #0f172a;
+  --fiddler-dark-secondary: #1e293b;
+  --fiddler-gray: #64748b;
+  --fiddler-white: #ffffff;
+  --fiddler-accent: #06b6d4;
+}
+
+/* Main app styling */
+.chainlit-app, #root, body {
+  background: linear-gradient(135deg, var(--fiddler-dark) 0%, var(--fiddler-dark-secondary) 100%) !important;
+  min-height: 100vh !important;
+}
+
+/* Override default Chainlit backgrounds */
+.cl-app, .cl-main, .cl-container {
+  background: transparent !important;
+}
+
+/* Header styling */
+.chainlit-header {
+  background: var(--fiddler-dark) !important;
+  border-bottom: 2px solid var(--fiddler-blue) !important;
+}
+
+/* Logo styling */
+.chainlit-header .chainlit-logo {
+  max-height: 40px !important;
+  width: auto !important;
+}
+
+/* Chat container */
+.chainlit-chat-container {
+  background: transparent !important;
+}
+
+/* Message styling */
+.chainlit-message {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(37, 99, 235, 0.2) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.chainlit-message.user {
+  background: linear-gradient(135deg, var(--fiddler-blue), var(--fiddler-blue-dark)) !important;
+  color: white !important;
+}
+
+.chainlit-message.assistant {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--fiddler-blue) !important;
+}
+
+/* Input styling */
+.chainlit-input-container {
+  background: var(--fiddler-dark-secondary) !important;
+  border-radius: 16px !important;
+  border: 2px solid var(--fiddler-blue) !important;
+  padding: 8px !important;
+}
+
+.chainlit-input {
+  background: transparent !important;
+  color: var(--fiddler-white) !important;
+  border: none !important;
+}
+
+.chainlit-input::placeholder {
+  color: var(--fiddler-gray) !important;
+}
+
+/* Send button */
+.chainlit-send-button {
+  background: var(--fiddler-blue) !important;
+  color: white !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+}
+
+.chainlit-send-button:hover {
+  background: var(--fiddler-blue-dark) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Sidebar styling */
+.chainlit-sidebar {
+  background: var(--fiddler-dark) !important;
+  border-right: 2px solid var(--fiddler-blue) !important;
+}
+
+/* Code blocks */
+.chainlit-code {
+  background: var(--fiddler-dark-secondary) !important;
+  border: 1px solid var(--fiddler-blue) !important;
+  border-radius: 8px !important;
+}
+
+/* Links and buttons */
+a, .chainlit-button {
+  color: var(--fiddler-blue-light) !important;
+  transition: color 0.3s ease !important;
+}
+
+a:hover, .chainlit-button:hover {
+  color: var(--fiddler-accent) !important;
+}
+
+/* Tool execution steps */
+.chainlit-step {
+  background: rgba(6, 182, 212, 0.1) !important;
+  border-left: 4px solid var(--fiddler-accent) !important;
+  border-radius: 8px !important;
+}
+
+/* Welcome message styling */
+.chainlit-welcome {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(6, 182, 212, 0.1)) !important;
+  border: 2px solid var(--fiddler-blue) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--fiddler-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fiddler-blue);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fiddler-blue-light);
+}
+
+/* Animation for message appearance */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chainlit-message {
+  animation: fadeInUp 0.3s ease-out !important;
+}
+
+/* Loading indicator */
+.chainlit-loading {
+  color: var(--fiddler-blue) !important;
+}
+
+/* Status indicators */
+.chainlit-status-online {
+  color: var(--fiddler-accent) !important;
+}
+
+.chainlit-status-error {
+  color: #ef4444 !important;
+}
+
+/* Tool call styling */
+.chainlit-tool-call {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(37, 99, 235, 0.1)) !important;
+  border: 1px solid var(--fiddler-accent) !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+}
+
+/* Typography improvements */
+.chainlit-message-content {
+  line-height: 1.6 !important;
+  font-size: 14px !important;
+}
+
+.chainlit-message-content h1,
+.chainlit-message-content h2,
+.chainlit-message-content h3 {
+  color: var(--fiddler-blue-light) !important;
+  margin-top: 16px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Session ID styling */
+.chainlit-session-id, code {
+  background: rgba(37, 99, 235, 0.2) !important;
+  color: var(--fiddler-blue-light) !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace !important;
+  font-size: 12px !important;
+}
+
+/* Additional Chainlit-specific selectors */
+.cl-message, .cl-message-content, .cl-bubble, [data-testid="chat-message"] {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(37, 99, 235, 0.2) !important;
+  border-radius: 12px !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+.cl-message-user, [data-testid="chat-message-user"] {
+  background: linear-gradient(135deg, var(--fiddler-blue), var(--fiddler-blue-dark)) !important;
+  color: white !important;
+}
+
+.cl-message-assistant, [data-testid="chat-message-assistant"] {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--fiddler-blue) !important;
+}
+
+/* Input field enhancements */
+.cl-input, [data-testid="chat-input"], textarea, input {
+  background: var(--fiddler-dark-secondary) !important;
+  color: var(--fiddler-white) !important;
+  border: 2px solid var(--fiddler-blue) !important;
+  border-radius: 12px !important;
+}
+
+.cl-input:focus, [data-testid="chat-input"]:focus, textarea:focus, input:focus {
+  border-color: var(--fiddler-blue-light) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+  outline: none !important;
+}
+
+/* Header and navigation */
+.cl-header, .cl-sidebar, [data-testid="header"], [data-testid="sidebar"] {
+  background: var(--fiddler-dark) !important;
+  border-color: var(--fiddler-blue) !important;
+}
+
+/* Buttons and interactive elements */
+.cl-button, button {
+  background: var(--fiddler-blue) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  transition: all 0.3s ease !important;
+}
+
+.cl-button:hover, button:hover {
+  background: var(--fiddler-blue-dark) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Loading and status indicators */
+.cl-spinner, .cl-loading {
+  color: var(--fiddler-blue) !important;
+}
+
+/* Welcome screen and readme styling */
+.cl-readme, .cl-welcome {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 2px solid var(--fiddler-blue) !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(10px) !important;
+  color: var(--fiddler-white) !important;
+}
