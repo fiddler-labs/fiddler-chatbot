@@ -13,10 +13,9 @@ from datetime import datetime
 from pydantic import SecretStr
 
 import chainlit as cl
-from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool # , Tool
 from langchain_core.runnables.config import RunnableConfig
-from langchain_core.messages import HumanMessage, ToolMessage, AIMessage #, SystemMessage, BaseMessage
+from langchain_core.messages import HumanMessage, ToolMessage, AIMessage , SystemMessage #, BaseMessage
 from langchain_openai import ChatOpenAI
 
 from langgraph.graph import StateGraph, START, END
@@ -71,7 +70,7 @@ logger.info("✓ Fiddler monitoring initialized successfully")
 # Read the system instructions template
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
 with open(os.path.join(PROJECT_ROOT, "src", "system_instructions_AGENTIC.md"), "r") as f:
-    SYSTEM_INSTRUCTIONS_PROMPT = PromptTemplate.from_template(f.read().strip())
+    SYSTEM_INSTRUCTIONS_PROMPT = f.read()
 
 base_llm = ChatOpenAI(
     model="gpt-4o-mini",
@@ -130,7 +129,14 @@ def chatbot_node(state: ChatbotState):
     if not llm:
         raise ValueError("LLM not found in session")
     
+    # Add the system instructions to the messages
+    # all_messages_in_state.append( [SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)] )
+    
+    logger.debug(f"CHATBOT_NODE: Debug - All Messages in State: {try_pretty_formatting(all_messages_in_state)}")
+
     response = llm.invoke(all_messages_in_state)
+    set_llm_context(base_llm, str(response.content))
+
     print(f"🤖 Assistant: {response.content}\n")
     logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_formatting(response.content)}")
 
@@ -140,13 +146,23 @@ def chatbot_node(state: ChatbotState):
     else:
         logger.debug('No tool calls - ending conversation turn')
         return Command(update={"messages": [response]}, goto=END)
-    
+
 def tool_execution_node(state: ChatbotState):
     """Custom tool node to execute tool calls"""
-    ai_message = state["messages"][-1]
-    tool_outputs = []
+    # Get the last AI message that contains tool calls
+    last_ai_message = None
+    for msg in reversed(state["messages"]):
+        if isinstance(msg, AIMessage) and hasattr(msg, "tool_calls") and msg.tool_calls:
+            last_ai_message = msg
+            break
     
-    for tool_call in (ai_message.tool_calls) or []: # type: ignore
+    if not last_ai_message:
+        raise ValueError("No AI message with tool calls found in state")
+    
+    tool_outputs = []
+    for tool_call in last_ai_message.tool_calls: # type: ignore
+        logger.debug(f"Executing tool: {tool_call['name']} with args: {tool_call['args']}")
+        
         match tool_call['name']:
             case "get_system_time":
                 output = get_system_time.invoke(tool_call['args'])
@@ -158,14 +174,16 @@ def tool_execution_node(state: ChatbotState):
                 output = tool_fiddler_guardrail_faithfulness.invoke(tool_call['args'])
             case _:
                 raise ValueError(f"Unknown tool: {tool_call['name']}")
-            
-        tool_outputs.append(
-                ToolMessage(
-                    content=json.dumps(output),
-                    name=tool_call['name'],
-                    tool_call_id=tool_call['id'],
-                )
-            )
+        
+        # Create a ToolMessage for each tool call
+        tool_message = ToolMessage(
+            content=json.dumps(output),
+            name=tool_call['name'],
+            tool_call_id=tool_call['id'],
+        )
+        tool_outputs.append(tool_message)
+        logger.debug(f"Created tool message for {tool_call['name']}: {tool_message}")
+    
     return Command(update={"messages": tool_outputs}, goto="chatbot")
 
 
@@ -251,7 +269,10 @@ async def on_message(message: cl.Message):
         return
     
     # Create initial state with new user message
-    exec_state = ChatbotState(messages=[HumanMessage(content=message.content)])
+    exec_state = ChatbotState(messages=[
+        SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT), 
+        HumanMessage(content=message.content)
+        ])
     
     # Create a message for streaming
     msg = cl.Message(content="")
