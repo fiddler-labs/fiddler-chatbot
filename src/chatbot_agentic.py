@@ -1,5 +1,5 @@
 """
-Fiddler Agentic Chatbot - CURRENT PHASE: Phase 2: RAG Integration
+Fiddler Agentic Chatbot
 A simple CLI chatbot using LangGraph with integrated Fiddler monitoring
 """
 
@@ -131,7 +131,6 @@ def human_node(state: ChatbotState):
     
     return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="chatbot" )
 
-
 def chatbot_node(state: ChatbotState):
     """
     Processes the conversation state to generate a response using the LLM.
@@ -149,21 +148,19 @@ def chatbot_node(state: ChatbotState):
     print(f"🤖 Assistant: {response.content}\n")
     logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_foramtting(response.content)}")
 
-
-    if hasattr(response, "tool_calls") and len(response.tool_calls) > 0:
-        print('Entering tools node')
-        return Command(update={"messages": [response]}, goto="tools")
+    if hasattr(response, "tool_calls") and response.tool_calls and len(response.tool_calls) > 0: # type: ignore
+        logger.debug('Transferring to tool_execution node')
+        return Command(update={"messages": [response]}, goto="tool_execution")
     else:
-        print('Entering human node')
+        logger.debug('Transferring to human node - no tool calls')
         return Command(update={"messages": [response]}, goto="human")
     
-
-def custom_tool_node(state: ChatbotState):
-    """Custom tool node to tackle tool calls"""
+def tool_execution_node(state: ChatbotState):
+    """Custom tool node to execute tool calls"""
     ai_message = state["messages"][-1]
     tool_outputs = []
     
-    for tool_call in (ai_message.tool_calls) or []:
+    for tool_call in (ai_message.tool_calls) or []: # type: ignore
         if tool_call['name'] == "get_system_time": # todo - use a switch statement
             output = get_system_time.invoke(tool_call['args'])
         elif tool_call['name'] == "cassandra_search_function":
@@ -179,29 +176,24 @@ def custom_tool_node(state: ChatbotState):
     return Command(update={"messages": tool_outputs}, goto="chatbot")
 
 
-
 def build_chatbot_graph():
-    # Build the LangGraph workflow
     logger.info("Building LangGraph workflow...")
     workflow_builder = StateGraph(ChatbotState)
 
     # Component entities
     workflow_builder.add_node("human", human_node)
     workflow_builder.add_node("chatbot", chatbot_node)
-    # workflow_builder.add_node("tools", ToolNode(tools))
-    workflow_builder.add_node("tools", custom_tool_node)
+    workflow_builder.add_node("tool_execution", tool_execution_node)
 
     # Define the graph flow
     workflow_builder.add_edge(START, "human")
     # workflow_builder.add_edge("human", "chatbot")
     # workflow_builder.add_edge("chatbot", "human")
-    # workflow_builder.add_edge("chatbot", "tools")
-    # workflow_builder.add_edge("tools", "chatbot")
-    # workflow_builder.add_edge("human", END)
+    # workflow_builder.add_edge("chatbot", "tool_execution")
+    # workflow_builder.add_edge("tool_execution", "chatbot")
+    workflow_builder.add_edge("human", END)
 
-    # Compile the graph with checkpointer
     chatbot_graph = workflow_builder.compile(checkpointer=checkpointer)
-
     return chatbot_graph
 
 def visualize_chatbot_graph(chatbot_graph):
@@ -234,6 +226,7 @@ def run_chatbot():
     print("🤖 Fiddler Agentic Chatbot")
     thread_config = get_thread_config()
     session_id = thread_config.get("configurable", {}).get("thread_id",'NO_SESSION_ID_PROVIDED')
+
     print(f"Session ID: {session_id}\n")
     print("Type 'quit', 'exit', or 'q' to end the conversation.")
     print("="*60 + "\n")
@@ -241,8 +234,8 @@ def run_chatbot():
     chatbot_graph = build_chatbot_graph()
     visualize_chatbot_graph(chatbot_graph)
     
-    set_conversation_id(chatbot_graph, session_id)  # for Fiddler monitoring
-        
+    set_conversation_id(session_id)  # for Fiddler monitoring
+    
     # Start with a HumanMessage if automation_messages is not empty
     if automation_messages:
         exec_state = ChatbotState(messages=[HumanMessage(content=automation_messages.pop(0))])
