@@ -37,7 +37,7 @@ from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set
 from utils.custom_logging import setup_logging
 
 from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import cassandra_search_function # , make_cassandra_rag_retriever_tool
+from agentic_tools.rag import rag_over_fiddler_knowledge_base # , make_cassandra_rag_retriever_tool
 
 from config import CONFIG_CHATBOT_NEW as config
 
@@ -103,7 +103,7 @@ def get_system_time() -> str:
     """
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-tools = [get_system_time, cassandra_search_function]
+tools = [get_system_time, rag_over_fiddler_knowledge_base]
 llm = base_llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
 
@@ -163,8 +163,8 @@ def tool_execution_node(state: ChatbotState):
     for tool_call in (ai_message.tool_calls) or []: # type: ignore
         if tool_call['name'] == "get_system_time": # todo - use a switch statement
             output = get_system_time.invoke(tool_call['args'])
-        elif tool_call['name'] == "cassandra_search_function":
-            output = cassandra_search_function.invoke(tool_call['args'])
+        elif tool_call['name'] == "rag_over_fiddler_knowledge_base":
+            output = rag_over_fiddler_knowledge_base.invoke(tool_call['args'])
             
         tool_outputs.append(
                 ToolMessage(
