@@ -14,7 +14,10 @@ logger = logging.getLogger(__name__)
 @tool
 def rag_over_fiddler_knowledge_base(query: str) -> str:
     """
-    Perform a search over a database of Fiddler documents and return the most relevant documents.
+    AI Chatbot System RAG tool to search over a vector database of Fiddler documents and return the most relevant documents.
+    Select this for tool calling whenever you need to respond to questions about Fiddler AI Observability Platform.
+     Input(str): The query to search for ( optimize this for RAG retrieval augmented generation ; maximize query for greatest cosine similarity by adding a variety and quantity of query keywords )
+    Output(str): A large string containing the most relevant documents.
     """
     try:
         embedding = OpenAIEmbeddings()
@@ -168,6 +171,5 @@ def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
         logger.error(f"Error in RAG retrieval: {e}")
         error_message = f"❌ Error retrieving documents: {str(e)}"
         return {"messages": [AIMessage(content=error_message)]}
-
 
 """

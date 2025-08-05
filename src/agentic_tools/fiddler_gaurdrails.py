@@ -3,6 +3,7 @@ import requests
 import json
 import time
 import logging
+from langchain_core.tools import tool
 
 from config import CONFIG_CHATBOT_OLD as config
 
@@ -98,12 +99,30 @@ def get_safety_guardrail_results(query: str) -> tuple[float, float]:
         logger.error(f"Raw response: {guardrail_response_safety.text}")
         return 0.0, guardrail_latency
 
+@tool
+def tool_fiddler_guardrail_safety(query: str):
+    """Safety guardrail LangGraph tool node.
+    AI Chatbot System Guardrail tool to check for safety of a query.
+    Select this for tool calling whenever you need to check for safety of a query.
+    Inputs: 
+        - query(str): The query to check for safety.
+    Outputs:
+        - safety_score(float): The safety score.
+        - latency(float): The latency in milliseconds.
+    """
+    return get_safety_guardrail_results(query)
 
-def tool_node__guardrail_safety(query: str):
-    """Safety guardrail LangGraph tool node."""
-    return None
-
-def tool_node__guardrail_faithfulness(response: str, source_docs: list):
-    """Faithfulness guardrail LangGraph tool node."""
-    return None
+@tool
+def tool_fiddler_guardrail_faithfulness(response: str, source_docs: list):
+    """Faithfulness guardrail LangGraph tool.
+    AI Chatbot System Guardrail tool to check for faithfulness of a response given a query and source documents.
+    Select this for tool calling whenever you need to check for faithfulness of a response.
+    Inputs: 
+        - response(str): The response to check for faithfulness.
+        - source_docs(list): The source documents to check for faithfulness.
+    Outputs:
+        - faithfulness_score(float): The faithfulness score.
+        - latency(float): The latency in milliseconds.
+    """
+    return get_faithfulness_guardrail_results(response, source_docs)
 
