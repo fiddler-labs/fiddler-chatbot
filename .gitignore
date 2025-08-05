@@ -20,3 +20,4 @@ local_assets/*_output_pandas.csv
 logs/log_*.log
 
 temp_ref/
+.chainlit/translations
