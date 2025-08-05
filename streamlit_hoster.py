@@ -19,7 +19,7 @@ import os
 import sys
 import subprocess
 import streamlit as st
-import streamlit.components.v1 as components
+# import streamlit.components.v1 as components  # Only needed for iframe approach
 import time
 import atexit
 import socket
@@ -27,9 +27,11 @@ from pathlib import Path
 from typing import Tuple, Optional
 
 # ===== CONFIGURATION - UPDATE THESE FOR YOUR PROJECT =====
+REQUIRED_ENV_VARS = ["OPENAI_API_KEY", "FIDDLER_API_KEY", "FIDDLER_APP_ID"]  # Your required env vars
+
+# Legacy Chainlit configuration (kept for backward compatibility)
 CHAINLIT_APP_PATH = "src/chatbot_chainlit.py"  # Path to your Chainlit application
 CHAINLIT_PORT = 8000  # Port for Chainlit (8501 is reserved for Streamlit)
-REQUIRED_ENV_VARS = ["OPENAI_API_KEY", "FIDDLER_API_KEY", "FIDDLER_APP_ID"]  # Your required env vars
 
 # ===== GLOBAL STATE =====
 chainlit_process = None
@@ -55,29 +57,50 @@ def validate_environment() -> Tuple[list, list, Optional[str]]:
     Validate that the environment is properly configured
     
     Returns:
-        Tuple of (errors, warnings, chainlit_version)
+        Tuple of (errors, warnings, streamlit_version)
     """
     errors = []
     warnings = []
-    chainlit_version = None
-    
-    # Check if Chainlit app exists
-    if not Path(CHAINLIT_APP_PATH).exists():
-        errors.append(f"Chainlit app not found at: {CHAINLIT_APP_PATH}")
+    streamlit_version = None
     
     # Check required environment variables
     missing_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
     if missing_vars:
         errors.append(f"Missing environment variables: {', '.join(missing_vars)}")
     
-    # Check if chainlit is installed
+    # Check if required modules are available
     try:
-        import chainlit
-        chainlit_version = chainlit.__version__
+        import streamlit as st
+        streamlit_version = st.__version__
     except ImportError:
-        errors.append("Chainlit is not installed. Add 'chainlit' to your requirements.txt")
+        errors.append("Streamlit is not installed")
     
-    return errors, warnings, chainlit_version
+    # Check for other dependencies using importlib
+    import importlib.util
+    
+    required_packages = [
+        ("langchain_core", "LangChain core"),
+        ("langgraph", "LangGraph"),
+        ("fiddler_langgraph", "Fiddler LangGraph client")
+    ]
+    
+    for package_name, display_name in required_packages:
+        if importlib.util.find_spec(package_name) is None:
+            errors.append(f"{display_name} is not installed")
+    
+    # Check for chatbot source files
+    required_files = [
+        "src/system_instructions.md",
+        "src/agentic_tools/state_data_model.py",
+        "src/agentic_tools/rag.py",
+        "config.py"
+    ]
+    
+    for file_path in required_files:
+        if not Path(file_path).exists():
+            errors.append(f"Required file not found: {file_path}")
+    
+    return errors, warnings, streamlit_version
 
 def start_chainlit_subprocess() -> Tuple[bool, str]:
     """
@@ -144,7 +167,7 @@ def check_chainlit_health() -> Tuple[bool, str]:
     except Exception as e:
         return False, f"Health check failed: {str(e)}"
 
-def render_sidebar(errors: list, chainlit_version: Optional[str], chainlit_healthy: bool, health_status: str):
+def render_sidebar(errors: list, streamlit_version: Optional[str], chatbot_ready: bool, health_status: str):
     """Render the sidebar with status and controls"""
     with st.sidebar:
         st.subheader("🔧 System Status")
@@ -156,14 +179,21 @@ def render_sidebar(errors: list, chainlit_version: Optional[str], chainlit_healt
                 st.error(f"• {error}")
         else:
             st.success("✅ Environment OK")
-            if chainlit_version:
-                st.info(f"Chainlit v{chainlit_version}")
+            if streamlit_version:
+                st.info(f"Streamlit v{streamlit_version}")
         
-        # Chainlit status
-        if chainlit_healthy:
-            st.success(f"✅ Chainlit: {health_status}")
+        # Chatbot status
+        if chatbot_ready:
+            st.success(f"✅ Chatbot: {health_status}")
         else:
-            st.error(f"❌ Chainlit: {health_status}")
+            st.error(f"❌ Chatbot: {health_status}")
+        
+        # Session info
+        if st.session_state.get('session_id'):
+            st.info(f"**Session:** `{st.session_state.session_id[:8]}...`")
+        
+        if st.session_state.get('messages'):
+            st.info(f"**Messages:** {len(st.session_state.messages)}")
         
         st.markdown("---")
         
@@ -171,14 +201,11 @@ def render_sidebar(errors: list, chainlit_version: Optional[str], chainlit_healt
         col1, col2 = st.columns(2)
         with col1:
             if st.button("🔄 Restart", use_container_width=True, disabled=bool(errors)):
-                with st.spinner("Restarting Chainlit..."):
-                    success, message = start_chainlit_subprocess()
-                    if success:
-                        st.session_state.chainlit_started = True
-                        time.sleep(2)
-                        st.rerun()
-                    else:
-                        st.error(message)
+                # Clear session state to restart chatbot
+                for key in ['messages', 'session_id', 'chatbot_graph', 'thread_config']:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                st.rerun()
         
         with col2:
             if st.button("🧪 Test", use_container_width=True):
@@ -187,10 +214,10 @@ def render_sidebar(errors: list, chainlit_version: Optional[str], chainlit_healt
         # Configuration info
         with st.expander("⚙️ Configuration"):
             st.code(f"""
-App Path: {CHAINLIT_APP_PATH}
-Chainlit Port: {CHAINLIT_PORT}
-Streamlit Port: 8501
+Mode: Streamlit Native Chatbot
+Port: 8501 (Streamlit)
 Required Vars: {', '.join(REQUIRED_ENV_VARS)}
+Backend: LangGraph + Fiddler
             """)
 
 def render_error_state(errors: list):
@@ -203,134 +230,178 @@ def render_error_state(errors: list):
     st.markdown("---")
     st.subheader("🛠️ Setup Instructions")
     st.markdown("""
-    1. **Missing Chainlit app**: Ensure your Chainlit application exists at the specified path
-    2. **Missing environment variables**: Set required variables in Streamlit Cloud's secrets
-    3. **Missing dependencies**: Add `chainlit` to your `requirements.txt`
+    1. **Missing environment variables**: Set required variables in Streamlit Cloud's secrets
+    2. **Missing dependencies**: Ensure all required packages are in `requirements.txt`
+    3. **Missing source files**: Ensure all chatbot source files are present
     
-    Example `requirements.txt`:
+    **Required Environment Variables:**
+    ```
+    OPENAI_API_KEY = "your-openai-api-key"
+    FIDDLER_API_KEY = "your-fiddler-api-key"  
+    FIDDLER_APP_ID = "your-fiddler-app-id"
+    ```
+    
+    **Key Dependencies:**
     ```
     streamlit>=1.28.0
-    chainlit>=1.0.0
-    # Your other dependencies...
+    langchain>=0.3.0
+    langgraph>=0.5.0
+    fiddler-langgraph
+    openai>=1.0.0
     ```
     """)
 
 def render_starting_state():
     """Render the starting/loading state UI"""
-    st.warning("⚠️ **Chainlit Starting Up**")
-    st.write("Your Chainlit application is initializing. This may take a few moments...")
+    st.warning("⚠️ **Chatbot Initializing**")
+    st.write("The Fiddler AI Assistant is starting up. This may take a few moments...")
     
-    with st.spinner("Starting Chainlit..."):
-        # Try to start if not already attempted
-        if not st.session_state.chainlit_started:
-            success, message = start_chainlit_subprocess()
-            if success:
-                st.session_state.chainlit_started = True
-                time.sleep(3)
-                st.rerun()
+    with st.spinner("Initializing AI Assistant..."):
+        # Show progress and automatically retry
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        for i in range(100):
+            progress_bar.progress(i + 1)
+            if i < 30:
+                status_text.text("Loading dependencies...")
+            elif i < 60:
+                status_text.text("Initializing Fiddler client...")
+            elif i < 80:
+                status_text.text("Building LangGraph workflow...")
             else:
-                st.error(f"Failed to start Chainlit: {message}")
-        else:
-            # Wait and check again
-            progress_bar = st.progress(0)
-            for i in range(100):
-                progress_bar.progress(i + 1)
-                time.sleep(0.02)
-            st.rerun()
+                status_text.text("Almost ready...")
+            time.sleep(0.03)
+        
+        st.success("🎉 Initialization complete! Refreshing...")
+        time.sleep(1)
+        st.rerun()
 
 def render_running_state():
-    """Render the main running state with Chainlit integration"""
+    """Render the main running state with Streamlit-native chatbot"""
     st.success("✅ **Fiddler AI Assistant is Ready**")
     
-    # For cloud deployment, we need a different approach than localhost iframe
-    # Check if we're running in Streamlit Cloud
-    is_cloud_deployment = os.getenv("STREAMLIT_SHARING_MODE") or "streamlit.app" in os.getenv("HOSTNAME", "")
-    
-    if is_cloud_deployment:
-        # Cloud deployment - show connection info and direct link
-        st.info("🌐 **Running in Streamlit Cloud** - Direct iframe embedding is not supported due to browser security restrictions.")
+    # Import and run the Streamlit-native chatbot
+    try:
+        # Import the chatbot components we need
+        import streamlit_chatbot
         
-        st.markdown("""
-        ### 🚀 **Access Your Chatbot**
+        # Initialize the chatbot session
+        streamlit_chatbot.initialize_session()
         
-        Due to Streamlit Cloud's security policies, the chatbot needs to be accessed directly rather than embedded.
-        """)
+        # Check for environment issues first
+        missing_vars = streamlit_chatbot.validate_environment()
+        if missing_vars:
+            st.error("❌ **Environment Setup Required**")
+            st.write("Please set the following environment variables in Streamlit Cloud's secrets:")
+            for var in missing_vars:
+                st.code(f"{var} = 'your-{var.lower().replace('_', '-')}-here'")
+            st.info("Go to your Streamlit Cloud app → Settings → Secrets to add these variables.")
+            return
         
-        # Get the current domain but use port 8000
-        current_url = st.get_option("browser.serverAddress") or "unknown"
-        chainlit_url = f"https://{current_url.replace(':8501', ':8000').replace('http://', '').replace('https://', '')}"
+        # Check if chatbot graph is available
+        if not st.session_state.get('chatbot_graph'):
+            st.error("❌ **Chatbot Initialization Failed**")
+            st.write("There was an error initializing the chatbot. Please check the logs and try refreshing the page.")
+            return
         
-        # Provide direct access buttons
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            st.markdown(f"""
-            <a href="{chainlit_url}" target="_blank" style="
-                display: inline-block;
-                padding: 12px 24px;
-                background-color: #FF6B6B;
-                color: white;
-                text-decoration: none;
-                border-radius: 8px;
-                font-weight: bold;
-                text-align: center;
-                width: 100%;
-                box-sizing: border-box;
-            ">🚀 Open Chatbot in New Tab</a>
-            """, unsafe_allow_html=True)
-        
-        with col2:
-            if st.button("📋 Copy Chatbot URL", use_container_width=True):
-                st.code(chainlit_url)
-                st.success("URL ready to copy!")
-        
-        # Show the URL for manual access
-        st.markdown("**Direct URL:**")
-        st.code(chainlit_url)
-        
-        # Troubleshooting section
-        with st.expander("🔧 Troubleshooting"):
+        # Display welcome message if no conversation started
+        if not st.session_state.get('messages'):
             st.markdown("""
-            **If the chatbot doesn't load:**
-            1. Wait 30-60 seconds for Chainlit to fully start
-            2. Check that all environment variables are set in Streamlit Cloud secrets
-            3. Try refreshing this page to restart the Chainlit process
-            4. Check the Streamlit Cloud logs for any error messages
+            ### 🤖 Welcome to Fiddler AI Assistant!
             
-            **Expected behavior:**
-            - The chatbot should open in a new tab
-            - You should see the Fiddler AI Assistant welcome message
-            - The interface should be fully interactive
+            I'm your intelligent companion for AI observability, monitoring, and model insights.
+            
+            I can help you with:
+            - Fiddler platform questions
+            - ML monitoring best practices  
+            - Technical guidance and documentation
+            - Model performance analysis
+            
+            **What would you like to explore today?**
             """)
+        
+        # Display chat messages
+        for message in st.session_state.get('messages', []):
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+        
+        # Chat input
+        if prompt := st.chat_input("Ask me anything about Fiddler AI..."):
+            # Add user message to chat history
+            if 'messages' not in st.session_state:
+                st.session_state.messages = []
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # Display user message
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            
+            # Generate assistant response
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    try:
+                        # Import required classes
+                        from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+                        
+                        # Try to import ChatbotState with path adjustment
+                        try:
+                            from agentic_tools.state_data_model import ChatbotState
+                        except ImportError:
+                            import sys
+                            sys.path.append('src')
+                            from agentic_tools.state_data_model import ChatbotState
+                        
+                        # Create state for the conversation
+                        exec_state = ChatbotState(messages=[HumanMessage(content=prompt)])
+                        
+                        # Stream the response
+                        response_placeholder = st.empty()
+                        final_response = ""
+                        
+                        for event in st.session_state.chatbot_graph.stream(
+                            exec_state, 
+                            st.session_state.thread_config, 
+                            stream_mode="values"
+                        ):
+                            messages = event.get("messages", [])
+                            if messages:
+                                last_message = messages[-1]
+                                
+                                if isinstance(last_message, AIMessage) and last_message.content:
+                                    final_response = str(last_message.content)
+                                    response_placeholder.markdown(final_response)
+                                
+                                elif isinstance(last_message, ToolMessage):
+                                    # Show tool usage
+                                    with st.expander(f"🔧 Tool Used: {last_message.name}", expanded=False):
+                                        st.json(last_message.content)
+                        
+                        # Add assistant response to chat history
+                        if final_response:
+                            st.session_state.messages.append({"role": "assistant", "content": final_response})
+                    
+                    except Exception as e:
+                        error_msg = f"❌ Error: {str(e)}"
+                        st.error(error_msg)
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"Error in conversation: {e}", exc_info=True)
+                        st.session_state.messages.append({"role": "assistant", "content": error_msg})
+        
+    except ImportError as e:
+        st.error(f"❌ **Import Error**: {str(e)}")
+        st.write("Please ensure all required dependencies are installed.")
+    except Exception as e:
+        st.error(f"❌ **Chatbot Error**: {str(e)}")
+        st.write("There was an error loading the chatbot. Please try refreshing the page.")
     
-    else:
-        # Local development - iframe should work
-        chainlit_url = f"http://localhost:{CHAINLIT_PORT}"
-        
-        st.info("🖥️ **Local Development Mode** - Embedding chatbot via iframe")
-        
-        # Create iframe HTML with professional styling
-        iframe_html = f"""
-        <iframe 
-            src="{chainlit_url}" 
-            width="100%" 
-            height="700" 
-            style="border: none; 
-                   border-radius: 8px; 
-                   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                   background: white;"
-            title="Fiddler AI Assistant">
-        </iframe>
-        """
-        
-        # Display the iframe
-        components.html(iframe_html, height=720)
-    
-    # Footer with helpful links (works for both modes)
+    # Footer
     st.markdown("---")
     st.markdown(f"""
     <div style="text-align: center; color: #666; font-size: 14px;">
         <a href="?refresh={time.time()}" style="color: #FF6B6B;">Force refresh</a> | 
-        Status: Chainlit subprocess running
+        Session: {st.session_state.get('session_id', 'Not initialized')[:8]}...
     </div>
     """, unsafe_allow_html=True)
 
@@ -345,49 +416,47 @@ def main():
         initial_sidebar_state="collapsed"
     )
     
-    # Initialize session state
-    if 'chainlit_started' not in st.session_state:
-        st.session_state.chainlit_started = False
-        st.session_state.startup_attempted = False
-    
-    # Auto-start Chainlit on first load
-    if not st.session_state.startup_attempted:
-        st.session_state.startup_attempted = True
-        
-        # Validate environment first
-        errors, warnings, chainlit_version = validate_environment()
-        
-        if not errors:
-            # Try to start Chainlit automatically
-            success, message = start_chainlit_subprocess()
-            if success:
-                st.session_state.chainlit_started = True
-                # Wait a moment for Chainlit to fully start
-                time.sleep(3)
+    # Initialize session state for chatbot
+    if 'chatbot_initialized' not in st.session_state:
+        st.session_state.chatbot_initialized = False
     
     # Check current status
-    errors, warnings, chainlit_version = validate_environment()
-    chainlit_healthy, health_status = check_chainlit_health()
+    errors, warnings, streamlit_version = validate_environment()
+    
+    # Determine chatbot health
+    chatbot_ready = False
+    health_status = "Not initialized"
+    
+    if not errors:
+        try:
+            # Try to initialize the chatbot components
+            import streamlit_chatbot
+            streamlit_chatbot.initialize_session()
+            
+            if st.session_state.get('chatbot_graph'):
+                chatbot_ready = True
+                health_status = "Ready"
+            else:
+                health_status = "Initialization failed"
+        except Exception as e:
+            health_status = f"Error: {str(e)[:50]}..."
+    else:
+        health_status = "Environment issues"
     
     # Header
     st.title("🤖 Fiddler AI Assistant")
-    st.markdown("*Powered by Chainlit & LangGraph*")
+    st.markdown("*Powered by Streamlit & LangGraph*")
     
     # Render sidebar
-    render_sidebar(errors, chainlit_version, chainlit_healthy, health_status)
+    render_sidebar(errors, streamlit_version, chatbot_ready, health_status)
     
     # Main content area - render appropriate state
     if errors:
         render_error_state(errors)
-    elif not chainlit_healthy:
+    elif not chatbot_ready:
         render_starting_state()
     else:
         render_running_state()
-    
-    # Auto-refresh if Chainlit isn't healthy (and no errors)
-    if not chainlit_healthy and not errors:
-        time.sleep(5)
-        st.rerun()
 
 if __name__ == "__main__":
     main()
