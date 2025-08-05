@@ -9,7 +9,7 @@ This reference document provides regex patterns for cleaning markdown files at s
 1. [YAML Metadata Cleaning](#1-yaml-metadata-cleaning)
 2. [GitBook Asset Image Removal](#2-gitbook-asset-image-removal)
 3. [GitBook Include Statement Removal](#3-gitbook-include-statement-removal)
-4. [Usage Instructions](#4-usage-instructions)
+4. [Usage Instructions](#4-usage-instructions-in-vs-code)
 5. [Pattern Components Reference](#5-pattern-components-reference)
 
 ---
@@ -128,21 +128,17 @@ excerpt: >-
 
 ## 2. GitBook Asset Image Removal
 
-### Purpose
-
 Remove markdown image links that reference GitBook assets folder, typically used for screenshots and diagrams that aren't needed in the corpus.
 
-### Final Refined Pattern
-
-**Search Pattern:**
+Final Refined Pattern:
 
 ```regex
 !\[.*?\]\((?:\.\.\/)*\.gitbook\/assets\/[^)]+\)
 ```
 
-**Replace Pattern:** (empty - to completely remove)
+Replace Pattern: (empty - to completely remove)
 
-### Pattern Breakdown
+Pattern Breakdown:
 
 1. **`!\[.*?\]`** - Matches the markdown image syntax
    - `!` identifies this as an image (not a regular link)
@@ -160,15 +156,13 @@ Remove markdown image links that reference GitBook assets folder, typically used
    - `+` requires at least one character
 6. **`\)`** - Escaped closing parenthesis
 
-### Example Matches
+Example Matches:
 
 - `![](../../.gitbook/assets/2b19cf0-Screen_Shot_2023-12-19_at_2.31.43_PM.png)`
 - `![Screenshot](.gitbook/assets/dashboard.png)`
 - `![](../../../.gitbook/assets/model-upload-flow.jpg)`
 
-### Variations and Edge Cases
-
-The pattern handles:
+Variations and Edge Cases: The pattern handles:
 
 - Empty alt text or alt text with content
 - Multiple levels of parent directory navigation
@@ -179,23 +173,15 @@ The pattern handles:
 
 ## 3. GitBook Include Statement Removal
 
-### Purpose
-
 Remove Liquid template include statements that reference GitBook includes folder, typically used for shared content blocks like headers and footers.
 
-### Final Refined Pattern (VS Code Compatible)
-
-**Search Pattern:**
+Final Refined Pattern (VS Code Compatible):
 
 ```regex
 {%.*\.gitbook\/includes\/.*%}
 ```
 
-**Replace Pattern:** (empty - to completely remove)
-
-### Alternative Patterns (For Different Regex Engines)
-
-**More Specific Pattern (if VS Code supports):**
+Alternative Patterns (For Different Regex Engines):
 
 ```regex
 {%[ ]*include[ ]*"(?:\.\.\/)*\.gitbook\/includes\/[^"]*"[ ]*%}
@@ -230,13 +216,13 @@ Remove Liquid template include statements that reference GitBook includes folder
 10. **`[ ]*`** - Optional trailing spaces
 11. **`%}`** - Closing template markers
 
-### Example Matches
+Example Matches:
 
 - `{% include "../.gitbook/includes/main-doc-dev-footer.md" %}`
 - `{%include ".gitbook/includes/header.md"%}`
 - `{% include "../../../.gitbook/includes/shared/navigation.html" %}`
 
-### VS Code Compatibility Notes
+VS Code Compatibility Notes:
 
 The simplified pattern `{%.*\.gitbook\/includes\/.*%}` is recommended for VS Code because:
 
@@ -246,11 +232,9 @@ The simplified pattern `{%.*\.gitbook\/includes\/.*%}` is recommended for VS Cod
 
 ---
 
-## 4. Usage Instructions
+## 4. Usage Instructions In VS Code
 
-### In VS Code
-
-1. **Open Search and Replace:**
+1. **Open Search and Replace**
    - Press `Ctrl+Shift+F` (Windows/Linux) or `Cmd+Shift+F` (Mac)
    - Or use Find → Replace in Files from the menu
 
