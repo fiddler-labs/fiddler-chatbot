@@ -201,12 +201,21 @@ def build_chatbot_graph():
     workflow_builder.add_edge(START, "chatbot")
     workflow_builder.add_edge("chatbot", END)
     
-    # LEGACY CODE - for reference only
     """
     Note: In Chainlit, we don't use static edges for conditional flow.
     The chatbot_node and tool_execution_node use Command objects with goto
-    to control the flow dynamically, just like in the CLI version.
-    """
+
+    IMPORTANT: Do NOT add static edges from chatbot or tool_execution
+    The Command objects with goto control the dynamic routing:
+    - chatbot_node returns Command(goto="tool_execution") when tools needed
+    - chatbot_node returns Command(goto=END) when no tools needed  
+    - tool_execution_node returns Command(goto="chatbot") to continue processing
+    
+    This enables the guardrail workflows:
+    1. User message → chatbot → safety check tool → chatbot → RAG tool → chatbot → faithfulness tool → chatbot → response
+    2. User message → chatbot → RAG tool → chatbot → faithfulness tool → chatbot → retry RAG → chatbot → response
+    
+    # LEGACY CODE - for reference only
     # This allows conditional routing based on whether tools are needed.
     # workflow_builder.add_edge(START, "human")
     # workflow_builder.add_edge("human", "chatbot")
@@ -214,6 +223,7 @@ def build_chatbot_graph():
     # workflow_builder.add_edge("chatbot", "tool_execution")
     # workflow_builder.add_edge("tool_execution", "chatbot")
     # workflow_builder.add_edge("human", END)
+    """
 
     checkpointer = MemorySaver()
     chatbot_graph = workflow_builder.compile(checkpointer=checkpointer)
@@ -268,11 +278,17 @@ async def on_message(message: cl.Message):
         await cl.Message(content="❌ Error: Chat session not initialized").send()
         return
     
-    # Create initial state with new user message
-    exec_state = ChatbotState(messages=[
-        SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT), 
-        HumanMessage(content=message.content)
+    # Get existing conversation state or create new one
+    conversation_state = cl.user_session.get("conversation_state")
+    if not conversation_state:
+        # Initialize with system message for new conversations
+        conversation_state = ChatbotState(messages=[
+            SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)
         ])
+        cl.user_session.set("conversation_state", conversation_state)
+    
+    # Add the new user message to existing conversation
+    Command(update={"messages": HumanMessage(content=message.content)})
     
     # Create a message for streaming
     msg = cl.Message(content="")
@@ -283,7 +299,7 @@ async def on_message(message: cl.Message):
         final_ai_message = None
         
         async for event in chatbot_graph.astream(
-            exec_state, 
+            conversation_state, 
             thread_config, 
             stream_mode="values"
             ):
@@ -319,6 +335,10 @@ async def on_message(message: cl.Message):
         if final_ai_message and final_ai_message.content:
             msg.content = str(final_ai_message.content)
             await msg.update()
+        
+        # Update the persistent conversation state with the final result
+        if conversation_state and conversation_state["messages"]:
+            cl.user_session.set("conversation_state", conversation_state)
             
     except Exception as e:
         logger.error(f"Error in conversation: {e}", exc_info=True)
