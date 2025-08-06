@@ -1,5 +1,5 @@
 import logging
-
+import json
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Cassandra as CassandraVectorStore
 from langchain_core.tools import Tool, tool  # noqa: F401
@@ -37,13 +37,16 @@ def rag_over_fiddler_knowledge_base(query: str) -> str:
                 return "No relevant documents found in the knowledge base."
             
             # Format results
-            formatted_results = []
+            formatted_results = {}
             for i, doc in enumerate(documents, 1):
                 content = doc.page_content
                 metadata = doc.metadata if doc.metadata else {}
-                formatted_results.append(f"Document {i}:{metadata}\n{content}\n")
+                formatted_results[f"Document {i}"] = {
+                    "metadata": metadata,
+                    "content": content
+                    }
                 
-            return "\n".join(formatted_results)
+            return json.dumps(formatted_results , indent=4)
             
     except Exception as e:
         logger.error(f"Error in Cassandra search: {e}")

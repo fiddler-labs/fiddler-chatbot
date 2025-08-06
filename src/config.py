@@ -64,8 +64,6 @@ CONFIG_CHATBOT_NEW = {
     "FIDDLER_URL": "https://preprod.cloud.fiddler.ai",
     "FIDDLER_URL_GUARDRAILS": "https://demo.fiddler.ai",
 
-    "SCORE_THRESHOLD_FAITHFULNESS": 0.0,
-    "SCORE_THRESHOLD_JAILBREAKING": 0.0,
     "FDL_GAURDRAIL_REQUESTS_TIMEOUT": 20,
     "TOP_K_RETRIEVAL": 6,
     }
