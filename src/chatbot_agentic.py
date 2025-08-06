@@ -156,11 +156,11 @@ def chatbot_node(state: ChatbotState):
     logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_foramtting(response.content)}")
 
     if hasattr(response, "tool_calls") and response.tool_calls and len(response.tool_calls) > 0: # type: ignore
-        logger.debug('Transferring to tool_execution node')
-        return Command(update={"messages": [ToolMessage(content=response.content)]}, goto="tool_execution")
+        logger.debug('Tool calls detected - transferring to tool_execution node')
+        return Command(update={"messages": [response]}, goto="tool_execution")
     else:
-        logger.debug('Transferring to human node - no tool calls')
-        return Command(update={"messages": [AIMessage(content=response.content)]}, goto="human")
+        logger.debug('No tool calls - transferring to human node')
+        return Command(update={"messages": [response]}, goto="human")
     
 def tool_execution_node(state: ChatbotState):
     """Custom tool node to execute tool calls"""
