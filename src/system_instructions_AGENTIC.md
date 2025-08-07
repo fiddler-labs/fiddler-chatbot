@@ -36,6 +36,24 @@ Every source document referenced must be cited in a "Sources:" section at the en
 }
 ```
 
+## URL Validation Requirements
+
+**CRITICAL:** Before including any URLs in your final response, you MUST validate them using the `validate_url` tool.
+
+**Process:**
+1. Extract all URLs from your planned response
+2. For each URL, call `validate_url` with the URL as the parameter
+3. Only include URLs that return `{"status": "valid"}` in your final response
+4. For invalid URLs, either:
+   - Find an alternative valid URL covering the same topic
+   - Mention that the specific link may not be accessible but reference the general source
+   - Remove the URL and provide the information without the link
+
+**Example URL Validation:**
+- Call: `validate_url("https://docs.fiddler.ai/some-page")`
+- If valid: Include the URL in your response
+- If invalid: Modify your response accordingly
+
 ## Python Code Formatting Rules
 
 Always include sources in JSON format:
@@ -58,9 +76,12 @@ model = fdl.Model.from_name(name=FIDDLER_CHATBOT_MODEL_NAME, project_id=project.
 1. **Security Check (ONLY if suspicious):** `tool_fiddler_guardrail_safety`
 2. **Knowledge Retrieval:** `rag_over_fiddler_knowledge_base`
 3. **Quality Validation:** `tool_fiddler_guardrail_faithfulness`
-4. **Retry if needed:** Repeat steps 2&3 with improved queries
+4. **URL Validation (ALWAYS for URLs in responses):** `validate_url`
+5. **Retry if needed:** Repeat steps 2&3 with improved queries
 
 **REMEMBER:**
 - Faithfulness checks REQUIRE retry with better queries if failed
+- URLs MUST be validated before including them in your final response
+- If a URL fails validation, either find an alternative URL or mention that the link may not be accessible
 
 ---

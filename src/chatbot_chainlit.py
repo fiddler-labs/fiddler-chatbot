@@ -31,6 +31,7 @@ from utils.pretty_formatter import try_pretty_formatting
 from agentic_tools.state_data_model import ChatbotState
 from agentic_tools.rag import rag_over_fiddler_knowledge_base
 from agentic_tools.fiddler_gaurdrails import tool_fiddler_guardrail_safety, tool_fiddler_guardrail_faithfulness
+from agentic_tools.validator_url import validate_url
 
 # from langgraph.prebuilt import ToolNode, tools_condition
 # from langgraph.graph.message import add_messages
@@ -90,6 +91,7 @@ tools = [
     rag_over_fiddler_knowledge_base, 
     tool_fiddler_guardrail_safety, 
     tool_fiddler_guardrail_faithfulness,
+    validate_url,
     ]
 llm = base_llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
@@ -172,6 +174,8 @@ def tool_execution_node(state: ChatbotState):
                 output = tool_fiddler_guardrail_safety.invoke(tool_call['args'])
             case "tool_fiddler_guardrail_faithfulness":
                 output = tool_fiddler_guardrail_faithfulness.invoke(tool_call['args'])
+            case "validate_url":
+                output = validate_url.invoke(tool_call['args'])
             case _:
                 raise ValueError(f"Unknown tool: {tool_call['name']}")
         
