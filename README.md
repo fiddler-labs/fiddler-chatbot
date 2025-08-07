@@ -144,6 +144,69 @@ The legacy chatbot application also integrates with Fiddler AI's platform for:
 
 ---
 
+## 🧪 Testing
+
+The project includes a comprehensive testing framework to ensure code quality and reliability.
+
+### Quick Start
+
+```bash
+# Install testing dependencies (included in main dependencies)
+uv sync
+
+# Run all tests
+pytest
+
+# Run tests with coverage
+pytest --cov=src
+
+# Run tests excluding network-dependent tests
+pytest -m "not network"
+```
+
+### Test Organization
+
+- **Unit Tests**: Test individual functions in isolation
+- **Integration Tests**: Test component interactions
+- **Network Tests**: Test actual network calls (marked with `@pytest.mark.network`)
+- **Mocked Tests**: Use `responses` library to mock HTTP requests
+
+### Test Structure
+
+```
+tests/
+├── conftest.py              # Shared fixtures and configuration
+├── README.md                # Detailed testing documentation
+└── agentic_tools/
+    └── test_validator_url.py # URL validator comprehensive tests
+```
+
+### Running Specific Tests
+
+```bash
+# Run specific test file
+pytest tests/agentic_tools/test_validator_url.py
+
+# Run specific test class
+pytest tests/agentic_tools/test_validator_url.py::TestValidateUrlSyntax
+
+# Run with verbose output
+pytest -v
+
+# Generate HTML coverage report
+pytest --cov=src --cov-report=html
+```
+
+### Coverage Requirements
+
+- **Minimum Coverage**: 80%
+- **Critical Components**: All public functions must have tests
+- **Error Handling**: All error paths must be tested
+
+For detailed testing guidelines, see [`tests/README.md`](tests/README.md).
+
+---
+
 ### Development Methodology for Risk Mitigation
 
 This project follows an iterative, verification-driven approach, emphasizing small, testable increments with validation at each stage,
