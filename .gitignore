@@ -22,3 +22,21 @@ logs/log_*.log
 temp_ref/
 .chainlit/translations
 .chainlit/.langchain.db
+
+# Testing and coverage files
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# LangChain database files
+.langchain.db
+*.langchain.db
