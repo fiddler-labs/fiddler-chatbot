@@ -10,7 +10,7 @@ uv.lock
 .ruff_cache
 build/
 
-.vscode/settings.json
+# .vscode/settings.json - now tracked for team consistency
 .env
 
 local_assets/*/*.md

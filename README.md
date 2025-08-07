@@ -40,7 +40,20 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    cd fiddler-chatbot
    ```
 
-2. **Install dependencies**
+2. **Quick Setup (Recommended)**
+
+   ```bash
+   # Run the automated setup script
+   ./setup_dev.sh
+   ```
+
+   This will:
+   - Install all dependencies with uv
+   - Verify VS Code/Cursor configuration
+   - Test linting and testing frameworks
+   - Provide next steps
+
+3. **Manual Setup**
 
    ```bash
    # Using uv (recommended)
@@ -50,7 +63,7 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    uv pip install .
    ```
 
-3. **Environment Configuration**
+4. **Environment Configuration**
 
    Create a `.env` file with required API keys by copying the `.env.template` file.
    Test the env by running the following command:
@@ -59,20 +72,20 @@ The Fiddler Chatbot is built to provide intelligent, context-aware responses abo
    uv run src/utils/test_agentic_env.py
    ```
 
-4. **Run the new agentic application CLI**
+5. **Run the new agentic application CLI**
 
    ```bash
    uv run src/chatbot_agentic.py "hello" "what is the current time?" "quit"
    ```
 
-5. **Running the older Streamlit Application (Legacy)**
+6. **Running the older Streamlit Application (Legacy)**
    The application will be available at `http://localhost:8501`
 
    ```bash
    streamlit run chatbot.py
    ```
 
-6. **Running the new chatbot with Chainlit (New)**
+7. **Running the new chatbot with Chainlit (New)**
    The application will be available at `http://localhost:8000`
 
    ```bash
@@ -227,6 +240,26 @@ The project uses **Ruff** for consistent code formatting and linting:
 - **Line length**: 88 characters
 - **Target**: Python 3.11+
 - **Rules**: pycodestyle, pyflakes, isort, naming, and more
+
+### VS Code/Cursor Integration
+
+The project includes VS Code/Cursor settings for consistent development experience:
+
+- **Automatic Setup**: VS Code will prompt to install recommended extensions
+- **Ruff Integration**: Linting and formatting on save
+- **Project Settings**: Override personal settings for consistency
+- **Test Integration**: Pytest discovery and execution
+- **File Exclusions**: Hide generated files from explorer
+
+**Files**:
+- `.vscode/settings.json` - Project-specific editor settings
+- `.vscode/extensions.json` - Recommended extensions
+
+**Recommended Extensions**:
+- `charliermarsh.ruff` - Ruff linter and formatter
+- `ms-python.python` - Python language support
+- `ms-python.debugpy` - Python debugging
+- `tamasfe.even-better-toml` - TOML file support
 
 ---
 
