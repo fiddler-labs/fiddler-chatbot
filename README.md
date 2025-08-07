@@ -205,6 +205,29 @@ pytest --cov=src --cov-report=html
 
 For detailed testing guidelines, see [`tests/README.md`](tests/README.md).
 
+### Code Style and Linting
+
+The project uses **Ruff** for consistent code formatting and linting:
+
+```bash
+# Check code style
+./lint.sh check          # or: uv run ruff check src/ tests/
+
+# Auto-fix issues
+./lint.sh fix             # or: uv run ruff check src/ tests/ --fix
+
+# Format code
+./lint.sh format          # or: uv run ruff format src/ tests/
+
+# Fix and format everything
+./lint.sh all
+```
+
+**Configuration**: See `[tool.ruff]` section in `pyproject.toml`
+- **Line length**: 88 characters
+- **Target**: Python 3.11+
+- **Rules**: pycodestyle, pyflakes, isort, naming, and more
+
 ---
 
 ### Development Methodology for Risk Mitigation
