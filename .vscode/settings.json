@@ -1,0 +1,88 @@
+{
+  "// Fiddler Chatbot Project Settings": "Override personal settings for consistency",
+
+  "// Python Configuration": "",
+  "python.defaultInterpreterPath": "./.venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+
+  "// Linting Configuration - Use Project Ruff Settings": "",
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.flake8Enabled": false,
+  "python.linting.banditEnabled": false,
+  "python.linting.mypyEnabled": false,
+
+  "// Formatting Configuration - Use Ruff Formatter": "",
+  "python.formatting.provider": "none",
+  "python.defaultFormatterProvider": "charliermarsh.ruff",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+
+  "// Ruff Extension Settings": "",
+  "ruff.enable": true,
+  "ruff.fixAll": true,
+  "ruff.organizeImports": true,
+  "ruff.nativeServer": true,
+  "ruff.configurationPreference": "filesystemFirst",
+
+  "// Editor Settings for Consistency": "",
+  "editor.rulers": [88],
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+
+  "// Testing Configuration": "",
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": [
+    "tests"
+  ],
+  "python.testing.autoTestDiscoverOnSaveEnabled": true,
+
+  "// File Associations": "",
+  "files.associations": {
+    "*.toml": "toml",
+    "*.md": "markdown",
+    ".env*": "properties"
+  },
+
+  "// Exclude Files from VS Code Explorer": "",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.coverage": true,
+    "**/htmlcov": true,
+    "**/*.pyc": true,
+    "**/.DS_Store": true,
+    ".venv": true
+  },
+
+  "// Search Exclude": "",
+  "search.exclude": {
+    "**/.venv": true,
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/htmlcov": true,
+    "**/*.pyc": true
+  },
+
+  "// File Watcher Exclude": "",
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/htmlcov/**": true
+  }
+}
