@@ -31,7 +31,7 @@ dependencies = [
     "opentelemetry-proto==1.34.1",
     "opentelemetry-sdk==1.34.1",
     "opentelemetry-semantic-conventions==0.55b1",
-    "langgraph>=0.5.1",
+    "langgraph>=0.5.1,<0.6.0",
     "langgraph-cli>=0.3.4",
     "cassio>=0.1.10",
     "watchdog>=6.0.0",
@@ -64,7 +64,7 @@ select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
     "F",   # pyflakes
-    "I",   # isort
+    # "I",   # isort
     "N",   # pep8-naming
     "UP",  # pyupgrade
     "B",   # flake8-bugbear

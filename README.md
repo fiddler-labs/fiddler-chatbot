@@ -186,7 +186,7 @@ pytest -m "not network"
 
 ### Test Structure
 
-```
+```sh
 tests/
 ├── conftest.py              # Shared fixtures and configuration
 ├── README.md                # Detailed testing documentation
@@ -196,7 +196,7 @@ tests/
 
 ### Running Specific Tests
 
-```bash
+```sh
 # Run specific test file
 pytest tests/agentic_tools/test_validator_url.py
 
@@ -222,7 +222,7 @@ For detailed testing guidelines, see [`tests/README.md`](tests/README.md).
 
 The project uses **Ruff** for consistent code formatting and linting:
 
-```bash
+```sh
 # Check code style
 ./lint.sh check          # or: uv run ruff check src/ tests/
 
@@ -237,6 +237,7 @@ The project uses **Ruff** for consistent code formatting and linting:
 ```
 
 **Configuration**: See `[tool.ruff]` section in `pyproject.toml`
+
 - **Line length**: 88 characters
 - **Target**: Python 3.11+
 - **Rules**: pycodestyle, pyflakes, isort, naming, and more
@@ -252,14 +253,110 @@ The project includes VS Code/Cursor settings for consistent development experien
 - **File Exclusions**: Hide generated files from explorer
 
 **Files**:
+
 - `.vscode/settings.json` - Project-specific editor settings
 - `.vscode/extensions.json` - Recommended extensions
 
 **Recommended Extensions**:
+
 - `charliermarsh.ruff` - Ruff linter and formatter
 - `ms-python.python` - Python language support
 - `ms-python.debugpy` - Python debugging
 - `tamasfe.even-better-toml` - TOML file support
+
+---
+
+## Containerization (Docker): Build and Run
+
+The repository includes a production-ready `Dockerfile` for running the Chainlit app. This section captures all the specifics needed to build and run the container reproducibly.
+
+### Requirements
+
+- **Docker 24+** (Docker Desktop on macOS is fine)
+- Network access for dependency install during build
+
+- **Optional**:
+  - `FIDDLER_URL` (defaults to `preprod.cloud.fiddler.ai` via `src/config.py` if not set)
+  - `HOST` (default `0.0.0.0` inside container)
+  - `PORT` (default `8000`)
+
+`.env` files are intentionally excluded from the image by `.dockerignore`. Pass secrets via `--env-file` or `-e` flags when running the container.
+
+### Operational tips and troubleshooting
+
+- **Secrets handling**: Prefer `--env-file .env`. The app also uses `load_dotenv()`, so mounting `.env` into `/app/.env` works too.
+- **Port conflicts**: If `8000` is taken on the host, map a different host port, e.g. `-p 8080:8000`.
+- **Apple Silicon**: The base image supports `linux/arm64`. Use `--platform linux/amd64` only if you need x86 compatibility.
+- **Logs**: `docker logs -f fiddler-chatbot` to follow logs.
+- **Rebuild dependencies**: If `pyproject.toml` changed, rebuild without cache: `docker build --no-cache -t fiddler-chatbot:latest .`.
+
+### Build
+
+```sh
+# From the repo root
+docker build -t fiddler-chatbot:latest .
+```
+
+### Run (basic)
+
+```sh
+# Map host 8000 → container 8000, inject environment from .env
+docker run --rm \
+  --name fiddler-chatbot \
+  -p 8000:8000 \
+  --env-file .env \
+  fiddler-chatbot:latest
+
+# App will be available at http://localhost:8000
+```
+
+### Run (override port/host)
+
+```sh
+# Change the container's listening port and map it on the host
+docker run --rm \
+  --name fiddler-chatbot \
+  -e PORT=8001 -e HOST=0.0.0.0 \
+  -p 8001:8001 \
+  --env-file .env \
+  fiddler-chatbot:latest
+```
+
+### Run (development with hot-reload)
+
+The image defaults to production-style start. For local iteration, mount your working dir and enable Chainlit watch mode.
+
+```sh
+docker run --rm -it \
+  --name fiddler-chatbot-dev \
+  -p 8000:8000 \
+  --env-file .env \
+  -v "$(pwd)/src:/app/src" \
+  -v "$(pwd)/public:/app/public" \
+  fiddler-chatbot:latest \
+  sh -lc "/app/.venv/bin/chainlit run src/chatbot_chainlit.py -w --host 0.0.0.0 --port 8000"
+```
+
+### Running tests inside the container
+
+Tests are not baked into the image (the Dockerfile copies `src/` and `public/` only). Mount the test assets at runtime.
+
+```sh
+# Run full test suite with coverage
+docker run --rm -it \
+  --name fiddler-chatbot-tests \
+  -v "$(pwd)/tests:/app/tests" \
+  -v "$(pwd)/pytest.ini:/app/pytest.ini" \
+  fiddler-chatbot:latest \
+  sh -lc "uv run pytest --cov=src --cov-report=term-missing"
+
+# Run only URL validator tests
+docker run --rm -it \
+  -v "$(pwd)/tests:/app/tests" \
+  -v "$(pwd)/pytest.ini:/app/pytest.ini" \
+  fiddler-chatbot:latest \
+  sh -lc "uv run pytest tests/agentic_tools/test_validator_url.py -v"
+```
 
 ---
 
@@ -271,7 +368,7 @@ avoiding large-scale development without proper testing.
 - Each phase must be fully functional before proceeding
 - All features must be tested and verified
 - **Testing**: Mandatory verification at each major development milestone
-- **Integration Issues**: Continuous integration testing with green-streamlit
+- **Integration Issues**: Continuous integration testing with streamlit
 - **Monitoring Failures**: Early integration of Fiddler monitoring to identify issues
 - **Platform Compatibility**: Regular validation of Fiddler LangGraph SDK compatibility
 - **Data Visibility**: Continuous monitoring of data flow to Fiddler platform

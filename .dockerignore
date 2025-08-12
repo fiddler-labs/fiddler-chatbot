@@ -1,0 +1,41 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+.ruff_cache
+.pytest_cache
+.venv
+env/
+venv/
+
+# Local/runtime
+.DS_Store
+*.log
+logs/
+
+# Env files (pass via --env-file at runtime instead)
+.env
+.env.*
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Large local assets not needed at runtime
+local_assets/
+temp_ref/
+
+# Dev/editor configs (not needed in runtime image)
+.vscode/
+.devcontainer/
+.cursorrules/
+
+# Non-runtime content
+docs/
+tests/
+.files/
+workflow_graph.png
