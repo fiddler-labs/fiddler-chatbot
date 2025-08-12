@@ -268,7 +268,25 @@ The project includes VS Code/Cursor settings for consistent development experien
 
 ## Containerization (Docker): Build and Run
 
-The repository includes a production-ready `Dockerfile` for running the Chainlit app. This section captures all the specifics needed to build and run the container reproducibly.
+The repository includes a production-ready `Dockerfile` and a comprehensive Docker management utility for simplified container lifecycle management.
+
+### Quick Start with Docker Manager
+
+```bash
+# Make the script executable (first time only)
+chmod +x docker-manager.sh
+
+# Most common usage: rebuild and run
+./docker-manager.sh
+
+# Other common commands
+./docker-manager.sh dev     # Development mode with hot-reload
+./docker-manager.sh test    # Run tests
+./docker-manager.sh logs    # View logs
+./docker-manager.sh stop    # Stop container
+```
+
+For full documentation, see [Docker Manager Documentation](docs/docker-utility.md) or run `./docker-manager.sh --help`.
 
 ### Requirements
 
