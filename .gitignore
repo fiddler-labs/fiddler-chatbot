@@ -40,3 +40,4 @@ coverage.xml
 # LangChain database files
 .langchain.db
 *.langchain.db
+/.chainlit/.langchain.db

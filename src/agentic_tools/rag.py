@@ -13,15 +13,26 @@ logger = logging.getLogger(__name__)
 
 @tool
 def rag_over_fiddler_knowledge_base(query: str) -> str:
-    """
-    AI Chatbot System RAG tool to search over a vector database of Fiddler documents and return the most relevant documents.
-    Select this for tool calling whenever you need to respond to questions about Fiddler AI Observability Platform.
-     Input(str): The query to search for ( optimize this for RAG retrieval augmented generation ; maximize query for greatest cosine similarity by adding a variety and quantity of query keywords )
-    Output(str): A large string containing the most relevant documents.
+    """RAG Knowledge Retrieval - PRIMARY INFORMATION SOURCE
+    PURPOSE: Search Fiddler's documentation vector database for relevant information.
+
+    WHEN TO USE:
+    - For ANY question about Fiddler AI Observability Platform
+    - When user asks about features, APIs, integrations, or best practices
+    - To gather context before formulating responses
+
+    QUERY OPTIMIZATION STRATEGY: strip filler words and stop words from the user input to form the RAG inputquery
+
+    MANDATORY WORKFLOW - ALWAYS FOLLOW THIS SEQUENCE:
+    1. Call this tool with optimized query
+    2. IMMEDIATELY call tool_fiddler_guardrail_faithfulness to validate retrieval quality
+
+    Input(str): Optimized search query with only key terms for maximum cosine similarity
+    Output(str): Concatenated relevant documents with metadata
     """
     try:
         embedding = OpenAIEmbeddings()
-        
+
         with cassandra_connection() as (cassandra_cluster, cassandra_session):
             vector_store = CassandraVectorStore(
                 embedding=embedding,
@@ -29,13 +40,13 @@ def rag_over_fiddler_knowledge_base(query: str) -> str:
                 keyspace=CONFIG_VECTOR_INDEX_MGMT["keyspace"],
                 table_name=CONFIG_VECTOR_INDEX_MGMT["TABLE_NAME"]
                 )
-            
+
             # Perform similarity search
             documents = vector_store.similarity_search( query, k=CONFIG_CHATBOT_NEW['TOP_K_RETRIEVAL'] )
-            
+
             if not documents:
                 return "No relevant documents found in the knowledge base."
-            
+
             # Format results
             formatted_results = {}
             for i, doc in enumerate(documents, 1):
@@ -45,9 +56,9 @@ def rag_over_fiddler_knowledge_base(query: str) -> str:
                     "metadata": metadata,
                     "content": content
                     }
-                
+
             return json.dumps(formatted_results , indent=4)
-            
+
     except Exception as e:
         logger.error(f"Error in Cassandra search: {e}")
         return f"Error: {str(e)}\n Please fix your mistakes."
@@ -61,7 +72,7 @@ def make_cassandra_rag_retriever_tool() -> Tool:
         description="Search and return information from the cassandra data corpus.",
         func=cassandra_search_function
         )
-    
+
     return retriever_tool
 
 def make_local_rag_retriever_tool() -> Tool:
@@ -78,7 +89,7 @@ def make_local_rag_retriever_tool() -> Tool:
         search_type="similarity",
         search_kwargs={"k": 5}
     )
-    
+
     retriever_tool = create_retriever_tool(
         retriever,
         "retrieval_tool",
@@ -100,7 +111,7 @@ from fiddler_langgraph.tracing.instrumentation import set_llm_context
 
 def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
     # Retrieve relevant documents from the Cassandra vector database using RAG.
-    
+
     # Args: state: Current conversation state containing messages
     # Returns: Dictionary with updated messages including retrieved context
     try:
@@ -110,17 +121,17 @@ def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
             if isinstance(msg, HumanMessage):
                 last_message = msg
                 break
-        
+
         if not last_message:
             logger.warning("No user message found for RAG retrieval")
             return {"messages": [AIMessage(content="No query found for document retrieval.")]}
-        
+
         query = str(last_message.content)  # Ensure query is a string
         logger.info(f"Performing RAG retrieval for query: '{query[:100]}...'")
-        
+
         # Set up embeddings and vector store
         llm, embedding = setup_llm_and_embeddings()
-        
+
         with cassandra_connection() as (cassandra_cluster, cassandra_session):
             vector_store = CassandraVectorStore(
                 embedding=embedding,
@@ -128,48 +139,48 @@ def LEGACY_cassandra_rag_node(state: ChatbotState) -> Dict[str, Any]:
                 keyspace=CONFIG_VECTOR_INDEX_MGMT["keyspace"],
                 table_name=CONFIG_VECTOR_INDEX_MGMT["TABLE_NAME"]
             )
-        
-            
+
+
         # Perform similarity search
         k = 5  # Number of documents to retrieve
         documents = vector_store.similarity_search(query, k=k)
-        
+
         if not documents:
             logger.warning("No relevant documents found")
             return {"messages": [AIMessage(content="No relevant documents found in the knowledge base.")]}
-        
+
         # Format retrieved documents
         retrieved_context = []
         for i, doc in enumerate(documents, 1):
             content = doc.page_content[:50]  # Truncate for brevity
             metadata = doc.metadata
-            
+
             # Extract useful metadata
             source = metadata.get('source', 'Unknown')
             title = metadata.get('title', 'Untitled')
-            
+
             retrieved_context.append(
                 f"Document {i} (Source: {source}, Title: {title}):\n{content}..."
             )
-                    
+
         # Create context message
         context_message = (
             f"📚 Retrieved {len(documents)} relevant documents for your query:\n\n" +
             "\n\n".join(retrieved_context) +
             "\n\n🤖 I'll use this information to provide you with a comprehensive answer."
         )
-        
+
         logger.info(f"Successfully retrieved {len(documents)} documents")
 
         set_llm_context(llm, context_message)
-        
+
         # Store retrieved documents in state for use by other nodes
         return {
             "messages": [AIMessage(content=context_message)],
             "retrieved_documents": documents,  # Store for potential use by other nodes
             "retrieval_query": query
         }
-            
+
     except Exception as e:
         logger.error(f"Error in RAG retrieval: {e}")
         error_message = f"❌ Error retrieving documents: {str(e)}"
