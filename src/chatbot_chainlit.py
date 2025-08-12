@@ -35,7 +35,7 @@ from agentic_tools.validator_url import validate_url
 
 # from langgraph.prebuilt import ToolNode, tools_condition
 # from langgraph.graph.message import add_messages
-# from langchain.chat_models import init_chat_model 
+# from langchain.chat_models import init_chat_model
     # llm = init_chat_model("anthropic:claude-3-5-sonnet-latest")
     # response_model = init_chat_model("openai:gpt-4.1", temperature=0)
 from config import CONFIG_CHATBOT_NEW as config
@@ -87,9 +87,9 @@ def get_system_time() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 tools = [
-    get_system_time, 
-    rag_over_fiddler_knowledge_base, 
-    tool_fiddler_guardrail_safety, 
+    get_system_time,
+    rag_over_fiddler_knowledge_base,
+    tool_fiddler_guardrail_safety,
     tool_fiddler_guardrail_faithfulness,
     validate_url,
     ]
@@ -112,28 +112,28 @@ def human_node(state: ChatbotState):
         print(f"👤 You (automated): {user_input}")
     else:
         user_input = input("Please enter your message (or 'quit' to exit): ")
-    
+
     # Check for exit commands
     if user_input and user_input.lower() in ["quit", "exit", "q"]:
         print("👋 Goodbye! Thank you for chatting.\n")
         return Command(update={"messages": [HumanMessage(content="USER EXITTED")]}, goto=END)
         # sys.exit(0)
-    
+
     return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="chatbot" )
 """
 
 def chatbot_node(state: ChatbotState):
     """Processes the conversation state to generate a response using the LLM."""
     all_messages_in_state = state["messages"]
-    
+
     # Get the LLM from session
     llm = cl.user_session.get("llm")
     if not llm:
         raise ValueError("LLM not found in session")
-    
+
     # Add the system instructions to the messages
     # all_messages_in_state.append( [SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)] )
-    
+
     logger.debug(f"CHATBOT_NODE: Debug - All Messages in State: {try_pretty_formatting(all_messages_in_state)}")
 
     response = llm.invoke(all_messages_in_state)
@@ -157,14 +157,14 @@ def tool_execution_node(state: ChatbotState):
         if isinstance(msg, AIMessage) and hasattr(msg, "tool_calls") and msg.tool_calls:
             last_ai_message = msg
             break
-    
+
     if not last_ai_message:
         raise ValueError("No AI message with tool calls found in state")
-    
+
     tool_outputs = []
     for tool_call in last_ai_message.tool_calls: # type: ignore
         logger.debug(f"Executing tool: {tool_call['name']} with args: {tool_call['args']}")
-        
+
         match tool_call['name']:
             case "get_system_time":
                 output = get_system_time.invoke(tool_call['args'])
@@ -178,7 +178,7 @@ def tool_execution_node(state: ChatbotState):
                 output = validate_url.invoke(tool_call['args'])
             case _:
                 raise ValueError(f"Unknown tool: {tool_call['name']}")
-        
+
         # Create a ToolMessage for each tool call
         tool_message = ToolMessage(
             content=json.dumps(output),
@@ -187,7 +187,7 @@ def tool_execution_node(state: ChatbotState):
         )
         tool_outputs.append(tool_message)
         logger.debug(f"Created tool message for {tool_call['name']}: {tool_message}")
-    
+
     return Command(update={"messages": tool_outputs}, goto="chatbot")
 
 
@@ -204,7 +204,7 @@ def build_chatbot_graph():
     # Define the graph flow
     workflow_builder.add_edge(START, "chatbot")
     workflow_builder.add_edge("chatbot", END)
-    
+
     """
     Note: In Chainlit, we don't use static edges for conditional flow.
     The chatbot_node and tool_execution_node use Command objects with goto
@@ -212,13 +212,13 @@ def build_chatbot_graph():
     IMPORTANT: Do NOT add static edges from chatbot or tool_execution
     The Command objects with goto control the dynamic routing:
     - chatbot_node returns Command(goto="tool_execution") when tools needed
-    - chatbot_node returns Command(goto=END) when no tools needed  
+    - chatbot_node returns Command(goto=END) when no tools needed
     - tool_execution_node returns Command(goto="chatbot") to continue processing
-    
+
     This enables the guardrail workflows:
     1. User message → chatbot → safety check tool → chatbot → RAG tool → chatbot → faithfulness tool → chatbot → response
     2. User message → chatbot → RAG tool → chatbot → faithfulness tool → chatbot → retry RAG → chatbot → response
-    
+
     # LEGACY CODE - for reference only
     # This allows conditional routing based on whether tools are needed.
     # workflow_builder.add_edge(START, "human")
@@ -231,9 +231,9 @@ def build_chatbot_graph():
 
     checkpointer = MemorySaver()
     chatbot_graph = workflow_builder.compile(checkpointer=checkpointer)
-    
+
     logger.info("✓ Workflow compiled successfully")
-    
+
     output_path = "workflow_graph.png"
     try:
         image_data = chatbot_graph.get_graph().draw_mermaid_png()
@@ -242,7 +242,7 @@ def build_chatbot_graph():
         logger.info(f"Workflow graph saved to {output_path}")
     except Exception as e:
         logger.error(f"Workflow visualization failed: {e}")
-        
+
     return chatbot_graph
 
 
@@ -266,7 +266,7 @@ async def on_chat_start():
     cl.user_session.set("chatbot_graph", chatbot_graph)
     cl.user_session.set("session_id", session_id)
     cl.user_session.set("thread_config", thread_config)
-    
+
     # Send welcome message
     await cl.Message(
         content=f"""🤖 **Welcome to Fiddler AI Assistant!**\n\nI'm your intelligent companion for AI observability, monitoring, and model insights. \n\nI can help you with Fiddler platform questions, ML monitoring best practices, and technical guidance.\n\n**Session ID:** `{session_id}`\n\nWhat would you like to explore today?"""
@@ -281,7 +281,7 @@ async def on_message(message: cl.Message):
     if not chatbot_graph:
         await cl.Message(content="❌ Error: Chat session not initialized").send()
         return
-    
+
     # Get existing conversation state or create new one
     conversation_state = cl.user_session.get("conversation_state")
     if not conversation_state:
@@ -290,37 +290,37 @@ async def on_message(message: cl.Message):
             SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)
         ])
         cl.user_session.set("conversation_state", conversation_state)
-    
+
     # Add the new user message to existing conversation
     Command(update={"messages": HumanMessage(content=message.content)})
-    
+
     # Create a message for streaming
     msg = cl.Message(content="")
     await msg.send()
-    
+
     try:
         # Stream the response
         final_ai_message = None
-        
+
         async for event in chatbot_graph.astream(
-            conversation_state, 
-            thread_config, 
+            conversation_state,
+            thread_config,
             stream_mode="values"
             ):
             # Get the last message from the state
             messages = event.get("messages", [])
             if messages:
                 last_message = messages[-1]
-                
+
                 # Handle AI messages
                 if isinstance(last_message, AIMessage):
                     final_ai_message = last_message
-                    
+
                     # Stream the content if available
                     if last_message.content:
                         msg.content = str(last_message.content)
                         await msg.update()
-                    
+
                     # Show tool calls if any
                     if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
                         tool_info = "\n\n🔧 **Using tools:**"
@@ -328,22 +328,22 @@ async def on_message(message: cl.Message):
                             tool_info += f"\n- {tool_call['name']}"
                         msg.content = tool_info + "\n\n" + (msg.content or "Processing...")
                         await msg.update()
-                
+
                 # Handle Tool messages
                 elif isinstance(last_message, ToolMessage):
                     # Show tool results in a step
                     async with cl.Step(name=f"Tool: {last_message.name}", type="tool") as step:
                         step.output = str(last_message.content)
-        
+
         # Final update if we have content
         if final_ai_message and final_ai_message.content:
             msg.content = str(final_ai_message.content)
             await msg.update()
-        
+
         # Update the persistent conversation state with the final result
         if conversation_state and conversation_state["messages"]:
             cl.user_session.set("conversation_state", conversation_state)
-            
+
     except Exception as e:
         logger.error(f"Error in conversation: {e}", exc_info=True)
         logger.error(traceback.format_exc())
@@ -356,7 +356,7 @@ async def on_message(message: cl.Message):
 async def on_chat_end():
     """Clean up when chat ends"""
     logger.info("Chat session ended")
-    
+
     # Clean up instrumentation if needed
     if instrumentor:
         try:
