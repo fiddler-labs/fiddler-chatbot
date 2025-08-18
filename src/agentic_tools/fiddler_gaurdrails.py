@@ -1,49 +1,96 @@
-import os
-import requests
 import json
-import time
 import logging
-from langchain_core.tools import tool
-from langchain_core.documents import Document
+import os
+import time
 
-from config import CONFIG_CHATBOT_NEW as config
+import requests
+from langchain_core.documents import Document
+from langchain_core.tools import tool
+
+from config import CONFIG_CHATBOT_NEW as config  # noqa: N811
 
 FDL_GAURDRAIL_REQUESTS_TIMEOUT = config["FDL_GAURDRAIL_REQUESTS_TIMEOUT"]
 
 token = os.getenv("FIDDLER_API_KEY_GUARDRAILS")
-fiddler_url = config["FIDDLER_URL_GUARDRAILS"] # CONFIG_CHATBOT_NEW["FIDDLER_URL"] for preprod
+fiddler_url = config[ "FIDDLER_URL_GUARDRAILS"]  # CONFIG_CHATBOT_NEW["FIDDLER_URL"] for preprod
 url_safety = f"{fiddler_url}/v3/guardrails/ftl-safety"
 url_faithfulness = f"{fiddler_url}/v3/guardrails/ftl-response-faithfulness"
 
 
 logger = logging.getLogger(__name__)
 
-def get_faithfulness_guardrail_results(response: str, source_docs: list) -> tuple[float, float]:
+
+def get_faithfulness_guardrail_results(
+    response: str, source_docs: list
+    ) -> tuple[float, float]:
     """Calculates the faithfulness score for a response given a query and source documents."""
 
+    # Extract text content from documents
     source_docs_list = []
     for document in source_docs:
-        source_docs_list.append(document.page_content if isinstance(document, Document) else document)
+        source_docs_list.append(
+            document.page_content if isinstance(document, Document) else str(document)
+        )
+
+    # Convert list to single string as required by API
+    context_text = "\n\n".join(source_docs_list)
+
+    # Validate token limits (approximate using character count)
+    # Faithfulness limits: 3500 tokens for context, 350 for response
+    # Rough estimate: 1 token ≈ 4 characters
+    max_context_chars = (
+        3500 * 4 * 0.85
+    )  # 85% of the theoretical limit as a safety margin
+    max_response_chars = (
+        350 * 4 * 0.85
+    )  # 85% of the theoretical limit as a safety margin
+
+    if len(context_text) > max_context_chars:
+        logger.warning(
+            f"Context text truncated from {len(context_text)} to {max_context_chars} characters to meet API limits"
+        )
+        context_text = context_text[:max_context_chars]
+
+    if len(response) > max_response_chars:
+        logger.warning(
+            f"Response text truncated from {len(response)} to {max_response_chars} characters to meet API limits"
+        )
+        response = response[:max_response_chars]
+
+    # Validate inputs
+    if not response.strip():
+        logger.error("Response cannot be empty")
+        raise ValueError("Response cannot be empty")
+
+    if not context_text.strip():
+        logger.error("Context cannot be empty")
+        raise ValueError("Context cannot be empty")
 
     payload = json.dumps(
         {
             "data": {
                 "response": response,
-                "context": source_docs_list,
+                "context": context_text,  # Now a single string as required
             }
         }
-        )
+    )
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
     guardrail_start_time = time.time()
-    guardrail_response_faithfulness = requests.request( "POST", url_faithfulness, headers=headers, data=payload, timeout=FDL_GAURDRAIL_REQUESTS_TIMEOUT )
+    guardrail_response_faithfulness = requests.request(
+        "POST",
+        url_faithfulness,
+        headers=headers,
+        data=payload,
+        timeout=FDL_GAURDRAIL_REQUESTS_TIMEOUT,
+    )
     guardrail_end_time = time.time()
     guardrail_latency = guardrail_end_time - guardrail_start_time
 
     # Check if request was successful
     if guardrail_response_faithfulness.status_code != 200:
-        logger.error(f"Error: Faithfulness API request failed with status code {guardrail_response_faithfulness.status_code}")
+        logger.error( f"Error: Faithfulness API request failed with status code {guardrail_response_faithfulness.status_code}" )
         logger.error(f"Response: {guardrail_response_faithfulness.text}")
-        return 0.0, guardrail_latency
+        raise ValueError( f"API request failed with status code {guardrail_response_faithfulness.status_code}" )
 
     try:
         response_dict = guardrail_response_faithfulness.json()
@@ -53,22 +100,44 @@ def get_faithfulness_guardrail_results(response: str, source_docs: list) -> tupl
         if "fdl_faithful_score" in response_dict:
             return response_dict["fdl_faithful_score"], guardrail_latency
         else:
-            logger.error(f"Warning: Expected faithfulness key not found. Available keys: {list(response_dict.keys())}")
-            return 0.0, guardrail_latency
+            logger.error(f"Warning: Expected faithfulness key not found. Available keys: {list(response_dict.keys())}" )
+            raise ValueError(f"Expected faithfulness key not found. Available keys: {list(response_dict.keys())}" )
 
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding faithfulness JSON response: {e}")
         logger.error(f"Raw response: {guardrail_response_faithfulness.text}")
-        return 0.0, guardrail_latency
+        raise
 
 
 def get_safety_guardrail_results(query: str) -> tuple[float, float]:
     """Calculates the safety score for a given query."""
 
+    # Validate token limits (approximate using character count)
+    # Safety limit: 4096 tokens
+    # Rough estimate: 1 token ≈ 4 characters
+    max_input_chars = 4096 * 4 * 0.85  # 85% of the theoretical limit as a safety margin
+
+    if len(query) > max_input_chars:
+        logger.warning(
+            f"Query text truncated from {len(query)} to {max_input_chars} characters to meet API limits"
+        )
+        query = query[:max_input_chars]
+
+    # Validate input
+    if not query.strip():
+        logger.error("Query cannot be empty")
+        raise ValueError("Query cannot be empty")
+
     payload = json.dumps({"data": {"input": query}})
     headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
     guardrail_start_time = time.time()
-    guardrail_response_safety = requests.request( "POST", url_safety, headers=headers, data=payload, timeout=FDL_GAURDRAIL_REQUESTS_TIMEOUT )
+    guardrail_response_safety = requests.request(
+        "POST",
+        url_safety,
+        headers=headers,
+        data=payload,
+        timeout=FDL_GAURDRAIL_REQUESTS_TIMEOUT,
+        )
     guardrail_end_time = time.time()
     guardrail_latency = guardrail_end_time - guardrail_start_time
 
@@ -76,7 +145,7 @@ def get_safety_guardrail_results(query: str) -> tuple[float, float]:
     if guardrail_response_safety.status_code != 200:
         logger.error(f"Error: API request failed with status code {guardrail_response_safety.status_code}")
         logger.error(f"Response: {guardrail_response_safety.text}")
-        return 0.0, guardrail_latency
+        raise ValueError(f"API request failed with status code {guardrail_response_safety.status_code}")
 
     try:
         response_dict = guardrail_response_safety.json()
@@ -87,12 +156,13 @@ def get_safety_guardrail_results(query: str) -> tuple[float, float]:
             return response_dict["fdl_jailbreaking"], guardrail_latency
         else:
             logger.error(f"Warning: Expected key not found in response. Available keys: {list(response_dict.keys())}")
-            return 0.0, guardrail_latency
+            raise ValueError(f"Expected key not found in response. Available keys: {list(response_dict.keys())}")
 
     except json.JSONDecodeError as e:
         logger.error(f"Error decoding JSON response: {e}")
         logger.error(f"Raw response: {guardrail_response_safety.text}")
-        return 0.0, guardrail_latency
+        raise
+
 
 @tool
 def tool_fiddler_guardrail_safety(query: str) -> dict:
