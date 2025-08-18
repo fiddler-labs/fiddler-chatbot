@@ -376,6 +376,12 @@ docker run --rm -it \
   sh -lc "uv run pytest tests/agentic_tools/test_validator_url.py -v"
 ```
 
+### AWS ECR Deployment
+
+`docker tag <image_id> 079310353266.dkr.ecr.us-west-2.amazonaws.com/fiddler-chatbot:latest`
+
+`docker push 079310353266.dkr.ecr.us-west-2.amazonaws.com/fiddler-chatbot:latest`
+
 ---
 
 ### Development Methodology for Risk Mitigation
