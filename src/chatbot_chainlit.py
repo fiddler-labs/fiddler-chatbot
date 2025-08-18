@@ -11,42 +11,49 @@ import logging
 from dotenv import load_dotenv
 from datetime import datetime
 from pydantic import SecretStr
-
 import chainlit as cl
-from langchain_core.tools import tool # , Tool
+
+from langchain_core.messages import (  # , BaseMessage
+    AIMessage,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+    )
 from langchain_core.runnables.config import RunnableConfig
-from langchain_core.messages import HumanMessage, ToolMessage, AIMessage , SystemMessage #, BaseMessage
+from langchain_core.tools import tool  # , Tool
 from langchain_openai import ChatOpenAI
 
-from langgraph.graph import StateGraph, START, END
-from langgraph.types import Command
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command
 
 from fiddler_langgraph import FiddlerClient
-from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor, set_conversation_id, set_llm_context # todo - use this later  # noqa: F401
+from fiddler_langgraph.tracing.instrumentation import (  # todo - use this later  # noqa: F401
+    LangGraphInstrumentor,
+    set_conversation_id,
+    set_llm_context,
+    )
+
+from agentic_tools.rag import rag_over_fiddler_knowledge_base
+from agentic_tools.state_data_model import ChatbotState
+from agentic_tools.validator_url import validate_url
+from agentic_tools.fiddler_gaurdrails import (
+    tool_fiddler_guardrail_faithfulness,
+    tool_fiddler_guardrail_safety,
+    )
 
 from utils.custom_logging import setup_logging
 from utils.pretty_formatter import try_pretty_formatting
+from config import CONFIG_CHATBOT_NEW as config  # noqa: N811
 
-from agentic_tools.state_data_model import ChatbotState
-from agentic_tools.rag import rag_over_fiddler_knowledge_base
-from agentic_tools.fiddler_gaurdrails import tool_fiddler_guardrail_safety, tool_fiddler_guardrail_faithfulness
-from agentic_tools.validator_url import validate_url
-
-# from langgraph.prebuilt import ToolNode, tools_condition
-# from langgraph.graph.message import add_messages
-# from langchain.chat_models import init_chat_model
-    # llm = init_chat_model("anthropic:claude-3-5-sonnet-latest")
-    # response_model = init_chat_model("openai:gpt-4.1", temperature=0)
-from config import CONFIG_CHATBOT_NEW as config
 
 load_dotenv()
 
 setup_logging(log_level="DEBUG")
 logger = logging.getLogger(__name__)
 
-FIDDLER_URL     = config.get("FIDDLER_URL")
-FIDDLER_APP_ID  = config.get("FIDDLER_APP_ID")
+FIDDLER_URL    = config.get("FIDDLER_URL")
+FIDDLER_APP_ID = config.get("FIDDLER_APP_ID")
 FIDDLER_API_KEY = os.getenv("FIDDLER_API_KEY")
 OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
 
@@ -60,7 +67,7 @@ if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APP_ID :
 logger.info("Initializing Fiddler monitoring...")
 fdl_client = FiddlerClient(
     api_key=FIDDLER_API_KEY,
-    application_id=FIDDLER_APP_ID,
+    application_id=str(FIDDLER_APP_ID),
     url=str(FIDDLER_URL),
     console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
     )
@@ -72,12 +79,12 @@ logger.info("✓ Fiddler monitoring initialized successfully")
 
 # Read the system instructions template
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
-with open(os.path.join(PROJECT_ROOT, "src", "system_instructions_AGENTIC.md"), "r") as f:
+with open(os.path.join(PROJECT_ROOT, "src", "system_instructions_AGENTIC.md")) as f:
     SYSTEM_INSTRUCTIONS_PROMPT = f.read()
 
 base_llm = ChatOpenAI(
-    model="gpt-4o-mini",
-    temperature=0.7,
+    model="gpt-4.1",
+    temperature=0.4,
     api_key=SecretStr(OPENAI_API_KEY) if OPENAI_API_KEY else None,
     streaming=True,
     )
@@ -98,7 +105,7 @@ tools = [
 llm = base_llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
 
-set_llm_context(base_llm, 'agentic chatbot' )
+set_llm_context(base_llm, "agentic chatbot")
 
 
 """
@@ -145,11 +152,15 @@ def chatbot_node(state: ChatbotState):
     print(f"🤖 Assistant: {response.content}\n")
     logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_formatting(response.content)}")
 
-    if hasattr(response, "tool_calls") and response.tool_calls and len(response.tool_calls) > 0: # type: ignore
-        logger.debug('Tool calls detected - transferring to tool_execution node')
+    if (
+        hasattr(response, "tool_calls")
+        and response.tool_calls
+        and len(response.tool_calls) > 0
+        ):  # type: ignore
+        logger.debug("Tool calls detected - transferring to tool_execution node")
         return Command(update={"messages": [response]}, goto="tool_execution")
     else:
-        logger.debug('No tool calls - ending conversation turn')
+        logger.debug("No tool calls - ending conversation turn")
         return Command(update={"messages": [response]}, goto=END)
 
 def tool_execution_node(state: ChatbotState):
@@ -165,7 +176,7 @@ def tool_execution_node(state: ChatbotState):
         raise ValueError("No AI message with tool calls found in state")
 
     tool_outputs = []
-    for tool_call in last_ai_message.tool_calls: # type: ignore
+    for tool_call in last_ai_message.tool_calls:  # type: ignore
         logger.debug(f"Executing tool: {tool_call['name']} with args: {tool_call['args']}")
 
         match tool_call['name']:
@@ -256,13 +267,10 @@ async def on_chat_start():
 
     chatbot_graph = build_chatbot_graph()
 
-    session_id = str(datetime.now().strftime("%Y%m%d%H%M%S")) + '_' + str(uuid.uuid4())
-    # set_conversation_id(session_id)
+    session_id = str(datetime.now().strftime("%Y%m%d%H%M%S")) + "_" + str(uuid.uuid4())
+    set_conversation_id(session_id)
 
-    thread_config = RunnableConfig(
-        configurable={"thread_id": session_id},
-        callbacks=[cl.LangchainCallbackHandler()]
-        )
+    thread_config = RunnableConfig(configurable={"thread_id": session_id})
 
     # Store in session
     cl.user_session.set("llm", llm)
@@ -272,8 +280,13 @@ async def on_chat_start():
 
     # Send welcome message
     await cl.Message(
-        content=f"""🤖 **Welcome to Fiddler AI Assistant!**\n\nI'm your intelligent companion for AI observability, monitoring, and model insights. \n\nI can help you with Fiddler platform questions, ML monitoring best practices, and technical guidance.\n\n**Session ID:** `{session_id}`\n\n{URL_TO_AGENTIC_MONITORING}\n\n\nWhat would you like to explore today?"""
-        ).send()
+        content="🤖 **Welcome to Fiddler AI Assistant!**\n"
+            "I'm your intelligent companion for AI observability, monitoring, and model insights. \n"
+            "I can help you with Fiddler platform questions, ML monitoring best practices, and technical guidance.\n\n"
+            f"**Session ID:** `{session_id}`\n"
+            f"{URL_TO_AGENTIC_MONITORING}\n\n"
+            "What would you like to explore today?"
+            ).send()
 
 @cl.on_message
 async def on_message(message: cl.Message):
@@ -289,13 +302,16 @@ async def on_message(message: cl.Message):
     conversation_state = cl.user_session.get("conversation_state")
     if not conversation_state:
         # Initialize with system message for new conversations
-        conversation_state = ChatbotState(messages=[
-            SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)
-        ])
+        conversation_state = ChatbotState(
+            messages=[SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)]
+            )
         cl.user_session.set("conversation_state", conversation_state)
 
     # Add the new user message to existing conversation
-    Command(update={"messages": HumanMessage(content=message.content)})
+    user_message = HumanMessage(content=message.content)
+    conversation_state = ChatbotState(
+        messages=list(conversation_state["messages"]) + [user_message]
+        )
 
     # Create a message for streaming
     msg = cl.Message(content="")
@@ -304,12 +320,15 @@ async def on_message(message: cl.Message):
     try:
         # Stream the response
         final_ai_message = None
+        final_state = None
 
         async for event in chatbot_graph.astream(
             conversation_state,
             thread_config,
-            stream_mode="values"
+            stream_mode="values",
             ):
+            # Capture the final state from each event
+            final_state = event
             # Get the last message from the state
             messages = event.get("messages", [])
             if messages:
@@ -332,20 +351,20 @@ async def on_message(message: cl.Message):
                         msg.content = tool_info + "\n\n" + (msg.content or "Processing...")
                         await msg.update()
 
-                # Handle Tool messages
-                elif isinstance(last_message, ToolMessage):
-                    # Show tool results in a step
-                    async with cl.Step(name=f"Tool: {last_message.name}", type="tool") as step:
-                        step.output = str(last_message.content)
+                # # Handle Tool messages
+                # elif isinstance(last_message, ToolMessage):
+                #     # Show tool results in a step
+                #     async with cl.Step(name=f"Tool: {last_message.name}", type="tool") as step:
+                #         step.output = str(last_message.content)
 
         # Final update if we have content
         if final_ai_message and final_ai_message.content:
             msg.content = str(final_ai_message.content)
             await msg.update()
 
-        # Update the persistent conversation state with the final result
-        if conversation_state and conversation_state["messages"]:
-            cl.user_session.set("conversation_state", conversation_state)
+        # Update the persistent conversation state with the final result from graph execution
+        if final_state:
+            cl.user_session.set("conversation_state", final_state)
 
     except Exception as e:
         logger.error(f"Error in conversation: {e}", exc_info=True)
@@ -369,6 +388,7 @@ async def on_chat_end():
             logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
             logger.error(traceback.format_exc())
             raise e
+
 
 if __name__ == "__main__":
     logger.error("❌ Error: run this file with chainlit using the command: uv run chainlit run src/chatbot_chainlit.py")
