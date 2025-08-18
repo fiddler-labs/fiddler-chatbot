@@ -1,4 +1,4 @@
-CONFIG_DATA_GENERATION = {
+CONFIG_DATA_GENERATION : dict[str, str|int|list|bool] = {
     "FIDDLER_MAIN_REPO_URL": "https://github.com/fiddler-labs/fiddler.git",
     "FIDDLER_EXAMPLES_REPO_URL": "https://github.com/fiddler-labs/fiddler-examples.git",
     "FIDDLER_WEBSITE_BLOG_URL": "https://www.fiddler.ai/blog/",
@@ -7,18 +7,18 @@ CONFIG_DATA_GENERATION = {
     # GeneralText splitting configuration
     "RECURSIVE_SPLITTER_CHUNK_SIZE": 3000,
     "RECURSIVE_SPLITTER_CHUNK_OVERLAP": 600,
-    
+
     # MarkdownHeaderTextSplitter configuration
     "USE_MARKDOWN_HEADER_SPLITTER": True,  # Enable markdown header-based splitting
     "MARKDOWN_STRIP_HEADERS": False,  # Keep headers for better context
     "MARKDOWN_RETURN_EACH_LINE": False,  # Aggregate lines by headers
     "MARKDOWN_HEADERS_TO_SPLIT_ON": [
         ("#", "Header 1"),
-        # ("##", "Header 2"), 
+        # ("##", "Header 2"),
         # ("###", "Header 3"),
         # ("####", "Header 4")
         ],
-        
+
     "KEEP_REPOS": True,
     "KEEP_CSV_FILES": True,
 
@@ -48,19 +48,19 @@ CONFIG_CHATBOT_OLD = {
     "FIDDLER_URL": "https://demo.fiddler.ai",
     "PROJECT_NAME": "fiddler_chatbot_v3",
     "MODEL_NAME": "fiddler_rag_chatbot",
-    
+
     "ASTRA_DB_SECURE_BUNDLE_PATH": "datastax_auth/secure-connect-fiddlerai.zip",
     "ASTRA_DB_KEYSPACE": "fiddlerai",
     "ASTRA_DB_TABLE_NAME": "fiddler_doc_snippets_openai",
     "ASTRA_DB_LEDGER_TABLE_NAME": "fiddler_chatbot_ledger",
-    
+
     "TOP_K_RETRIEVAL": 6,
-    
+
     "OPENAI_EMBEDDING_MODEL": "text-embedding-3-large",
     "OPENAI_LLM_MODEL": "gpt-4-turbo",
     }
 
-CONFIG_CHATBOT_NEW = {
+CONFIG_CHATBOT_NEW : dict[str, str|int ] = {
     "FIDDLER_URL": "https://preprod.cloud.fiddler.ai",
     "FIDDLER_URL_GUARDRAILS": "https://demo.fiddler.ai",
 
