@@ -26,7 +26,7 @@ from langgraph.types import Command
 from langgraph.checkpoint.memory import MemorySaver
 # from langgraph.graph.message import add_messages
 
-# from langchain.chat_models import init_chat_model 
+# from langchain.chat_models import init_chat_model
     # llm = init_chat_model("anthropic:claude-3-5-sonnet-latest")
     # response_model = init_chat_model("openai:gpt-4.1", temperature=0)
 
@@ -57,11 +57,11 @@ def try_pretty_foramtting(incoming_str : Any) -> str:
                 return str(incoming_str)
             except Exception:
                 return incoming_str
-        
+
 
 FIDDLER_URL     = config.get("FIDDLER_URL")
+FIDDLER_APP_ID  = config.get("FIDDLER_APP_ID")
 FIDDLER_API_KEY = os.getenv("FIDDLER_API_KEY")
-FIDDLER_APP_ID  = os.getenv("FIDDLER_APP_ID")
 OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
 
 if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APP_ID :
@@ -104,9 +104,9 @@ def get_system_time() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 tools = [
-    get_system_time, 
-    rag_over_fiddler_knowledge_base, 
-    tool_fiddler_guardrail_safety, 
+    get_system_time,
+    rag_over_fiddler_knowledge_base,
+    tool_fiddler_guardrail_safety,
     tool_fiddler_guardrail_faithfulness,
     ]
 llm = base_llm.bind_tools(tools)
@@ -127,13 +127,13 @@ def human_node(state: ChatbotState):
         print(f"👤 You (automated): {user_input}")
     else:
         user_input = input("Please enter your message (or 'quit' to exit): ")
-    
+
     # Check for exit commands
     if user_input and user_input.lower() in ["quit", "exit", "q"]:
         print("👋 Goodbye! Thank you for chatting.\n")
         return Command(update={"messages": [HumanMessage(content="USER EXITTED")]}, goto=END)
         # sys.exit(0)
-    
+
     return Command( update={"messages": [HumanMessage(content=user_input)]}, goto="chatbot" )
 
 def chatbot_node(state: ChatbotState):
@@ -143,12 +143,12 @@ def chatbot_node(state: ChatbotState):
     """
     all_messages_in_state = state["messages"]
     # last_message = all_messages_in_State[-1]
-    
+
     # Add the system instructions to the messages
     # all_messages_in_state.append( [SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)] )
-    
+
     logger.debug(f"CHATBOT_NODE: Debug - All Messages in State: {try_pretty_foramtting(all_messages_in_state)}")
-    
+
     response = llm.invoke(all_messages_in_state)
     set_llm_context(base_llm, str(response.content))
 
@@ -161,7 +161,7 @@ def chatbot_node(state: ChatbotState):
     else:
         logger.debug('No tool calls - transferring to human node')
         return Command(update={"messages": [response]}, goto="human")
-    
+
 def tool_execution_node(state: ChatbotState):
     """Custom tool node to execute tool calls"""
     # Get the last AI message that contains tool calls
@@ -170,10 +170,10 @@ def tool_execution_node(state: ChatbotState):
         if isinstance(msg, AIMessage) and hasattr(msg, "tool_calls") and msg.tool_calls:
             last_ai_message = msg
             break
-    
+
     if not last_ai_message:
         raise ValueError("No AI message with tool calls found in state")
-    
+
     tool_outputs = []
     for tool_call in (last_ai_message.tool_calls) or []: # type: ignore
         logger.debug(f"Executing tool: {tool_call['name']} with args: {tool_call['args']}")
@@ -188,7 +188,7 @@ def tool_execution_node(state: ChatbotState):
                 output = tool_fiddler_guardrail_faithfulness.invoke(tool_call['args'])
             case _:
                 raise ValueError(f"Unknown tool: {tool_call['name']}")
-            
+
         # Create a ToolMessage for each tool call
         tool_message = ToolMessage(
             content=json.dumps(output),
@@ -197,7 +197,7 @@ def tool_execution_node(state: ChatbotState):
             )
         tool_outputs.append(tool_message)
         logger.debug(f"Created tool message for {tool_call['name']}: {tool_message}")
-    
+
     return Command(update={"messages": tool_outputs}, goto="chatbot")
 
 
@@ -255,12 +255,12 @@ def run_chatbot():
     print(f"Session ID: {session_id}\n")
     print("Type 'quit', 'exit', or 'q' to end the conversation.")
     print("="*60 + "\n")
-    
+
     chatbot_graph = build_chatbot_graph()
     visualize_chatbot_graph(chatbot_graph)
-    
+
     set_conversation_id(session_id)  # for Fiddler monitoring
-    
+
     # Start with a HumanMessage if automation_messages is not empty
     if automation_messages:
         exec_state = ChatbotState(messages=[
@@ -274,7 +274,7 @@ def run_chatbot():
         for yeilded_event in chatbot_graph.stream(exec_state, thread_config, stream_mode="values"):
             logger.info("Graph executed node, continuing... ")
             logger.debug(f"RUN_CHATBOT: Debug - Yeilded Event: {try_pretty_foramtting(yeilded_event)}")
-            
+
     except KeyboardInterrupt:
         print("\n\n👋 Interrupted. Goodbye!")
     except Exception as e:
@@ -283,7 +283,7 @@ def run_chatbot():
         print(f"\n❌ Error: {e}")
         print(traceback.format_exc())
         raise e
-    
+
     finally:
         # Clean up instrumentation
         if instrumentor:

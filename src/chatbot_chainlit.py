@@ -46,9 +46,11 @@ setup_logging(log_level="DEBUG")
 logger = logging.getLogger(__name__)
 
 FIDDLER_URL     = config.get("FIDDLER_URL")
+FIDDLER_APP_ID  = config.get("FIDDLER_APP_ID")
 FIDDLER_API_KEY = os.getenv("FIDDLER_API_KEY")
-FIDDLER_APP_ID  = os.getenv("FIDDLER_APP_ID")
 OPENAI_API_KEY  = os.getenv("OPENAI_API_KEY")
+
+URL_TO_AGENTIC_MONITORING = str(FIDDLER_URL) + '/genai-applications/' + str(FIDDLER_APP_ID)
 
 if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APP_ID :
     logger.error("Error: OPENAI_API_KEY, FIDDLER_API_KEY, or FIDDLER_APP_ID environment variables are required")
@@ -96,6 +98,8 @@ tools = [
 llm = base_llm.bind_tools(tools)
 logger.info("✓ Tools bound to language model successfully")
 
+set_llm_context(base_llm, 'agentic chatbot' )
+
 
 """
 def human_node(state: ChatbotState):
@@ -137,7 +141,6 @@ def chatbot_node(state: ChatbotState):
     logger.debug(f"CHATBOT_NODE: Debug - All Messages in State: {try_pretty_formatting(all_messages_in_state)}")
 
     response = llm.invoke(all_messages_in_state)
-    set_llm_context(base_llm, str(response.content))
 
     print(f"🤖 Assistant: {response.content}\n")
     logger.debug(f"CHATBOT_NODE: Debug - Response: \n\t{try_pretty_formatting(response.content)}")
@@ -254,7 +257,7 @@ async def on_chat_start():
     chatbot_graph = build_chatbot_graph()
 
     session_id = str(datetime.now().strftime("%Y%m%d%H%M%S")) + '_' + str(uuid.uuid4())
-    set_conversation_id(session_id)
+    # set_conversation_id(session_id)
 
     thread_config = RunnableConfig(
         configurable={"thread_id": session_id},
@@ -269,7 +272,7 @@ async def on_chat_start():
 
     # Send welcome message
     await cl.Message(
-        content=f"""🤖 **Welcome to Fiddler AI Assistant!**\n\nI'm your intelligent companion for AI observability, monitoring, and model insights. \n\nI can help you with Fiddler platform questions, ML monitoring best practices, and technical guidance.\n\n**Session ID:** `{session_id}`\n\nWhat would you like to explore today?"""
+        content=f"""🤖 **Welcome to Fiddler AI Assistant!**\n\nI'm your intelligent companion for AI observability, monitoring, and model insights. \n\nI can help you with Fiddler platform questions, ML monitoring best practices, and technical guidance.\n\n**Session ID:** `{session_id}`\n\n{URL_TO_AGENTIC_MONITORING}\n\n\nWhat would you like to explore today?"""
         ).send()
 
 @cl.on_message
