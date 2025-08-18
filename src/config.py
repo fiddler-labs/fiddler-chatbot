@@ -1,4 +1,6 @@
-CONFIG_DATA_GENERATION : dict[str, str|int|list|bool] = {
+from typing import Any
+
+CONFIG_DATA_GENERATION : dict[str, Any] = {
     "FIDDLER_MAIN_REPO_URL": "https://github.com/fiddler-labs/fiddler.git",
     "FIDDLER_EXAMPLES_REPO_URL": "https://github.com/fiddler-labs/fiddler-examples.git",
     "FIDDLER_WEBSITE_BLOG_URL": "https://www.fiddler.ai/blog/",
@@ -60,7 +62,7 @@ CONFIG_CHATBOT_OLD = {
     "OPENAI_LLM_MODEL": "gpt-4-turbo",
     }
 
-CONFIG_CHATBOT_NEW : dict[str, str|int ] = {
+CONFIG_CHATBOT_NEW : dict[str, Any ] = {
     "FIDDLER_URL": "https://preprod.cloud.fiddler.ai",
     "FIDDLER_URL_GUARDRAILS": "https://demo.fiddler.ai",
     "FIDDLER_APP_ID": "594dfc62-8c72-4654-a984-af229d8365c3",
