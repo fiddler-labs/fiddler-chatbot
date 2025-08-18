@@ -143,7 +143,7 @@ def chatbot_node(state: ChatbotState):
         raise ValueError("LLM not found in session")
 
     # Add the system instructions to the messages
-    # all_messages_in_state.append( [SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)] )
+    # all_messages_in_state.append( [SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT)] ) #todo
 
     logger.debug(f"CHATBOT_NODE: Debug - All Messages in State: {try_pretty_formatting(all_messages_in_state)}")
 
