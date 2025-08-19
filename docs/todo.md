@@ -2,16 +2,22 @@
 
 ## Pending action items listed in planned order of execution and priority
 
-- Tools implementation for agentic orchestration
-  - P0 : Currently using a dummy tool to begin implementation. <!Done!>
-  - P1 : Will transition to using Fiddler Guardrails once the dummy tool setup is validated. <!Ongoing!>
-  - Overall Strategy: Keep tool calls simple and focused (avoid over-engineering with multiple agents)
-  - URL Validation Tool:
-    - **Problem**: Generated URLs may lead to non-existent pages (hallucination)
-    - **Solution**: Build URL validator that checks if links are accessible
-    - **Goal**: Ensure all recommended URLs actually exist and are reachable
-    - **Implementation**: Tool call that can be tracked via otel tracers for Harrier dogfooding
-    - **Integration**: GitBook APIs can serve as validation medium
+- Demo Asset for Stakeholders (Sol. Eng.) .
+  Once tools are integrated and tested, and the ChainLit UI is ready , the goal is to:
+  Create a demo asset usable by @Max-Bukhovko-Fiddler and @Nick-Fiddler / @nick-fiddler
+  - Showcase chatbot usage with both Guardrails and Harrier monitoring.
+
+- Deployment and Development QoL
+  - Set up GitHub Actions workflow for automated embedding update
+    - set up a dev branch of `fiddler` repo to test out the github action
+
+- Data Generation tasks
+  - python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
+  - need to showcase to team all the possible methods for MD generation to see what works best
+    - make a notebook to that leverages data_generation.py and the /utils to create demp props
+
+- More Tools implementation for agentic orchestration
+  - Add a prompt optimization step in the langgraph app
   - Python Code Validation Tool:
     - **Problem**: LLM-generated code may contain syntax/type errors or hallucinated functions
     - **Solution**: Implement type checking on LLM outputs using tools like Pyright/Pylsp
@@ -23,19 +29,6 @@
     - **Architecture**: Can be wrapped as module-as-a-service or lightweight agent
   - Also explore the gitbook APIs : those can be a tool call ideas too
 
-- Demo Asset for Stakeholders (Sol. Eng.) . Once tools are integrated and tested, and the ChainLit UI is ready , the goal is to:
-  - Create a demo asset usable by Max and Nick.
-  - Showcase chatbot usage with both Guardrails and Harrier monitoring.
-  - Also showcase traditional LLM Fiddler monitoring
-    - planned for the future, including eventual showcase for enrichments based monitoring.
-
-- Deployment and Development QoL
-  - Set up GitHub Actions workflow for automated embedding update
-    - set up a dev branch of `fiddler` repo to test out the github action
-
-- need to showcase to team all the possible methods to see what works best
-  - make a notebook to that leverages data_generation.py and the /utils to create demp props
-
 ## Lower priority considerations / Deep future tasks
 
 - Expand README with comprehensive project documentation (setup, usage, architecture, etc.)
@@ -43,14 +36,9 @@
 - purge uv env and re-install everything after clean up to retain only needed packages
 - Testing framework basic setup (pytest)
 - Security review of Datastax authentication flow
-- make a definitive fiddler monitoring notebook (onbaord the models and set up enrichments, alerts) for backwards compatibility
 - Dev and Prod environments currently mixed : Implement config-driven environment switching : Clean separation of development vs production data/settings
 - GitHub Actions workflow for test automation : Immediate feedback on breaking changes
 - duplicate sri's MCP server to have a docs RAG server
-
-- add a prompt optimization step in the langgraph app
-
-- python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
 
 ## Better coding practices
 
@@ -60,7 +48,6 @@
 
 - Resource Management:  No cleanup of temporary files on failure
 - Magic numbers: Hardcoded timeouts, chunk sizes
-- Make CSS selectors configurable - Move to config file
 
 ---
 
@@ -82,6 +69,17 @@
 
 - try deployment on streamlit public cloud
   - FUNDANMENTALLY IMPOSSIBLE TO DEPLOY ON STREAMLIT PUBLIC CLOUD
+
+- Completed : Tools implementation for agentic orchestration
+  - P0 : Currently using a dummy tool to begin implementation. <!Done!>
+  - P1 : Will transition to using Fiddler Guardrails once the dummy tool setup is validated. <!Ongoing!>
+  - Overall Strategy: Keep tool calls simple and focused (avoid over-engineering with multiple agents)
+  - URL Validation Tool:
+    - **Problem**: Generated URLs may lead to non-existent pages (hallucination)
+    - **Solution**: Build URL validator that checks if links are accessible
+    - **Goal**: Ensure all recommended URLs actually exist and are reachable
+    - **Implementation**: Tool call that can be tracked via otel tracers for Harrier dogfooding
+    - **Integration**: GitBook APIs can serve as validation medium
 
 ## Side Notes
 
