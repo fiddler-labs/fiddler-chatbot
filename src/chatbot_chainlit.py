@@ -351,11 +351,11 @@ async def on_message(message: cl.Message):
                         msg.content = tool_info + "\n\n" + (msg.content or "Processing...")
                         await msg.update()
 
-                # # Handle Tool messages
-                # elif isinstance(last_message, ToolMessage):
-                #     # Show tool results in a step
-                #     async with cl.Step(name=f"Tool: {last_message.name}", type="tool") as step:
-                #         step.output = str(last_message.content)
+                # Handle Tool messages
+                elif isinstance(last_message, ToolMessage):
+                    # Show tool results in a step
+                    async with cl.Step(name=f"Tool: {last_message.name}", type="tool") as step:
+                        step.output = str(last_message.content)
 
         # Final update if we have content
         if final_ai_message and final_ai_message.content:
