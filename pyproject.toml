@@ -55,7 +55,7 @@ package-mode = false
 
 [tool.ruff]
 # Ruff configuration for consistent code style
-line-length = 88
+line-length = 200
 target-version = "py311"
 
 [tool.ruff.lint]
