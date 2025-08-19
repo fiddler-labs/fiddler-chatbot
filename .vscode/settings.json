@@ -18,22 +18,22 @@
   "python.defaultFormatterProvider": "charliermarsh.ruff",
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.formatOnSave": true,
+    "editor.formatOnSave": false,
     "editor.codeActionsOnSave": {
-      "source.fixAll.ruff": "explicit",
-      "source.organizeImports.ruff": "explicit"
+      // "source.fixAll.ruff": "explicit",
+      // "source.organizeImports.ruff": "explicit"
     }
   },
 
   "// Ruff Extension Settings": "",
   "ruff.enable": true,
-  "ruff.fixAll": true,
-  "ruff.organizeImports": true,
+  "ruff.fixAll": false,
+  "ruff.organizeImports": false,
   "ruff.nativeServer": true,
   "ruff.configurationPreference": "filesystemFirst",
 
   "// Editor Settings for Consistency": "",
-  "editor.rulers": [88],
+  "editor.rulers": [],
   "editor.tabSize": 4,
   "editor.insertSpaces": true,
   "editor.trimAutoWhitespace": true,
