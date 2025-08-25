@@ -1,0 +1,86 @@
+2025-08-22 14:51:33,180 -     INFO -   67 - chatbot_chainlit - chatbot_chainlit - <module> - Initializing Fiddler monitoring...
+2025-08-22 14:51:33,190 -     INFO -   78 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ Fiddler monitoring initialized successfully
+2025-08-22 14:51:33,256 -     INFO -   91 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ language model initialized successfully
+2025-08-22 14:51:33,260 -     INFO -  106 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ Tools bound to language model successfully
+2025-08-22 14:51:33,279 -     INFO -  210 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Building LangGraph workflow...
+2025-08-22 14:51:33,284 -     INFO -  249 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - ✓ Workflow compiled successfully
+2025-08-22 14:51:33,290 -    DEBUG - 1049 - urllib3.connectionpool - connectionpool - _new_conn - Starting new HTTPS connection (1): mermaid.ink:443
+2025-08-22 14:51:33,891 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://mermaid.ink:443 "GET /img/LS0tCmNvbmZpZzoKICBmbG93Y2hhcnQ6CiAgICBjdXJ2ZTogbGluZWFyCi0tLQpncmFwaCBURDsKCV9fc3RhcnRfXyg8cD5fX3N0YXJ0X188L3A+KQoJY2hhdGJvdChjaGF0Ym90KQoJdG9vbF9leGVjdXRpb24odG9vbF9leGVjdXRpb24pCglfX2VuZF9fKDxwPl9fZW5kX188L3A+KQoJX19zdGFydF9fIC0tPiBjaGF0Ym90OwoJY2hhdGJvdCAtLT4gX19lbmRfXzsKCWNsYXNzRGVmIGRlZmF1bHQgZmlsbDojZjJmMGZmLGxpbmUtaGVpZ2h0OjEuMgoJY2xhc3NEZWYgZmlyc3QgZmlsbC1vcGFjaXR5OjAKCWNsYXNzRGVmIGxhc3QgZmlsbDojYmZiNmZjCg==?type=png&bgColor=!white HTTP/1.1" 200 7152
+2025-08-22 14:51:33,894 -     INFO -  256 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Workflow graph saved to workflow_graph.png
+2025-08-22 14:51:33,911 -    DEBUG -  148 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - All Messages in State: list(1) [
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+]
+2025-08-22 14:51:36,296 -    DEBUG -  153 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - Response: 
+	"I don't have access to real-time weather data. For the latest weather in Tokyo, please check a relia..."
+2025-08-22 14:51:36,297 -    DEBUG -  163 - chatbot_chainlit - chatbot_chainlit - chatbot_node - No tool calls - ending conversation turn
+2025-08-22 14:51:36,298 -  WARNING -  291 - langgraph - algo - apply_writes - Task chatbot with path ('__pregel_pull', 'chatbot') wrote to unknown channel branch:to:__end__, ignoring it.
+2025-08-22 14:51:37,207 -    DEBUG - 1049 - urllib3.connectionpool - connectionpool - _new_conn - Starting new HTTPS connection (1): preprod.cloud.fiddler.ai:443
+2025-08-22 14:51:38,745 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-22 14:51:42,959 -    DEBUG -  148 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - All Messages in State: list(3) [
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+  AIMessage {
+      content: "I don't have access to real-time weather data. For the latest weather in Tokyo, please check a relia..."
+    }
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+]
+2025-08-22 14:51:45,325 -    DEBUG -  153 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - Response: 
+	"I do not have access to real-time weather data. For the most up-to-date weather information in Tokyo..."
+2025-08-22 14:51:45,326 -    DEBUG -  163 - chatbot_chainlit - chatbot_chainlit - chatbot_node - No tool calls - ending conversation turn
+2025-08-22 14:51:45,327 -  WARNING -  291 - langgraph - algo - apply_writes - Task chatbot with path ('__pregel_pull', 'chatbot') wrote to unknown channel branch:to:__end__, ignoring it.
+2025-08-22 14:51:46,163 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-22 14:52:07,192 -    DEBUG -  148 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - All Messages in State: list(5) [
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+  AIMessage {
+      content: "I don't have access to real-time weather data. For the latest weather in Tokyo, please check a relia..."
+    }
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+  AIMessage {
+      content: "I do not have access to real-time weather data. For the most up-to-date weather information in Tokyo..."
+    }
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+]
+2025-08-22 14:52:09,373 -    DEBUG -  153 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - Response: 
+	"I don’t have access to real-time weather updates. For the current weather in Tokyo, please check a t..."
+2025-08-22 14:52:09,374 -    DEBUG -  163 - chatbot_chainlit - chatbot_chainlit - chatbot_node - No tool calls - ending conversation turn
+2025-08-22 14:52:09,375 -  WARNING -  291 - langgraph - algo - apply_writes - Task chatbot with path ('__pregel_pull', 'chatbot') wrote to unknown channel branch:to:__end__, ignoring it.
+2025-08-22 14:52:10,645 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-22 14:52:23,253 -    DEBUG -  148 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - All Messages in State: list(7) [
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+  AIMessage {
+      content: "I don't have access to real-time weather data. For the latest weather in Tokyo, please check a relia..."
+    }
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+  AIMessage {
+      content: "I do not have access to real-time weather data. For the most up-to-date weather information in Tokyo..."
+    }
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+  AIMessage {
+      content: "I don’t have access to real-time weather updates. For the current weather in Tokyo, please check a t..."
+    }
+  HumanMessage {
+      content: "What is the weather in Tokyo?"
+    }
+]
+2025-08-22 14:52:25,621 -    DEBUG -  153 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - Response: 
+	"I don’t have access to real-time weather data. For the latest weather in Tokyo, please check a relia..."
+2025-08-22 14:52:25,622 -    DEBUG -  163 - chatbot_chainlit - chatbot_chainlit - chatbot_node - No tool calls - ending conversation turn
+2025-08-22 14:52:25,622 -  WARNING -  291 - langgraph - algo - apply_writes - Task chatbot with path ('__pregel_pull', 'chatbot') wrote to unknown channel branch:to:__end__, ignoring it.
+2025-08-22 14:52:26,098 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2

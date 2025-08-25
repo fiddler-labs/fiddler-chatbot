@@ -1,0 +1,4 @@
+2025-08-25 16:21:34,223 -     INFO -   67 - chatbot_chainlit - chatbot_chainlit - <module> - Initializing Fiddler monitoring...
+2025-08-25 16:21:34,234 -     INFO -   78 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ Fiddler monitoring initialized successfully
+2025-08-25 16:21:34,316 -     INFO -   91 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ language model initialized successfully
+2025-08-25 16:21:34,320 -     INFO -  106 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ Tools bound to language model successfully

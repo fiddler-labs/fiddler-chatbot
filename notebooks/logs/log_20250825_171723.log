@@ -1,0 +1,288 @@
+2025-08-25 17:17:23,027 -     INFO -   67 - chatbot_chainlit - chatbot_chainlit - <module> - Initializing Fiddler monitoring...
+2025-08-25 17:17:23,039 -     INFO -   78 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ Fiddler monitoring initialized successfully
+2025-08-25 17:17:23,128 -     INFO -   91 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ language model initialized successfully
+2025-08-25 17:17:23,132 -     INFO -  106 - chatbot_chainlit - chatbot_chainlit - <module> - ✓ Tools bound to language model successfully
+2025-08-25 17:17:24,048 -    DEBUG - 1049 - urllib3.connectionpool - connectionpool - _new_conn - Starting new HTTPS connection (1): preprod.cloud.fiddler.ai:443
+2025-08-25 17:17:25,477 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:17:32,399 -     INFO -  210 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Building LangGraph workflow...
+2025-08-25 17:17:32,404 -     INFO -  249 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - ✓ Workflow compiled successfully
+2025-08-25 17:17:32,408 -    DEBUG - 1049 - urllib3.connectionpool - connectionpool - _new_conn - Starting new HTTPS connection (1): mermaid.ink:443
+2025-08-25 17:17:32,537 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://mermaid.ink:443 "GET /img/LS0tCmNvbmZpZzoKICBmbG93Y2hhcnQ6CiAgICBjdXJ2ZTogbGluZWFyCi0tLQpncmFwaCBURDsKCV9fc3RhcnRfXyg8cD5fX3N0YXJ0X188L3A+KQoJY2hhdGJvdChjaGF0Ym90KQoJdG9vbF9leGVjdXRpb24odG9vbF9leGVjdXRpb24pCglfX2VuZF9fKDxwPl9fZW5kX188L3A+KQoJX19zdGFydF9fIC0tPiBjaGF0Ym90OwoJY2hhdGJvdCAtLT4gX19lbmRfXzsKCWNsYXNzRGVmIGRlZmF1bHQgZmlsbDojZjJmMGZmLGxpbmUtaGVpZ2h0OjEuMgoJY2xhc3NEZWYgZmlyc3QgZmlsbC1vcGFjaXR5OjAKCWNsYXNzRGVmIGxhc3QgZmlsbDojYmZiNmZjCg==?type=png&bgColor=!white HTTP/1.1" 200 7152
+2025-08-25 17:17:32,541 -     INFO -  256 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Workflow graph saved to workflow_graph.png
+2025-08-25 17:17:32,544 -    DEBUG -  148 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - All Messages in State: list(2) [
+  SystemMessage {
+      content: """
+        # System Instructions
+        
+        You are Fiddler Chatbot, an expert assistant for Fiddler AI's product documentation with integrated security and quality guardrails.
+        Your task is to provide detailed, accurate answers based on retrieved documentation while maintaining strict safety and faithfulness standards.
+        
+        ---
+        
+        ## Answer Generation Rules
+        
+        - Provide clear, informative answers (min 800 characters) using retrieved context
+        ... (101 more lines)
+      """
+    }
+  HumanMessage {
+      content: "I’m running a learning-to-rank search model on SageMaker—how do I instrument Fiddler to monitor it e..."
+    }
+]
+2025-08-25 17:17:32,857 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:18:15,117 -    DEBUG -  153 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - Response: 
+	"""
+  To instrument Fiddler for end-to-end monitoring of a learning-to-rank (LTR) search model deployed on SageMaker, you need to focus on three main areas: (1) logging the correct request/response schema, (2) understanding supported ranking metrics, and (3) leveraging Fiddler’s capabilities for slicing, alerting, and drift detection. Here’s a detailed guide:
+  
+  ---
+  
+  ## 1. Request/Response Schema for LTR Models
+  
+  **Schema Design:**
+  - **Request (Input):**
+    - `query`: The search query or user context.
+    - `candidate_items`: List of item IDs considered for ranking.
+  ... (112 more lines)
+"""
+2025-08-25 17:18:15,117 -    DEBUG -  163 - chatbot_chainlit - chatbot_chainlit - chatbot_node - No tool calls - ending conversation turn
+2025-08-25 17:18:15,118 -  WARNING -  291 - langgraph - algo - apply_writes - Task chatbot with path ('__pregel_pull', 'chatbot') wrote to unknown channel branch:to:__end__, ignoring it.
+2025-08-25 17:18:16,388 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:18:34,195 -     INFO -  210 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Building LangGraph workflow...
+2025-08-25 17:18:34,202 -     INFO -  249 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - ✓ Workflow compiled successfully
+2025-08-25 17:18:34,207 -    DEBUG - 1049 - urllib3.connectionpool - connectionpool - _new_conn - Starting new HTTPS connection (1): mermaid.ink:443
+2025-08-25 17:18:34,283 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://mermaid.ink:443 "GET /img/LS0tCmNvbmZpZzoKICBmbG93Y2hhcnQ6CiAgICBjdXJ2ZTogbGluZWFyCi0tLQpncmFwaCBURDsKCV9fc3RhcnRfXyg8cD5fX3N0YXJ0X188L3A+KQoJY2hhdGJvdChjaGF0Ym90KQoJdG9vbF9leGVjdXRpb24odG9vbF9leGVjdXRpb24pCglfX2VuZF9fKDxwPl9fZW5kX188L3A+KQoJX19zdGFydF9fIC0tPiBjaGF0Ym90OwoJY2hhdGJvdCAtLT4gX19lbmRfXzsKCWNsYXNzRGVmIGRlZmF1bHQgZmlsbDojZjJmMGZmLGxpbmUtaGVpZ2h0OjEuMgoJY2xhc3NEZWYgZmlyc3QgZmlsbC1vcGFjaXR5OjAKCWNsYXNzRGVmIGxhc3QgZmlsbDojYmZiNmZjCg==?type=png&bgColor=!white HTTP/1.1" 200 7152
+2025-08-25 17:18:34,287 -     INFO -  256 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Workflow graph saved to workflow_graph.png
+2025-08-25 17:18:34,291 -    DEBUG -  148 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - All Messages in State: list(4) [
+  SystemMessage {
+      content: """
+        # System Instructions
+        
+        You are Fiddler Chatbot, an expert assistant for Fiddler AI's product documentation with integrated security and quality guardrails.
+        Your task is to provide detailed, accurate answers based on retrieved documentation while maintaining strict safety and faithfulness standards.
+        
+        ---
+        
+        ## Answer Generation Rules
+        
+        - Provide clear, informative answers (min 800 characters) using retrieved context
+        ... (101 more lines)
+      """
+    }
+  HumanMessage {
+      content: "I’m running a learning-to-rank search model on SageMaker—how do I instrument Fiddler to monitor it e..."
+    }
+  AIMessage {
+      content: """
+        To instrument Fiddler for end-to-end monitoring of a learning-to-rank (LTR) search model deployed on SageMaker, you need to focus on three main areas: (1) logging the correct request/response schema, (2) understanding supported ranking metrics, and (3) leveraging Fiddler’s capabilities for slicing, alerting, and drift detection. Here’s a detailed guide:
+        
+        ---
+        
+        ## 1. Request/Response Schema for LTR Models
+        
+        **Schema Design:**
+        - **Request (Input):**
+          - `query`: The search query or user context.
+          - `candidate_items`: List of item IDs considered for ranking.
+        ... (112 more lines)
+      """
+    }
+  HumanMessage {
+      content: "For logging LTR events, should I send one record per query with nested arrays (candidates, features,..."
+    }
+]
+2025-08-25 17:18:34,826 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:18:53,302 -    DEBUG -  153 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - Response: 
+	"""
+  Great questions—these considerations are crucial for effective monitoring and analytics of learning-to-rank (LTR) models in Fiddler. Here’s a detailed breakdown addressing your schema choice, metric computation, slicing implications, and handling delayed feedback:
+  
+  ---
+  
+  ## 1. **Event Logging Schema: Nested vs. Exploded Records**
+  
+  ### **A. One Record per Query (Nested Arrays)**
+  - **Structure:** Each record represents a query event, with arrays for candidate items, features, scores, and positions.
+  - **Example:**
+    ```python
+  ... (99 more lines)
+"""
+2025-08-25 17:18:53,302 -    DEBUG -  163 - chatbot_chainlit - chatbot_chainlit - chatbot_node - No tool calls - ending conversation turn
+2025-08-25 17:18:53,303 -  WARNING -  291 - langgraph - algo - apply_writes - Task chatbot with path ('__pregel_pull', 'chatbot') wrote to unknown channel branch:to:__end__, ignoring it.
+2025-08-25 17:18:54,258 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:19:12,028 -     INFO -  210 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Building LangGraph workflow...
+2025-08-25 17:19:12,039 -     INFO -  249 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - ✓ Workflow compiled successfully
+2025-08-25 17:19:12,043 -    DEBUG - 1049 - urllib3.connectionpool - connectionpool - _new_conn - Starting new HTTPS connection (1): mermaid.ink:443
+2025-08-25 17:19:12,104 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://mermaid.ink:443 "GET /img/LS0tCmNvbmZpZzoKICBmbG93Y2hhcnQ6CiAgICBjdXJ2ZTogbGluZWFyCi0tLQpncmFwaCBURDsKCV9fc3RhcnRfXyg8cD5fX3N0YXJ0X188L3A+KQoJY2hhdGJvdChjaGF0Ym90KQoJdG9vbF9leGVjdXRpb24odG9vbF9leGVjdXRpb24pCglfX2VuZF9fKDxwPl9fZW5kX188L3A+KQoJX19zdGFydF9fIC0tPiBjaGF0Ym90OwoJY2hhdGJvdCAtLT4gX19lbmRfXzsKCWNsYXNzRGVmIGRlZmF1bHQgZmlsbDojZjJmMGZmLGxpbmUtaGVpZ2h0OjEuMgoJY2xhc3NEZWYgZmlyc3QgZmlsbC1vcGFjaXR5OjAKCWNsYXNzRGVmIGxhc3QgZmlsbDojYmZiNmZjCg==?type=png&bgColor=!white HTTP/1.1" 200 7152
+2025-08-25 17:19:12,106 -     INFO -  256 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Workflow graph saved to workflow_graph.png
+2025-08-25 17:19:12,110 -    DEBUG -  148 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - All Messages in State: list(6) [
+  SystemMessage {
+      content: """
+        # System Instructions
+        
+        You are Fiddler Chatbot, an expert assistant for Fiddler AI's product documentation with integrated security and quality guardrails.
+        Your task is to provide detailed, accurate answers based on retrieved documentation while maintaining strict safety and faithfulness standards.
+        
+        ---
+        
+        ## Answer Generation Rules
+        
+        - Provide clear, informative answers (min 800 characters) using retrieved context
+        ... (101 more lines)
+      """
+    }
+  HumanMessage {
+      content: "I’m running a learning-to-rank search model on SageMaker—how do I instrument Fiddler to monitor it e..."
+    }
+  AIMessage {
+      content: """
+        To instrument Fiddler for end-to-end monitoring of a learning-to-rank (LTR) search model deployed on SageMaker, you need to focus on three main areas: (1) logging the correct request/response schema, (2) understanding supported ranking metrics, and (3) leveraging Fiddler’s capabilities for slicing, alerting, and drift detection. Here’s a detailed guide:
+        
+        ---
+        
+        ## 1. Request/Response Schema for LTR Models
+        
+        **Schema Design:**
+        - **Request (Input):**
+          - `query`: The search query or user context.
+          - `candidate_items`: List of item IDs considered for ranking.
+        ... (112 more lines)
+      """
+    }
+  HumanMessage {
+      content: "For logging LTR events, should I send one record per query with nested arrays (candidates, features,..."
+    }
+  AIMessage {
+      content: """
+        Great questions—these considerations are crucial for effective monitoring and analytics of learning-to-rank (LTR) models in Fiddler. Here’s a detailed breakdown addressing your schema choice, metric computation, slicing implications, and handling delayed feedback:
+        
+        ---
+        
+        ## 1. **Event Logging Schema: Nested vs. Exploded Records**
+        
+        ### **A. One Record per Query (Nested Arrays)**
+        - **Structure:** Each record represents a query event, with arrays for candidate items, features, scores, and positions.
+        - **Example:**
+          ```python
+        ... (99 more lines)
+      """
+    }
+  HumanMessage {
+      content: "For late-arriving clicks/conversions in SageMaker, what ID/keying and ingestion pattern do you recom..."
+    }
+]
+2025-08-25 17:19:12,699 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:19:31,872 -    DEBUG -  153 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - Response: 
+	"""
+  Here’s a comprehensive answer for handling late-arriving clicks/conversions in SageMaker with Fiddler, focusing on robust ID/keying, ingestion patterns for idempotent updates, and metric recomputation controls:
+  
+  ---
+  
+  ## 1. **ID/Keying Strategy for Idempotent Updates**
+  
+  **Recommended Approach:**
+  - **Generate a stable, unique `query_event_id`** for each ranking event at the time of serving (e.g., a UUID, or a hash of query + timestamp + user/session ID).
+  - Log this `query_event_id` with every event (both at prediction time and when feedback arrives).
+  - This unique key allows you to **upsert** (update/overwrite) the same event in Fiddler when late feedback (clicks/conversions) is available, ensuring idempotency and preventing duplicates.
+  ... (87 more lines)
+"""
+2025-08-25 17:19:31,873 -    DEBUG -  163 - chatbot_chainlit - chatbot_chainlit - chatbot_node - No tool calls - ending conversation turn
+2025-08-25 17:19:31,874 -  WARNING -  291 - langgraph - algo - apply_writes - Task chatbot with path ('__pregel_pull', 'chatbot') wrote to unknown channel branch:to:__end__, ignoring it.
+2025-08-25 17:19:33,133 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:19:49,985 -     INFO -  210 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Building LangGraph workflow...
+2025-08-25 17:19:49,994 -     INFO -  249 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - ✓ Workflow compiled successfully
+2025-08-25 17:19:49,998 -    DEBUG - 1049 - urllib3.connectionpool - connectionpool - _new_conn - Starting new HTTPS connection (1): mermaid.ink:443
+2025-08-25 17:19:50,060 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://mermaid.ink:443 "GET /img/LS0tCmNvbmZpZzoKICBmbG93Y2hhcnQ6CiAgICBjdXJ2ZTogbGluZWFyCi0tLQpncmFwaCBURDsKCV9fc3RhcnRfXyg8cD5fX3N0YXJ0X188L3A+KQoJY2hhdGJvdChjaGF0Ym90KQoJdG9vbF9leGVjdXRpb24odG9vbF9leGVjdXRpb24pCglfX2VuZF9fKDxwPl9fZW5kX188L3A+KQoJX19zdGFydF9fIC0tPiBjaGF0Ym90OwoJY2hhdGJvdCAtLT4gX19lbmRfXzsKCWNsYXNzRGVmIGRlZmF1bHQgZmlsbDojZjJmMGZmLGxpbmUtaGVpZ2h0OjEuMgoJY2xhc3NEZWYgZmlyc3QgZmlsbC1vcGFjaXR5OjAKCWNsYXNzRGVmIGxhc3QgZmlsbDojYmZiNmZjCg==?type=png&bgColor=!white HTTP/1.1" 200 7152
+2025-08-25 17:19:50,062 -     INFO -  256 - chatbot_chainlit - chatbot_chainlit - build_chatbot_graph - Workflow graph saved to workflow_graph.png
+2025-08-25 17:19:50,066 -    DEBUG -  148 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - All Messages in State: list(8) [
+  SystemMessage {
+      content: """
+        # System Instructions
+        
+        You are Fiddler Chatbot, an expert assistant for Fiddler AI's product documentation with integrated security and quality guardrails.
+        Your task is to provide detailed, accurate answers based on retrieved documentation while maintaining strict safety and faithfulness standards.
+        
+        ---
+        
+        ## Answer Generation Rules
+        
+        - Provide clear, informative answers (min 800 characters) using retrieved context
+        ... (101 more lines)
+      """
+    }
+  HumanMessage {
+      content: "I’m running a learning-to-rank search model on SageMaker—how do I instrument Fiddler to monitor it e..."
+    }
+  AIMessage {
+      content: """
+        To instrument Fiddler for end-to-end monitoring of a learning-to-rank (LTR) search model deployed on SageMaker, you need to focus on three main areas: (1) logging the correct request/response schema, (2) understanding supported ranking metrics, and (3) leveraging Fiddler’s capabilities for slicing, alerting, and drift detection. Here’s a detailed guide:
+        
+        ---
+        
+        ## 1. Request/Response Schema for LTR Models
+        
+        **Schema Design:**
+        - **Request (Input):**
+          - `query`: The search query or user context.
+          - `candidate_items`: List of item IDs considered for ranking.
+        ... (112 more lines)
+      """
+    }
+  HumanMessage {
+      content: "For logging LTR events, should I send one record per query with nested arrays (candidates, features,..."
+    }
+  AIMessage {
+      content: """
+        Great questions—these considerations are crucial for effective monitoring and analytics of learning-to-rank (LTR) models in Fiddler. Here’s a detailed breakdown addressing your schema choice, metric computation, slicing implications, and handling delayed feedback:
+        
+        ---
+        
+        ## 1. **Event Logging Schema: Nested vs. Exploded Records**
+        
+        ### **A. One Record per Query (Nested Arrays)**
+        - **Structure:** Each record represents a query event, with arrays for candidate items, features, scores, and positions.
+        - **Example:**
+          ```python
+        ... (99 more lines)
+      """
+    }
+  HumanMessage {
+      content: "For late-arriving clicks/conversions in SageMaker, what ID/keying and ingestion pattern do you recom..."
+    }
+  AIMessage {
+      content: """
+        Here’s a comprehensive answer for handling late-arriving clicks/conversions in SageMaker with Fiddler, focusing on robust ID/keying, ingestion patterns for idempotent updates, and metric recomputation controls:
+        
+        ---
+        
+        ## 1. **ID/Keying Strategy for Idempotent Updates**
+        
+        **Recommended Approach:**
+        - **Generate a stable, unique `query_event_id`** for each ranking event at the time of serving (e.g., a UUID, or a hash of query + timestamp + user/session ID).
+        - Log this `query_event_id` with every event (both at prediction time and when feedback arrives).
+        - This unique key allows you to **upsert** (update/overwrite) the same event in Fiddler when late feedback (clicks/conversions) is available, ensuring idempotency and preventing duplicates.
+        ... (87 more lines)
+      """
+    }
+  HumanMessage {
+      content: "We’re about to run an A/B test with two ranker versions in SageMaker—what’s the recommended way to l..."
+    }
+]
+2025-08-25 17:19:50,546 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:20:08,589 -    DEBUG -  153 - chatbot_chainlit - chatbot_chainlit - chatbot_node - CHATBOT_NODE: Debug - Response: 
+	"""
+  To robustly monitor and analyze your A/B test of two ranker versions in SageMaker with Fiddler, you should follow these best practices for logging, analysis, and evaluation control:
+  
+  ---
+  
+  ## 1. **Logging `model_version` and Experiment Arm**
+  
+  **Recommended Schema:**
+  - **`model_version`**: Log the exact version or identifier of the ranker used for each query (e.g., “v1.0”, “v2.0”, commit hash, or deployment tag).
+  - **`experiment_arm`**: Explicitly tag each event with the experiment arm (e.g., “control”, “treatment”, “A”, “B”). This can be a separate field or embedded in metadata.
+  
+  ... (84 more lines)
+"""
+2025-08-25 17:20:08,590 -    DEBUG -  163 - chatbot_chainlit - chatbot_chainlit - chatbot_node - No tool calls - ending conversation turn
+2025-08-25 17:20:08,591 -  WARNING -  291 - langgraph - algo - apply_writes - Task chatbot with path ('__pregel_pull', 'chatbot') wrote to unknown channel branch:to:__end__, ignoring it.
+2025-08-25 17:20:08,970 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2
+2025-08-25 17:20:18,319 -    DEBUG - 1049 - urllib3.connectionpool - connectionpool - _new_conn - Starting new HTTPS connection (2): preprod.cloud.fiddler.ai:443
+2025-08-25 17:20:19,395 -    DEBUG -  544 - urllib3.connectionpool - connectionpool - _make_request - https://preprod.cloud.fiddler.ai:443 "POST /v1/traces HTTP/1.1" 200 2

@@ -138,7 +138,7 @@ def chatbot_node(state: ChatbotState):
     all_messages_in_state = state["messages"]
 
     # Get the LLM from session
-    llm = cl.user_session.get("llm")
+    # llm = cl.user_session.get("llm")
     if not llm:
         raise ValueError("LLM not found in session")
 
