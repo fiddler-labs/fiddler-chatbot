@@ -38,23 +38,15 @@ def get_faithfulness_guardrail_results(
     # Validate token limits (approximate using character count)
     # Faithfulness limits: 3500 tokens for context, 350 for response
     # Rough estimate: 1 token ≈ 4 characters
-    max_context_chars = (
-        3500 * 4 * 0.85
-    )  # 85% of the theoretical limit as a safety margin
-    max_response_chars = (
-        350 * 4 * 0.85
-    )  # 85% of the theoretical limit as a safety margin
+    max_context_chars  = int(3500 * 4 * 0.85)  # 85% of the theoretical limit as a safety margin
+    max_response_chars = int(350  * 4 * 0.85)  # 85% of the theoretical limit as a safety margin
 
     if len(context_text) > max_context_chars:
-        logger.warning(
-            f"Context text truncated from {len(context_text)} to {max_context_chars} characters to meet API limits"
-        )
+        logger.warning( f"Context text truncated from {len(context_text)} to {max_context_chars} characters to meet API limits")
         context_text = context_text[:max_context_chars]
 
     if len(response) > max_response_chars:
-        logger.warning(
-            f"Response text truncated from {len(response)} to {max_response_chars} characters to meet API limits"
-        )
+        logger.warning( f"Response text truncated from {len(response)} to {max_response_chars} characters to meet API limits")
         response = response[:max_response_chars]
 
     # Validate inputs
