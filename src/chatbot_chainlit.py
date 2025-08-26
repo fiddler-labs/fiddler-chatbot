@@ -64,18 +64,18 @@ if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APP_ID :
     sys.exit(1)
 
 
-# logger.info("Initializing Fiddler monitoring...")
-# fdl_client = FiddlerClient(
-#     api_key=FIDDLER_API_KEY,
-#     application_id=str(FIDDLER_APP_ID),
-#     url=str(FIDDLER_URL),
-#     console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
-#     )
+logger.info("Initializing Fiddler monitoring...")
+fdl_client = FiddlerClient(
+    api_key=FIDDLER_API_KEY,
+    application_id=str(FIDDLER_APP_ID),
+    url=str(FIDDLER_URL),
+    console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
+    )
 
-# # Instrument the application
-# instrumentor = LangGraphInstrumentor(fdl_client)
-# instrumentor.instrument()
-# logger.info("✓ Fiddler monitoring initialized successfully")
+# Instrument the application
+instrumentor = LangGraphInstrumentor(fdl_client)
+instrumentor.instrument()
+logger.info("✓ Fiddler monitoring initialized successfully")
 
 # Read the system instructions template
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
