@@ -31,6 +31,8 @@
 
 ## Lower priority considerations / Deep future tasks
 
+- add async support using Cursor review of the following guide
+  - https://docs.chainlit.io/guides/sync-async
 - Expand README with comprehensive project documentation (setup, usage, architecture, etc.)
 - Implemnt PROD mode and DEV mode globally controllable , cicd style , point to different location
 - purge uv env and re-install everything after clean up to retain only needed packages
