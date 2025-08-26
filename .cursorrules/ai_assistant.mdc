@@ -1,0 +1,114 @@
+---
+description: code generation rules for Cursor's agentic mode assistant
+alwaysApply: true
+---
+# Rapid Development AI Assistant
+
+## Project Priority
+
+**Time to market is the primary concern** - working code now is better than perfect code later.
+
+- Help ship working code ASAP
+- Prioritize solutions that work NOW over theoretically better approaches
+- Focus on the 80/20 rule - get the core functionality working first
+- Be a pragmatic coding partner, not a best-practices evangelizer
+
+## Our Philosophy
+
+- **Fast over perfect**: Working code now beats perfect code later
+- Suggest the quickest viable solution first
+- Avoid over-engineering and over-thinking, just get the job done
+- **Pragmatic over theoretical**: Practical solutions win rather than theoretical advice
+- **Focus on core functionality**: Get the essential features working first
+- Get feedback on working features early from the user after each iteration
+- **Simplicity over complexity**: Choose the simplest smallest and most direct approach that works
+- **Reuse what exists**: Leverage existing utils and patterns in the codebase
+- **Code always works**: Get the integration working end-to-end quickly
+- Focus on rapid iteration and immediate functionality
+- Favor working solutions over perfectly structured ones
+- **Avoid analysis paralysis**: Move forward without overengineering
+- **Focus on value**: Deliver what matters most to the business first
+- **Practical solutions**: Implement what works, not what's theoretically best
+
+### Project Structure
+
+- Separate interface from logic implementation
+- Keep modules focused on a single responsibility
+- Keep directory structure , modules and functions , All flat , wellnamed , readable and self-explanatory
+- Single file implementations are reccomended. Refactor only when user explicitly requests it
+- Use what's already in the codebase Minimize external dependencies
+- Accept reasonable technical debt for faster delivery
+
+### Code Modification
+
+- Make targeted changes with minimal impact
+- Focus on making things work, not making them perfect
+- Refactor only when it solves an immediate problem
+- Fix bugs directly without unnecessary explanations
+- Fix bugs completely from the root cause, not just symptomatically
+- Preserve working code whenever possible
+- dont rename functions unless requested by the user
+
+### Error Handling
+
+- Handle critical errors that prevent core functionality
+- Fail visibly : silent failures waste debugging time
+- Prioritize recovering from errors via bypasses and retries ( dont try to anticipate all edge cases )
+- Use specific exception types, Never use generic `Exception` class
+- Log all errors with appropriate context , relevantvariablesand include the error message in the log
+
+### Test Execution and Logging
+
+- **CRITICAL REQUIREMENT**: All temporary test source-code and execution-output-logs must be logged / outputted to prevent hallucinated test results.
+- **NO DEVIOUS PRETENSE PRINT:Success TESTS**: Never create tests that only contain print statements claiming success
+- **REAL VERIFICATION**: All tests must contain actual logical assertions that can fail
+- **COMPLETE OUTPUT CAPTURE**: Log the entire test execution output, not summaries
+- **FAILURE DOCUMENTATION**: When tests fail, log the complete failure trace
+- **Always reference log files**: When reporting test results, always mention the specific log file created
+- **Show actual output**: Include actual test output in responses
+- **Verify assertions**: Confirm that actual assertions were executed and their results
+- **Document failures**: When tests fail, provide the complete failure information from logs
+- Manual testing is acceptable for initial delivery
+- Focus on integration testing over unit testing
+
+## Pragmatic Documentation
+
+### Documentation Via Comments
+
+- Keep documentation focused on what's implemented, not theoretical design
+- Basic docstrings are sufficient - focus on "why" ( not "what" or "how" because those are in the code )
+- Add docstrings to all modules, classes, and functions
+- Include examples in docstrings when helpful
+
+### Documentation via Explicit Code
+
+- Readability , Verbosity and Explicitness benefits the User, Cursor, LLM Model, and the future maintainer
+- Abstraction hides the context from the LLM making it difficult for the LLM to understand the code
+
+- Type-hinting
+  - Use types to clarify intent
+  - Use types for all function parameters and return values
+  - Update comments to reflect code changes
+
+- Data Modeling
+  - Use Pydantic BaseModel for all data models
+  - Define validation rules using Fields
+  - Use appropriate type annotations (including Literal for enumerated values)
+
+### Documentation Via Diagrams
+
+- Update and Conitnously Reference the following availableMermaid diagrams:
+  - System architecture diagram (docs/diagram-system_architecture.md)
+  - Integration sequence diagram (docs/diagram-integration_sequence.md)
+  - Data model entity-relationship diagram (docs/diagram-data_model_entity_rels.md)
+- mermaid daigrams are in .md files in `./docs/diagrams` ,in ```mermaid ...``` blocks.
+
+### Markdown Formatting Standards
+
+- **Always prefer bullet points (dashes) over numbered lists** unless the content represents a step-by-step process
+- Use dashes (-) for all unordered lists including features, components, options, or general items
+- Only use numbered lists (1., 2., 3.) for actual sequential processes where order matters
+- This approach enables flexibility for manual reordering of priorities by the user
+- Examples of when to use either:
+  - numbered lists: installation steps, workflow processes, sequential procedures
+  - bullet points: feature lists, component descriptions, options, requirements

@@ -1,2 +1,39 @@
+# Streamlit Configuration for Chainlit-Streamlit Hybrid Deployment
+
+[server]
+# Default port for Streamlit (Streamlit Cloud will override this)
+port = 8501
+
+# Allow connections from any host
+address = "0.0.0.0"
+
+# Enable CORS for iframe embedding
+enableCORS = true
+
+# Increase upload limits
+maxUploadSize = 200
+
+# Keep browser opening disabled (good for cloud deployment)
+headless = true
+
+[client]
+# Show error details for debugging
+showErrorDetails = "full"
+
+# Minimize toolbar for cleaner embedded experience
+toolbarMode = "minimal"
+
+[browser]
+# Don't gather usage stats to avoid conflicts
+gatherUsageStats = false
+
 [theme]
-base="light"
+# Optional: Set theme colors that work well with Chainlit
+primaryColor = "#FF6B6B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+
+[logger]
+# Set appropriate logging level
+level = "info"

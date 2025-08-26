@@ -1,0 +1,156 @@
+{
+  "configurations": [
+    {
+      "name": "Run AGENTIC CHAINLIT Chatbot (Local)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "chainlit",
+      "args": ["run", "${workspaceFolder}/src/chatbot_chainlit.py", "-w"],
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run AGENTIC Chatbot (Manual CLI chat)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/chatbot_agentic.py",
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run AGENTIC Chatbot (Automated)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/chatbot_agentic.py",
+      "args": ["Hello", "What is the current time?", "quit"],
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run LEGACY Chatbot CLI",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/chatbot.py",
+      // "args": [],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Run LEGACY Chatbot Streamlit",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "${workspaceFolder}/src/chatbot.py"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Data Generation: Run Workflow",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/data_generation.py",
+      // "args": [],
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Vector Index: UPDATE: Safe Mode (APPEND ONLY)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/vector_index_mgmt.py",
+      "args": [],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Vector Index: UPDATE: Replace Mode (OVERWRITE + TRUNCATE)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/vector_index_mgmt.py",
+      "args": ["--truncate"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Vector Index: PROD Mode : Skip Maintenance + UPDATE (Fast and destructive)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/vector_index_mgmt.py",
+      "args": ["--skip-maintenance", "--truncate"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Vector Index: Health Check",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/vector_index_mgmt.py",
+      "args": ["--health-check"],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+  ]
+}
