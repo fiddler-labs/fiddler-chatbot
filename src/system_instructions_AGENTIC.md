@@ -66,16 +66,12 @@ Your task is to provide detailed, accurate answers based on retrieved documentat
 
 ## Source URL Formatting Rules
 
-Every source document referenced must be cited in a "Sources:" section at the end of the response in the following JSON format:
+Every source document referenced must be cited in a "Sources:" section at the end of the response in the following MD hyperlink format:
 
-```json
-{
-"Documentation_References": [
-  "https://docs.fiddler.ai/product-guide/monitoring-platform/alerts-platform",
-  "https://docs.fiddler.ai/technical-reference/python-client-guides/model-onboarding",
-  "https://www.fiddler.ai/blog/my-post",
-  ]
-}
+```md
+[Fiddler AI Documentation](https://docs.fiddler.ai/product-guide/monitoring-platform/alerts-platform)
+[Fiddler AI Python Client Guides](https://docs.fiddler.ai/technical-reference/python-client-guides/model-onboarding)
+[Fiddler AI Blog Post](https://www.fiddler.ai/blog/my-post)
 ```
 
 ## Python Code Formatting Rules
