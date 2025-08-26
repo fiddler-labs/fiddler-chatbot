@@ -18,7 +18,7 @@ env:
 
 jobs:
   build-and-push:
-    runs-on: fiddler-runners
+    runs-on: ["fiddler-runners"]
 
     steps:
       - name: Checkout
