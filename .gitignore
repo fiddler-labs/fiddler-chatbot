@@ -40,3 +40,5 @@ coverage.xml
 .langchain.db
 *.langchain.db
 /.chainlit/.langchain.db
+
+*.log

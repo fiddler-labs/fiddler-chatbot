@@ -4,7 +4,9 @@ import uuid
 import warnings
 import argparse
 import pandas as pd
+
 from datetime import datetime
+from dotenv import load_dotenv
 from typing import Annotated
 from typing_extensions import TypedDict
 
@@ -29,6 +31,12 @@ from rich.markdown import Markdown
 
 import chatbot_chainlit
 
+from fiddler_langgraph import FiddlerClient
+from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import Compression
+
+load_dotenv()
+
 # Constants
 GPT_5 = 'gpt-5'
 PERSONA = "persona"
@@ -51,6 +59,19 @@ CONSOLE = Console()
 
 # Initialize LLM
 LLM = ChatOpenAI(model=GPT_5, max_tokens=4096)
+
+fdl_client = FiddlerClient(
+    api_key=os.environ["FIDDLER_API_KEY"],
+    application_id=os.environ["FIDDLER_APP_ID"],
+    url=os.environ["FIDDLER_URL"],
+    console_tracer=False,
+    span_limits=None,
+    sampler=None,
+    compression=Compression.Gzip
+)
+
+instrumentor = LangGraphInstrumentor(fdl_client)
+instrumentor.instrument()
 
 class SimUserState(TypedDict):
     persona: str
@@ -207,7 +228,7 @@ def run_simulation(persona: str, max_iterations: int = 20):
                 SIM_MESSAGES: [SystemMessage(content=SIM_SYSTEM_PROMPT)],
                 USER_CB_MESSAGES: [SystemMessage(content=chatbot_chainlit.SYSTEM_INSTRUCTIONS_PROMPT)],
             },
-            {"recursion_limit": 20},  # Allow more recursion for complex conversations
+            {"recursion_limit": max_iterations},  # Allow more recursion for complex conversations
             stream_mode='values',
         )
 
@@ -273,7 +294,7 @@ Common Personas:
     parser.add_argument(
         "--max-iterations",
         type=int,
-        default=10,
+        default=30,
         help="Maximum number of conversation iterations (default: 10)"
     )
 
