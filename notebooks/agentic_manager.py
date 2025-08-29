@@ -1,4 +1,5 @@
 import os
+import uuid
 import argparse
 import agentic_user
 import pandas as pd
@@ -42,9 +43,12 @@ if __name__ == "__main__":
     # Run the simulation for each persona
     all_conversations = []
     for persona in personas:
+        thread_id = str(uuid.uuid4())
         print(f"Running simulation for persona: {persona}")
-        conversations = agentic_user.run_simulation(persona, args.max_iterations)
-        conversation_df = agentic_user.convert_conversation_to_df(conversations)
+        if persona.startswith('#'):
+            continue
+        conversations = agentic_user.run_simulation(persona, thread_id, args.max_iterations)
+        conversation_df = agentic_user.convert_conversation_to_df(conversations, thread_id, persona)
         all_conversations.append(conversation_df)
         all_conversation_df = pd.concat(all_conversations)
         all_conversation_df.to_csv(output_file_path, index=False, mode='a', header=not os.path.exists(output_file_path))
