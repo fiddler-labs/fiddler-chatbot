@@ -110,7 +110,7 @@ client = OpenAI(api_key=OPENAI_API_KEY)
 
 logger = get_logger(__name__)
 
-FIDDLER_API_KEY            = os.environ.get( "FIDDLER_API_KEY"          )
+FIDDLER_API_KEY            = os.environ.get( "FIDDLER_API_KEY_GUARDRAILS" ) # this changes to FIDDLER_API_KEY for the new chatbot , this is pointing to Guardrails API key only to map to demo.fiddler.ai
 OPENAI_API_KEY             = os.environ.get( "OPENAI_API_KEY"             )
 ASTRA_DB_APPLICATION_TOKEN = os.environ.get( "ASTRA_DB_APPLICATION_TOKEN" )
 
