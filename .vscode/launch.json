@@ -1,6 +1,22 @@
 {
   "configurations": [
     {
+      "name": "Run REACT CHAINLIT Chatbot (Local)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "chainlit",
+      "args": ["run", "${workspaceFolder}/src/chatbot_chainlit_react.py", "-w"],
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
       "name": "Run AGENTIC CHAINLIT Chatbot (Local)",
       "type": "debugpy",
       "request": "launch",
