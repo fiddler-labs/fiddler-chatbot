@@ -42,3 +42,6 @@ coverage.xml
 /.chainlit/.langchain.db
 
 *.log
+notebooks/.chainlit/translations/
+notebooks/.chainlit/langchain.db/
+notebooks/logs/
