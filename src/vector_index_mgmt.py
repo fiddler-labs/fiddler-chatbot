@@ -161,6 +161,79 @@ def cassandra_connection():
             time.sleep(current_delay)
             current_delay *= backoff
 
+def open_cassandra_connection():
+    """
+    Establish and return a persistent Cassandra connection (cluster, session).
+    Caller is responsible for closing via close_cassandra_connection.
+    Includes the same retry logic as cassandra_connection().
+    """
+    cluster = None
+    session = None
+
+    max_attempts = config["max_retry_attempts"]
+    delay = config["retry_delay"]
+    backoff = config["retry_backoff"]
+    current_delay = delay
+
+    for attempt in range(max_attempts):
+        try:
+            ASTRA_DB_APPLICATION_TOKEN = os.environ.get('ASTRA_DB_APPLICATION_TOKEN')
+            if not ASTRA_DB_APPLICATION_TOKEN:
+                raise ValueError("ASTRA_DB_APPLICATION_TOKEN environment variable not set")
+
+            if not os.path.exists(config["secure_bundle_path"]):
+                raise FileNotFoundError(f"Secure bundle file not found: {config['secure_bundle_path']}")
+
+            cloud_config = {'secure_connect_bundle': config["secure_bundle_path"]}
+            auth_provider = PlainTextAuthProvider("token", ASTRA_DB_APPLICATION_TOKEN)
+
+            if cassandra_connection_class:
+                cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider, connection_class=cassandra_connection_class)
+            else:
+                cluster = Cluster(cloud=cloud_config, auth_provider=auth_provider)
+
+            session = cluster.connect()
+            session.set_keyspace(config["keyspace"])
+
+            logger.info(f"✅ (persistent) Connected to Cassandra keyspace: {config['keyspace']}")
+            return cluster, session
+        except Exception as e:
+            # Cleanup any partial resources
+            if session:
+                try:
+                    session.shutdown()
+                except Exception:
+                    pass
+                session = None
+
+            if cluster:
+                try:
+                    cluster.shutdown()
+                except Exception:
+                    pass
+                cluster = None
+
+            if attempt == max_attempts - 1:
+                logger.error(f"❌ Failed to open persistent Cassandra connection after {max_attempts} attempts")
+                raise
+
+            logger.warning(f"⚠️  Persistent connection attempt {attempt + 1}/{max_attempts} failed: {e}")
+            logger.info(f"🔄 Retrying connection in {current_delay:.1f} seconds...")
+            time.sleep(current_delay)
+            current_delay *= backoff
+
+def close_cassandra_connection(cluster, session) -> None:
+    """
+    Close a persistent Cassandra (cluster, session) pair safely.
+    """
+    try:
+        if session:
+            session.shutdown()
+    finally:
+        if cluster:
+            cluster.shutdown()
+    logger.info("🔌 (persistent) Cassandra connection closed")
+
 def setup_llm_and_embeddings():
     """
     Configure OpenAI LLM and embeddings

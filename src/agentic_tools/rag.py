@@ -1,15 +1,66 @@
 import logging
 import json
+from typing import Any, cast
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import Cassandra as CassandraVectorStore
 from langchain_core.tools import Tool, tool  # noqa: F401
 # from langchain.tools.retriever import create_retriever_tool
 
-from vector_index_mgmt import cassandra_connection
-
+from vector_index_mgmt import open_cassandra_connection, close_cassandra_connection
 from config import CONFIG_VECTOR_INDEX_MGMT , CONFIG_CHATBOT_NEW
 
 logger = logging.getLogger(__name__)
+
+_cassandra_cluster = None
+_cassandra_session = None
+_embedding: OpenAIEmbeddings | None = None
+_vector_store: CassandraVectorStore | None = None
+
+def init_rag_resources() -> tuple[bool, str]:
+    """Initialize global Cassandra vector store resources once for reuse."""
+    global _cassandra_cluster, _cassandra_session, _embedding, _vector_store
+    if _vector_store is not None and _cassandra_session is not None:
+        return True, "Already initialized"
+    try:
+        _embedding = OpenAIEmbeddings(
+            model=CONFIG_VECTOR_INDEX_MGMT["embedding_model"],
+            dimensions=CONFIG_VECTOR_INDEX_MGMT["embedding_dimensions"],
+            )
+        _cassandra_cluster, _cassandra_session = cast(tuple[Any, Any], open_cassandra_connection())
+        _vector_store = CassandraVectorStore(
+            embedding=_embedding,
+            session=_cassandra_session,
+            keyspace=CONFIG_VECTOR_INDEX_MGMT["keyspace"],
+            table_name=CONFIG_VECTOR_INDEX_MGMT["TABLE_NAME"],
+            )
+        logger.info("✓ RAG resources initialized (persistent Cassandra session)")
+        return True, "Initialized"
+    except Exception as e:
+        logger.error(f"Error initializing RAG resources: {e}")
+        # Ensure globals are cleared on failure
+        _vector_store = None
+        _embedding = None
+        if _cassandra_cluster or _cassandra_session:
+            try:
+                close_cassandra_connection(_cassandra_cluster, _cassandra_session)
+            except Exception:
+                pass
+        _cassandra_cluster = None
+        _cassandra_session = None
+        return False, str(e)
+
+def shutdown_rag_resources() -> None:
+    """Shutdown global Cassandra vector store resources safely."""
+    global _cassandra_cluster, _cassandra_session, _embedding, _vector_store
+    try:
+        if _cassandra_cluster or _cassandra_session:
+            close_cassandra_connection(_cassandra_cluster, _cassandra_session)
+    finally:
+        _cassandra_cluster = None
+        _cassandra_session = None
+        _embedding = None
+        _vector_store = None
+        logger.info("✓ RAG resources shut down")
 
 @tool
 def rag_over_fiddler_knowledge_base(query: str) -> str:
@@ -31,33 +82,29 @@ def rag_over_fiddler_knowledge_base(query: str) -> str:
     Output(str): Concatenated relevant documents with metadata
     """
     try:
-        embedding = OpenAIEmbeddings()
+        global _vector_store
+        if _vector_store is None:
+            ok, msg = init_rag_resources()
+            logger.warning(f"RAG resources initialized during query stage (not during chat start): {msg}")
+            if not ok or _vector_store is None:
+                logger.error(f"Error: RAG resources not initialized: {msg}")
+                return f"Error: RAG resources not initialized: {msg}"
 
-        with cassandra_connection() as (cassandra_cluster, cassandra_session):
-            vector_store = CassandraVectorStore(
-                embedding=embedding,
-                session=cassandra_session,
-                keyspace=CONFIG_VECTOR_INDEX_MGMT["keyspace"],
-                table_name=CONFIG_VECTOR_INDEX_MGMT["TABLE_NAME"]
-                )
+        documents = _vector_store.similarity_search(query, k=CONFIG_CHATBOT_NEW['TOP_K_RETRIEVAL'])
 
-            # Perform similarity search
-            documents = vector_store.similarity_search( query, k=CONFIG_CHATBOT_NEW['TOP_K_RETRIEVAL'] )
+        if not documents:
+            return "No relevant documents found in the knowledge base."
 
-            if not documents:
-                return "No relevant documents found in the knowledge base."
+        formatted_results = {}
+        for i, doc in enumerate(documents, 1):
+            content = doc.page_content
+            metadata = doc.metadata if doc.metadata else {}
+            formatted_results[f"Document {i}"] = {
+                "metadata": metadata,
+                "content": content
+                }
 
-            # Format results
-            formatted_results = {}
-            for i, doc in enumerate(documents, 1):
-                content = doc.page_content
-                metadata = doc.metadata if doc.metadata else {}
-                formatted_results[f"Document {i}"] = {
-                    "metadata": metadata,
-                    "content": content
-                    }
-
-            return json.dumps(formatted_results , indent=4)
+        return json.dumps(formatted_results , indent=4)
 
     except Exception as e:
         logger.error(f"Error in Cassandra search: {e}")

@@ -34,7 +34,11 @@ from fiddler_langgraph.tracing.instrumentation import (  # todo - use this later
     set_llm_context,
     )
 
-from agentic_tools.rag import rag_over_fiddler_knowledge_base
+from agentic_tools.rag import (
+    rag_over_fiddler_knowledge_base,
+    init_rag_resources,
+    shutdown_rag_resources,
+    )
 from agentic_tools.validator_url import validate_url
 from agentic_tools.fiddler_gaurdrails import (
     tool_fiddler_guardrail_faithfulness,
@@ -126,6 +130,9 @@ app = create_react_agent(
 
 set_llm_context(base_llm, "ReAct chatbot agent powered by OpenAI Model gpt-4.1")
 
+ok, msg = init_rag_resources()
+if not ok:
+    logger.error(f"RAG initialization failed: {msg}")
 
 @cl.on_chat_start
 async def on_chat_start():
@@ -215,6 +222,12 @@ async def on_message(message: cl.Message):
 async def on_chat_end():
     """Clean up when chat ends"""
     logger.info("Chat session ended")
+
+    # # Shutdown RAG resources
+    # try:
+    #     shutdown_rag_resources()
+    # except Exception as e:
+    #     logger.warning(f"RAG shutdown encountered an error: {e}")
 
     # Clean up instrumentation if needed
     if instrumentor:
