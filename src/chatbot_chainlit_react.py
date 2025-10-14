@@ -86,7 +86,7 @@ with open(os.path.join(PROJECT_ROOT, "src", "system_instructions_AGENTIC.md")) a
 
 base_llm = ChatOpenAI(
     model="gpt-4o",
-    temperature=0.4,
+    # temperature=0.4,
     api_key=SecretStr(OPENAI_API_KEY) if OPENAI_API_KEY else None,
     streaming=True,
     )
