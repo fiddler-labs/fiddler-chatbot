@@ -64,7 +64,7 @@ default_avatar_file_url = "/public/logo.png"
     name = "Fiddler Gen AI Application Monitoring"
     display_name = "AI App Monitoring"
     icon_url = "https://avatars.githubusercontent.com/u/128686189?s=200&v=4"
-    url = "https://demo.fiddler.ai/genai-applications/89ac25c1-8b36-4835-8cd6-60a7d0a1004d"
+    url = "https://preprod.cloud.fiddler.ai/genai-applications/594dfc62-8c72-4654-a984-af229d8365c3"
 
 [meta]
 generated_by = "2.6.5"
