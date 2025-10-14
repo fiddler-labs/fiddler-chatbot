@@ -63,9 +63,9 @@ CONFIG_CHATBOT_OLD = {
     }
 
 CONFIG_CHATBOT_NEW : dict[str, Any ] = {
-    "FIDDLER_URL": "https://preprod.cloud.fiddler.ai",
+    "FIDDLER_URL": "https://demo.fiddler.ai",
     "FIDDLER_URL_GUARDRAILS": "https://demo.fiddler.ai",
-    "FIDDLER_APP_ID": "70b1ba52-211b-43f4-bb71-cd6bd7846472",
+    "FIDDLER_APP_ID": "89ac25c1-8b36-4835-8cd6-60a7d0a1004d",
 
     "FDL_GAURDRAIL_REQUESTS_TIMEOUT": 10,
     "TOP_K_RETRIEVAL": 4,
