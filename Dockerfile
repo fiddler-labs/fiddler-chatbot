@@ -47,4 +47,4 @@ EXPOSE 8000
 
 # Optionally load a mounted .env at runtime via python-dotenv (already in code),
 # or pass env vars with --env-file. Start Chainlit bound to HOST:PORT.
-CMD ["sh", "-lc", "/app/.venv/bin/chainlit run src/chatbot_chainlit.py --host ${HOST:-0.0.0.0} --port ${PORT:-8000}"]
+CMD ["sh", "-lc", "/app/.venv/bin/chainlit run src/chatbot_chainlit_react.py --host ${HOST:-0.0.0.0} --port ${PORT:-8000}"]
