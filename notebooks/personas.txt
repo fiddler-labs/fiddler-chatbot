@@ -1,0 +1,20 @@
+Data Scientist - responsible for model accuracy and performance metrics that directly impact their professional reputation
+ML Engineer - accountable for model deployment stability and production performance that affects system reliability
+Data Engineer - ensures data pipeline quality that feeds the model, affecting downstream model effectiveness
+Product Manager - model performance directly impacts user experience and product KPIs they're measured on
+DevOps Engineer - model failures and performance issues create operational incidents they must resolve
+Quality Assurance Engineer - responsible for testing model outputs and catching performance degradation before users do
+Business Analyst - relies on model predictions for business insights and recommendations to stakeholders
+Software Engineer - integrates model APIs into applications where poor performance affects user-facing features
+Data Analyst - uses model outputs for reporting and analysis, needing reliable predictions for accurate insights
+Risk Manager - depends on model accuracy for risk assessment decisions that protect company assets
+Compliance Officer - ensures model fairness and regulatory compliance, facing penalties if models behave improperly
+Customer Success Manager - model performance issues directly impact client satisfaction and retention rates
+Technical Lead - oversees team delivery and is accountable for overall model system performance
+Site Reliability Engineer - maintains uptime and performance SLAs that include model response times and accuracy
+Research Scientist - develops new modeling approaches and needs monitoring to validate research hypotheses
+Sales Engineer - demonstrates model capabilities to prospects, needing consistent performance for successful deals
+Finance Analyst - uses model predictions for financial forecasting and budgeting decisions
+Marketing Data Scientist - relies on model performance for campaign optimization and customer targeting effectiveness
+Operations Manager - uses model outputs for resource planning and operational decision-making
+Chief Technology Officer - ultimately responsible for technology stack performance and innovation success
