@@ -1,0 +1,84 @@
+{
+    "personas": [
+    {
+        "name": "Data Scientist",
+        "description": "responsible for model accuracy and performance metrics that directly impact their professional reputation"
+    },
+    {
+        "name": "ML Engineer",
+        "description": "accountable for model deployment stability and production performance that affects system reliability"
+    },
+    {
+        "name": "Data Engineer",
+        "description": "ensures data pipeline quality that feeds the model, affecting downstream model effectiveness"
+    },
+    {
+        "name": "DevOps Engineer",
+        "description": "model failures and performance issues create operational incidents they must resolve"
+    },
+    {
+        "name": "Quality Assurance Engineer",
+        "description": "responsible for testing model outputs and catching performance degradation before users do"
+    },
+    {
+        "name": "Business Analyst",
+        "description": "relies on model predictions for business insights and recommendations to stakeholders"
+    },
+    {
+        "name": "Software Engineer",
+        "description": "integrates model APIs into applications where poor performance affects user-facing features"
+    },
+    {
+        "name": "Data Analyst",
+        "description": "uses model outputs for reporting and analysis, needing reliable predictions for accurate insights"
+    },
+    {
+        "name": "Customer Success Manager",
+        "description": "model performance issues directly impact client satisfaction and retention rates"
+    },
+    {
+        "name": "Risk Manager",
+        "description": "depends on model accuracy for risk assessment decisions that protect company assets"
+    },
+    {
+        "name": "Compliance Officer",
+        "description": "ensures model fairness and regulatory compliance, facing penalties if models behave improperly"
+    },
+    {
+        "name": "Technical Lead",
+        "description": "oversees team delivery and is accountable for overall model system performance"
+    },
+    {
+        "name": "Site Reliability Engineer",
+        "description": "maintains uptime and performance SLAs that include model response times and accuracy"
+    },
+    {
+        "name": "Research Scientist",
+        "description": "develops new modeling approaches and needs monitoring to validate research hypotheses"
+    },
+    {
+        "name": "Sales Engineer",
+        "description": "demonstrates model capabilities to prospects, needing consistent performance for successful deals"
+    },
+    {
+        "name": "Finance Analyst",
+        "description": "uses model predictions for financial forecasting and budgeting decisions"
+    },
+    {
+        "name": "Marketing Data Scientist",
+        "description": "relies on model performance for campaign optimization and customer targeting effectiveness"
+    },
+    {
+        "name": "Operations Manager",
+        "description": "uses model outputs for resource planning and operational decision-making"
+    },
+    {
+        "name": "Product Manager",
+        "description": "model performance directly impacts user experience and product KPIs they're measured on"
+    },
+    {
+        "name": "Chief Technology Officer",
+        "description": "ultimately responsible for technology stack performance and innovation success"
+    }
+    ]
+}
