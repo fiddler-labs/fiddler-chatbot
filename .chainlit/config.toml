@@ -8,7 +8,10 @@ session_timeout = 3600
 user_session_timeout = 129600  # 1.5 days
 
 # Enable third parties caching (e.g., LangChain cache)
-cache = true
+cache = false
+
+# Authorized origins
+allow_origins = ["*"]
 
 [features]
 # Process and display HTML in messages. This can be a security risk (see https://stackoverflow.com/questions/19603097/why-is-it-dangerous-to-render-user-generated-html-or-javascript)
@@ -23,11 +26,11 @@ user_message_autoscroll = false
 auto_tag_thread = true
 
 edit_message = true
-prompt_playground = true
+prompt_playground = false
 multi_modal = false
 
 [UI]
-name = "Fiddler AI Assistant"
+name = "Fiddler Agentic Assistant"
 default_theme = "light"
 layout = "wide"
 

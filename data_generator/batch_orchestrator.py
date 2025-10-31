@@ -33,7 +33,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Read the input text file
-    with open(args.personas, "r") as file:
+    with open(args.personas, "r") as file: # TODO- This needs to now follow the new JSON format in personas.json
         personas = file.read().splitlines()
 
     output_file_path = args.output
