@@ -45,3 +45,4 @@ coverage.xml
 notebooks/.chainlit/translations/
 notebooks/.chainlit/langchain.db/
 notebooks/logs/
+data_generator/.chainlit/*
