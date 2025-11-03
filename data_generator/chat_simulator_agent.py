@@ -63,7 +63,9 @@ fdl_client = FiddlerClient(
     console_tracer=False,
     span_limits=None,
     sampler=None,
-    compression=Compression.Gzip
+    compression=Compression.Gzip,
+    jsonl_capture_enabled=True,
+    jsonl_file_path='./simulator.jsonl',
 )
 
 instrumentor = LangGraphInstrumentor(fdl_client)

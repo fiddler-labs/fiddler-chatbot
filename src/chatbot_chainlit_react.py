@@ -33,6 +33,7 @@ from fiddler_langgraph.tracing.instrumentation import (  # todo - use this later
     set_conversation_id,
     set_llm_context,
     )
+from opentelemetry.exporter.otlp.proto.http import Compression
 
 from agentic_tools.rag import (
     rag_over_fiddler_knowledge_base,
@@ -72,8 +73,12 @@ fdl_client = FiddlerClient(
     application_id=str(FIDDLER_APP_ID),
     url=str(FIDDLER_URL),
     console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
+    span_limits=None,
+    sampler=None,
+    compression=Compression.Gzip,
+    jsonl_capture_enabled=True,
+    jsonl_file_path='./chatbot.jsonl',
     )
-
 # Instrument the application
 instrumentor = LangGraphInstrumentor(fdl_client)
 instrumentor.instrument()
