@@ -56,20 +56,20 @@ MAX_CONVERSATION_LENGTH = 7
 # Initialize LLM
 LLM = ChatOpenAI(model=GPT_5, max_tokens=4096)
 
-fdl_client = FiddlerClient(
-    api_key=os.environ["FIDDLER_API_KEY"],
-    application_id=os.environ["FIDDLER_APP_ID"],
-    url=os.environ["FIDDLER_URL"],
-    console_tracer=False,
-    span_limits=None,
-    sampler=None,
-    compression=Compression.Gzip,
-    jsonl_capture_enabled=True,
-    jsonl_file_path='./simulator.jsonl',
-)
+# fdl_client = FiddlerClient(
+#     api_key=os.environ["FIDDLER_API_KEY"],
+#     application_id=os.environ["FIDDLER_APP_ID"],
+#     url=os.environ["FIDDLER_URL"],
+#     console_tracer=False,
+#     span_limits=None,
+#     sampler=None,
+#     compression=Compression.Gzip,
+#     jsonl_capture_enabled=True,
+#     jsonl_file_path='./simulator.jsonl',
+# )
 
-instrumentor = LangGraphInstrumentor(fdl_client)
-instrumentor.instrument()
+# instrumentor = LangGraphInstrumentor(fdl_client)
+# instrumentor.instrument()
 
 # Load system prompts from configuration file
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
