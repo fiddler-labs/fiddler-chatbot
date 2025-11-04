@@ -1,6 +1,82 @@
 {
   "configurations": [
     {
+      "name": "Data Generator: Batch Orchestrator (Personas)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/data_generator/batch_orchestrator.py",
+      "args": [
+        "--personas", "personas.json",
+        "--output", "data/agentic_conversations.csv",
+        "--max-iterations", "20"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}/data_generator",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Data Generator: Batch Orchestrator (Jailbreak Personas)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/data_generator/batch_orchestrator.py",
+      "args": [
+        "--personas", "jailed_personas.json",
+        "--output", "data/jailed_conversations.csv",
+        "--max-iterations", "20"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}/data_generator",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Data Generator: Validate Pipeline",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/data_generator/validate_pipeline.py",
+      "args": [],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}/data_generator",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "Data Generator: Single Persona Simulator",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/data_generator/chat_simulator_agent.py",
+      "args": [
+        "--persona", "You are a Data Scientist interested in Fiddler",
+        "--max-iterations", "20",
+        "--output-file", "data/test_conversation.csv"
+      ],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}/data_generator",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
       "name": "Run REACT CHAINLIT Chatbot (Local)",
       "type": "debugpy",
       "request": "launch",
