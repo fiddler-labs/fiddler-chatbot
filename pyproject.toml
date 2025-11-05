@@ -3,7 +3,7 @@ name = "fiddler-chatbot"
 version = "0.1.0"
 description = "Fiddler AI Model Monitoring Chatbot"
 readme = "README.md"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.11,<=3.13"
 dependencies = [
     "fiddler-client>=3.9.2",
     "langchain>=0.3.26",
@@ -17,7 +17,7 @@ dependencies = [
     "streamlit>=1.46.1",
     "pandas>=2.3.0",
     "openai>=1.92.1",
-    "protobuf<=6.0.0",
+    "protobuf",
     "bs4>=0.0.2",
     "feedparser>=6.0.9",
     "nbconvert>=7.16.6",
@@ -45,11 +45,8 @@ dependencies = [
     "pytest-cov>=4.0.0",
     # Linting and formatting
     "ruff>=0.1.0",
-    # Type stubs
     "types-requests>=2.31.0",
     # "jupyterlab>=4.4.5",
-    # "twisted>=25.5.0",
-    # "eventlet>=0.40.2",
     # "google-genai>=1.31.0",
     # "rich>=14.1.0",
     "eventlet>=0.40.3",
