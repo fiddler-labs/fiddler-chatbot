@@ -2,11 +2,6 @@
 
 ## Pending action items listed in planned order of execution and priority
 
-- Demo Asset for Stakeholders (Sol. Eng.) .
-  Once tools are integrated and tested, and the ChainLit UI is ready , the goal is to:
-  Create a demo asset usable by @Max-Bukhovko-Fiddler and @Nick-Fiddler / @nick-fiddler
-  - Showcase chatbot usage with both Guardrails and Harrier monitoring.
-
 - Deployment and Development QoL
   - Set up GitHub Actions workflow for automated embedding update
     - set up a dev branch of `fiddler` repo to test out the github action
@@ -28,10 +23,12 @@
     - **Goal**: Reduce code hallucination and improve accuracy
     - **Architecture**: Can be wrapped as module-as-a-service or lightweight agent
   - Also explore the gitbook APIs : those can be a tool call ideas too
+  - HIGH P : TRY add mcp from gitbooks to replace the cassandra stack
 
 ## Lower priority considerations / Deep future tasks
 
 - add async support using Cursor review of the following guide
+  - this will probably not work with the current fiddler-langgraph sdk
   - https://docs.chainlit.io/guides/sync-async
 - Expand README with comprehensive project documentation (setup, usage, architecture, etc.)
 - Implemnt PROD mode and DEV mode globally controllable , cicd style , point to different location
@@ -40,7 +37,6 @@
 - Security review of Datastax authentication flow
 - Dev and Prod environments currently mixed : Implement config-driven environment switching : Clean separation of development vs production data/settings
 - GitHub Actions workflow for test automation : Immediate feedback on breaking changes
-- duplicate sri's MCP server to have a docs RAG server
 
 ## Better coding practices
 
