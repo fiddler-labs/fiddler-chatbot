@@ -3,6 +3,7 @@ __pycache__/
 .ipynb_checkpoints/
 *.pyc
 
+datastax_auth/tmp*/
 
 uv.lock
 # lockfile is runtime specific and should not be committed
@@ -50,3 +51,5 @@ notebooks/.chainlit/translations/
 notebooks/.chainlit/langchain.db/
 notebooks/logs/
 data_generator/.chainlit/*
+
+/chatbot_run_export.jsonl

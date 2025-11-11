@@ -37,7 +37,7 @@ dependencies = [
     "watchdog>=6.0.0",
     "ipykernel>=6.30.0",
     "chainlit>=2.6.5",
-    "fiddler-langgraph>=0.1.0rc1",
+    "fiddler-langgraph>=0.1.1",
     # Testing dependencies
     "pytest>=8.0.0",
     "pytest-mock>=3.12.0",
