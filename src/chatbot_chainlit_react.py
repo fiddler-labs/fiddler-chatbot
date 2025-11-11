@@ -12,6 +12,12 @@ from datetime import datetime
 from pydantic import SecretStr
 import chainlit as cl
 
+from chainlit.config import (
+    ChainlitConfigOverrides,
+    UISettings,
+    HeaderLink,
+)
+
 from langchain_core.messages import (  # , BaseMessage
     AIMessage,
     HumanMessage,
@@ -39,7 +45,7 @@ from opentelemetry.sdk.trace import SpanLimits
 from agentic_tools.rag import (
     rag_over_fiddler_knowledge_base,
     init_rag_resources,
-    shutdown_rag_resources,
+    # shutdown_rag_resources,
     )
 from agentic_tools.validator_url import validate_url
 from agentic_tools.fiddler_gaurdrails import (
@@ -149,6 +155,26 @@ ok, msg = init_rag_resources()
 if not ok:
     logger.error(f"RAG initialization failed: {msg}")
 
+@cl.set_chat_profiles
+async def chat_profile(current_user: cl.User | None, metadata: str | None):
+    return [
+        cl.ChatProfile(
+            name="Main Profile",
+            markdown_description="You shoudld not be seeing this profile. This is the main profile. [Learn more](https://example.com/mcp)",
+            config_overrides=ChainlitConfigOverrides(
+                ui=UISettings(  name="Main UI" ,
+                                header_links = [HeaderLink(
+                                    name = "Fiddler Gen AI Application Monitoring",
+                                    display_name = "Monitor in Fiddler",
+                                    icon_url = "/public/logo.png",
+                                    url = URL_TO_AGENTIC_MONITORING
+                                )
+                                ]
+                        )
+            )
+        )
+    ]
+
 @cl.on_chat_start
 async def on_chat_start():
     """Initialize a new chat session"""
@@ -166,11 +192,8 @@ async def on_chat_start():
 
     # Send welcome message
     await cl.Message(
-        content="🤖 **Welcome to Fiddler AI Assistant!**\n"
-            "I'm your intelligent companion for AI observability, monitoring, and model insights. \n"
-            "I can help you with Fiddler platform questions, ML monitoring best practices, and technical guidance.\n\n"
-            f"**Session ID:** `{session_id}`\n"
-            f"{URL_TO_AGENTIC_MONITORING}\n\n"
+        content="**Welcome to Fiddler Agentic Assistant!**\n"
+            "I'm your intelligent companion for questions about  Fiddler's Agentic and ML observability and monitoring \n"
             "What would you like to explore today?"
             ).send()
 
@@ -208,12 +231,12 @@ async def on_message(message: cl.Message):
                         await msg.update()
 
                     # Show tool calls if any
-                    if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
-                        tool_info = "\n\n🔧 **Using tools:**"
-                        for tool_call in last_message.tool_calls:
-                            tool_info += f"\n- {tool_call['name']}"
-                        msg.content = tool_info + "\n\n" + (msg.content or "Processing...")
-                        await msg.update()
+                    # if hasattr(last_message, 'tool_calls') and last_message.tool_calls:
+                    #     tool_info = "\n\n🔧 **Using tools:**"
+                    #     for tool_call in last_message.tool_calls:
+                    #         tool_info += f"\n- {tool_call['name']}"
+                    #     msg.content = tool_info + "\n\n" + (msg.content or "Processing...")
+                    #     await msg.update()
 
                 # Handle Tool messages
                 elif isinstance(last_message, ToolMessage):
