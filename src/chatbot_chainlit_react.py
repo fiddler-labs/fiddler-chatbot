@@ -25,7 +25,7 @@ from langchain_core.tools import tool  # , Tool
 from langchain_openai import ChatOpenAI
 
 from langgraph.checkpoint.memory import MemorySaver # todo- , MemorySaverAsync , SqliteSaver , CassandraSaver
-from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt import create_react_agent #todo
 
 from fiddler_langgraph import FiddlerClient
 from fiddler_langgraph.tracing.instrumentation import (  # todo - use this later  # noqa: F401
@@ -34,6 +34,7 @@ from fiddler_langgraph.tracing.instrumentation import (  # todo - use this later
     set_llm_context,
     )
 from opentelemetry.exporter.otlp.proto.http import Compression
+from opentelemetry.sdk.trace import SpanLimits
 
 from agentic_tools.rag import (
     rag_over_fiddler_knowledge_base,
@@ -67,18 +68,29 @@ if not OPENAI_API_KEY or not FIDDLER_API_KEY or not FIDDLER_APP_ID :
     logger.error("Error: OPENAI_API_KEY, FIDDLER_API_KEY, or FIDDLER_APP_ID environment variables are required")
     sys.exit(1)
 
+# Custom span limits for high-volume applications
+custom_limits = SpanLimits(
+    max_events=64,            # Default: 32
+    max_links=64,             # Default: 32
+    max_span_attributes=64,   # Default: 32
+    max_event_attributes=64,  # Default: 32
+    max_link_attributes=64,   # Default: 32
+    max_span_attribute_length=8192, # Default: 2048
+)
+
 logger.info("Initializing Fiddler monitoring...")
 fdl_client = FiddlerClient(
     api_key=FIDDLER_API_KEY,
     application_id=str(FIDDLER_APP_ID),
     url=str(FIDDLER_URL),
-    console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
-    span_limits=None,
+    console_tracer=True,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
+    span_limits=custom_limits,
     sampler=None,
     compression=Compression.Gzip,
     jsonl_capture_enabled=True,
-    jsonl_file_path='./chatbot.jsonl',
+    jsonl_file_path='./chatbot_run_export.jsonl',
     )
+
 # Instrument the application
 instrumentor = LangGraphInstrumentor(fdl_client)
 instrumentor.instrument()
@@ -133,8 +145,6 @@ app = create_react_agent(
     checkpointer=checkpointer
     )
 
-set_llm_context(base_llm, "ReAct chatbot agent powered by OpenAI Model gpt-4.1")
-
 ok, msg = init_rag_resources()
 if not ok:
     logger.error(f"RAG initialization failed: {msg}")
@@ -186,6 +196,7 @@ async def on_message(message: cl.Message):
             messages = event.get("messages", [])
             if messages:
                 last_message = messages[-1]
+                set_llm_context(base_llm, str(messages[::-1]))
 
                 # Handle AI messages
                 if isinstance(last_message, AIMessage):
