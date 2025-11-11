@@ -55,7 +55,6 @@ dependencies = [
 
 authors = [{name = "Fiddler AI Team"}]
 maintainers = [{name = "Fiddler AI Team"}]
-package-mode = false
 
 [tool.ruff]
 # Ruff configuration for consistent code style
