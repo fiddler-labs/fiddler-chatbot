@@ -29,7 +29,7 @@
 
 - add async support using Cursor review of the following guide
   - this will probably not work with the current fiddler-langgraph sdk
-  - https://docs.chainlit.io/guides/sync-async
+  - <https://docs.chainlit.io/guides/sync-async>
 - Expand README with comprehensive project documentation (setup, usage, architecture, etc.)
 - Implemnt PROD mode and DEV mode globally controllable , cicd style , point to different location
 - purge uv env and re-install everything after clean up to retain only needed packages
