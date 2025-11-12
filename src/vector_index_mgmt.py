@@ -19,7 +19,7 @@ from tqdm import tqdm
 import pandas as pd
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import Optional, Any, Callable, Dict, List, Tuple, Union # noqa: F401
+from typing import Any, Union  # noqa: F401
 from contextlib import contextmanager
 from enum import Enum
 
@@ -41,7 +41,7 @@ from langchain_community.vectorstores import Cassandra
 from langchain_openai import OpenAI
 from langchain_openai import OpenAIEmbeddings
 
-from config import CONFIG_VECTOR_INDEX_MGMT as config
+from config import CONFIG_VECTOR_INDEX_MGMT as config  # noqa: N811
 
 from utils.custom_logging import setup_logging
 
@@ -62,15 +62,15 @@ class LoadResult:
     result: OperationResult
     message: str
     rows_processed: int = 0
-    backup_table: Optional[str] = None
-    errors: List[str] = field(default_factory=list)
+    backup_table: str | None = None
+    errors: list[str] = field(default_factory=list)
 
 @dataclass
 class ValidationResult:
     """Result of configuration validation"""
     is_valid: bool
-    errors:   List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors:   list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     valid_rows: int = 0
     total_rows: int = 0
 
@@ -273,7 +273,7 @@ def fetch_latest_csv_path() -> str:
         raise FileNotFoundError("No CSV files found in local_assets folder")
     return max(csv_files, key=os.path.getctime)
 
-def validate_and_load_documentation_data(csv_path: str) -> Tuple[ValidationResult, Optional[pd.DataFrame]]:
+def validate_and_load_documentation_data(csv_path: str) -> tuple[ValidationResult, pd.DataFrame | None]:
     """
     Load  and Validate documentation data from CSV file
     Returns: (validation_result, dataframe) tuple
@@ -814,7 +814,7 @@ def test_vector_store(
 
 # ==================== TABLE INSPECTION UTILITIES ====================
 
-def inspect_table_structure_safe(session, table_name: str, keyspace: Optional[str] = None) -> None:
+def inspect_table_structure_safe(session, table_name: str, keyspace: str | None = None) -> None:
     """
     Thread-safe utility to inspect Cassandra table structure and sample data
     Uses a local session approach to avoid row factory concurrency issues
@@ -922,7 +922,7 @@ def query_and_display_rows_safe(session, table_name: str, limit: int = 10) -> No
 
 # ==================== DATA EXPORT UTILITIES ====================
 
-def export_table_to_csv(session, table_name: str, output_file: Optional[str] = None) -> Optional[str]:
+def export_table_to_csv(session, table_name: str, output_file: str | None = None) -> str | None:
     """
     Export Cassandra table data to CSV file
     Returns the path to the created CSV file
