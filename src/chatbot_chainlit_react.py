@@ -24,14 +24,13 @@ from langchain_core.messages import (  # , BaseMessage
     ToolMessage,
     # SystemMessage,
     )
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.config import RunnableConfig
 from langchain_core.tools import tool  # , Tool
 
 from langchain_openai import ChatOpenAI
 
-from langgraph.checkpoint.memory import MemorySaver # todo- , MemorySaverAsync , SqliteSaver , CassandraSaver
-from langgraph.prebuilt import create_react_agent #todo
+from langgraph.checkpoint.memory import MemorySaver
+from langchain.agents import create_agent
 
 from fiddler_langgraph import FiddlerClient
 from fiddler_langgraph.tracing.instrumentation import (  # todo - use this later  # noqa: F401
@@ -127,27 +126,14 @@ tools = [
     tool_fiddler_guardrail_faithfulness,
     validate_url,
     ]
-llm = base_llm.bind_tools(tools)
-logger.info("✓ Tools bound to language model successfully")
+logger.info("✓ Tools configured successfully")
 
 checkpointer = MemorySaver()
 
-prompt_template = ChatPromptTemplate.from_messages([
-    ('system',SYSTEM_INSTRUCTIONS_PROMPT),
-    MessagesPlaceholder(variable_name='messages'),
-    ])
-
-
-app = create_react_agent(
-    model=llm,
-    tools = [
-            get_system_time,
-            rag_over_fiddler_knowledge_base,
-            tool_fiddler_guardrail_safety,
-            tool_fiddler_guardrail_faithfulness,
-            validate_url,
-        ],
-    prompt=prompt_template,
+app = create_agent(
+    model=base_llm,
+    tools=tools,
+    system_prompt=SYSTEM_INSTRUCTIONS_PROMPT,
     checkpointer=checkpointer
     )
 
@@ -186,7 +172,6 @@ async def on_chat_start():
     thread_config = RunnableConfig(configurable={"thread_id": session_id})
 
     # Store in session
-    cl.user_session.set("llm", llm)
     cl.user_session.set("session_id", session_id)
     cl.user_session.set("thread_config", thread_config)
 
