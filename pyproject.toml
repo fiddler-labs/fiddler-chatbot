@@ -51,6 +51,7 @@ dependencies = [
     # "rich>=14.1.0",
     "eventlet>=0.40.3",
     "twisted>=25.5.0",
+    "langchain-text-splitters>=1.0.0",
 ]
 
 authors = [{name = "Fiddler AI Team"}]

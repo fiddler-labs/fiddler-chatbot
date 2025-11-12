@@ -33,7 +33,7 @@ import requests
 from tqdm import tqdm
 from datetime import datetime, timezone
 from typing import List, Tuple, Optional
-from langchain.text_splitter import RecursiveCharacterTextSplitter , MarkdownHeaderTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
 from pathlib import Path
 from packaging import version
 
