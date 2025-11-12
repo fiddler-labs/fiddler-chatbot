@@ -31,7 +31,7 @@ import feedparser
 from bs4 import BeautifulSoup
 import requests
 from tqdm import tqdm
-from datetime import datetime
+import datetime as dt
 from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
 from pathlib import Path
 from packaging import version
@@ -794,7 +794,7 @@ def generate_corpus_from_sources() -> Path:
     df = pd.DataFrame({'text': corpus_chunks})
 
     # Create output filename
-    output_filename = f'vector_index_feed_{datetime.now(datetime.UTC).strftime("%Y%m%d%H%M%S")}.csv'  # type: ignore[attr-defined]
+    output_filename = f'vector_index_feed_{dt.datetime.now(dt.UTC).strftime("%Y%m%d%H%M%S")}.csv'  # type: ignore[attr-defined]
     output_path = os.path.join(LOCAL_DATA_ASSETS_DIR, output_filename)
 
     try:
