@@ -7,10 +7,12 @@ import sys
 import traceback
 import uuid
 import logging
+from typing import Literal
 from dotenv import load_dotenv
 from datetime import datetime
 from pydantic import SecretStr
 import chainlit as cl
+from chainlit.input_widget import Switch
 
 from chainlit.config import (
     ChainlitConfigOverrides,
@@ -88,7 +90,7 @@ fdl_client = FiddlerClient(
     api_key=FIDDLER_API_KEY,
     application_id=str(FIDDLER_APP_ID),
     url=str(FIDDLER_URL),
-    console_tracer=True,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
+    console_tracer=False,  # Set to True for debugging ; Enabling console tracer will prevent data from being sent to Fiddler.
     span_limits=custom_limits,
     sampler=None,
     compression=Compression.Gzip,
@@ -141,50 +143,110 @@ ok, msg = init_rag_resources()
 if not ok:
     logger.error(f"RAG initialization failed: {msg}")
 
+# Type definition for Chain of Thought mode - only two valid values
+CotModeType = Literal["hidden", "full"]
+
+# Global variable for Chain of Thought mode
+# Defaults to "hidden"
+COT_MODE: CotModeType = "hidden"
+
+
+def set_cot_mode(value: bool | str) -> CotModeType:
+    """
+    Update the global Chain of Thought mode.
+    Converts toggle boolean to mode string and validates the value.
+
+    Args: value: True/"full" for visible COT, False/"hidden" for hidden COT
+    Returns: The validated CotModeType value ("hidden" or "full")
+    """
+    global COT_MODE
+
+    # Convert boolean to string if needed
+    if isinstance(value, bool):
+        mode = "full" if value else "hidden"
+    else:
+        # Validate string values
+        mode = value if value in ("hidden", "full") else "hidden"
+        if value not in ("hidden", "full"):
+            logger.error(f"Invalid COT_MODE value '{value}', defaulting to 'hidden'")
+
+    COT_MODE = mode  # type: ignore
+    return COT_MODE
+
+
 @cl.set_chat_profiles
 async def chat_profile(current_user: cl.User | None, metadata: str | None):
+    """Define chat profile with UI customizations."""
     return [
         cl.ChatProfile(
             name="Main Profile",
             markdown_description="You shoudld not be seeing this profile. This is the main profile. [Learn more](https://example.com/mcp)",
             config_overrides=ChainlitConfigOverrides(
-                ui=UISettings(  name="Main UI" ,
-                                header_links = [HeaderLink(
-                                    name = "Fiddler Gen AI Application Monitoring",
-                                    display_name = "Monitor in Fiddler",
-                                    icon_url = "/public/logo.png",
-                                    url = URL_TO_AGENTIC_MONITORING
-                                )
-                                ]
+                ui=UISettings(
+                    name="Main UI",
+                    header_links=[
+                        HeaderLink(
+                            name="Fiddler Gen AI Application Monitoring",
+                            display_name="Monitor in Fiddler",
+                            icon_url="/public/logo.png",
+                            url=URL_TO_AGENTIC_MONITORING
                         )
+                    ]
+                )
             )
         )
     ]
 
 @cl.on_chat_start
 async def on_chat_start():
-    """Initialize a new chat session"""
+    """Initialize a new chat session with Chain of Thought toggle."""
     logger.info("New chat session started")
 
+    # Initialize session
     session_id = str(datetime.now().strftime("%Y%m%d%H%M%S")) + "_" + str(uuid.uuid4())
     set_conversation_id(session_id)
-
     thread_config = RunnableConfig(configurable={"thread_id": session_id})
-
-    # Store in session
     cl.user_session.set("session_id", session_id)
     cl.user_session.set("thread_config", thread_config)
+
+    # Create Chain of Thought toggle switch (defaults to current COT_MODE)
+    settings = await cl.ChatSettings(
+        [
+            Switch(
+                id="cot_toggle",
+                label="Chain of Thought",
+                initial=(COT_MODE == "full"),
+                tooltip="Toggle between full and hidden chain of thought display modes."
+            )
+        ]
+    ).send()
+
+    # Update COT_MODE from toggle (in case user changed it before first message)
+    cot_toggle_value = settings.get("cot_toggle", COT_MODE == "full")
+    set_cot_mode(cot_toggle_value)
+    cl.user_session.set("cot_toggle", cot_toggle_value)
+    logger.info(f"Chain of Thought mode: {COT_MODE}")
 
     # Send welcome message
     await cl.Message(
         content="**Welcome to Fiddler Agentic Assistant!**\n"
             "I'm your intelligent companion for questions about  Fiddler's Agentic and ML observability and monitoring \n"
             "What would you like to explore today?"
-            ).send()
+    ).send()
+
+@cl.on_settings_update
+async def settings_update(settings: dict):
+    """Handle Chain of Thought toggle changes (takes effect on next message)."""
+    cot_toggle_value = settings.get("cot_toggle")
+    if cot_toggle_value is not None:
+        old_mode = COT_MODE
+        set_cot_mode(cot_toggle_value)
+        cl.user_session.set("cot_toggle", cot_toggle_value)
+        logger.info(f"Chain of Thought: {old_mode} → {COT_MODE}")
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    """Handle incoming messages"""
+    """Handle incoming messages and stream responses."""
     thread_config = cl.user_session.get("thread_config")
 
     # Add the new user message to existing conversation
@@ -194,10 +256,10 @@ async def on_message(message: cl.Message):
     await msg.send()
 
     try:
-        # Stream the response
+        # Stream the agentic response
         final_ai_message = None
         async for event in app.astream(
-            {'messages': [HumanMessage(content=user_message.content)]},
+            {'messages': [user_message]},
             thread_config,
             stream_mode="values",
             ):
@@ -206,11 +268,9 @@ async def on_message(message: cl.Message):
                 last_message = messages[-1]
                 set_llm_context(base_llm, str(messages[::-1]))
 
-                # Handle AI messages
+                # Stream AI response content
                 if isinstance(last_message, AIMessage):
                     final_ai_message = last_message
-
-                    # Stream the content if available
                     if last_message.content:
                         msg.content = str(last_message.content)
                         await msg.update()
@@ -225,11 +285,17 @@ async def on_message(message: cl.Message):
 
                 # Handle Tool messages
                 elif isinstance(last_message, ToolMessage):
-                    # Show tool results in a step
-                    async with cl.Step(name=f"Tool: {last_message.name}", type="tool") as step:
-                        step.output = str(last_message.content)
+                    # Show tool results in a step - only if COT_MODE is "full"
+                    global COT_MODE
+                    if COT_MODE == "full":
+                        # Show tool execution details
+                        async with cl.Step(name=f"Tool: {last_message.name}", type="tool") as step:
+                            step.output = str(last_message.content)  # type: ignore
+                    else:
+                        # Hide tool details (log only for debugging)
+                        logger.debug(f"Tool {last_message.name} executed (hidden from user)")
 
-        # Final update if we have content
+        # Final update
         if final_ai_message and final_ai_message.content:
             msg.content = str(final_ai_message.content)
             await msg.update()
