@@ -31,8 +31,7 @@ import feedparser
 from bs4 import BeautifulSoup
 import requests
 from tqdm import tqdm
-from datetime import datetime, timezone
-from typing import List, Tuple, Optional
+from datetime import datetime
 from langchain_text_splitters import RecursiveCharacterTextSplitter, MarkdownHeaderTextSplitter
 from pathlib import Path
 from packaging import version
@@ -41,7 +40,7 @@ from utils.notebook_to_md import convert_notebooks_jupyter_nbconvert, convert_no
 from utils.flatten_folders import flatten_all_files_individually, concatenate_files_in_leaf_folders
 from utils.custom_logging import setup_logging
 
-from config import CONFIG_DATA_GENERATION as config
+from config import CONFIG_DATA_GENERATION as config  # noqa: N811
 
 # Setup logging with default values
 setup_logging(log_level="DEBUG")
@@ -209,9 +208,9 @@ def clone_or_pull_repo(repo_url: str, repo_location: str) -> None:
         logger.info(f"Successfully cloned repository: {result.stdout.strip()}")
     except subprocess.CalledProcessError as e:
         logger.error(f"Failed to clone repository {repo_url}: {e.stderr}")
-        raise RuntimeError(f"Repository cloning failed: {e.stderr}")
+        raise RuntimeError(f"Repository cloning failed: {e.stderr}") from e
 
-def checkout_latest_release_branch(repo_path: str, branch_override: Optional[str] = None) -> str:
+def checkout_latest_release_branch(repo_path: str, branch_override: str | None = None) -> str:
     """
     Get the latest release branch name from the repository and check out to it.
     Args:
@@ -220,7 +219,7 @@ def checkout_latest_release_branch(repo_path: str, branch_override: Optional[str
     Returns: Name of the branch that was checked out
     """
 
-    def _parse_version_from_branch(branch_name: str) -> Tuple[Optional[version.Version], str]:
+    def _parse_version_from_branch(branch_name: str) -> tuple[version.Version | None, str]:
         """
         Parse semantic version from branch name.
 
@@ -402,7 +401,7 @@ def process_docs() -> None: # WIP
                 _simple_copy_docs_folder()
             except Exception as e3:
                 logger.error(f"Error copying docs folder: {e3} , cannot continue")
-                raise RuntimeError("Error copying docs folder")
+                raise RuntimeError("Error copying docs folder") from e3
 
     return
 
@@ -413,7 +412,7 @@ def process_notebooks() -> None:
     Both documentation and notebook files are kept separate for individual embedding.
     """
 
-    def _find_notebook_files(source_dir: str) -> List[str]:
+    def _find_notebook_files(source_dir: str) -> list[str]:
         """
         Find all .ipynb files recursively in the source directory.
         Skips checkpoint files and returns a list of notebook file paths.
@@ -422,7 +421,7 @@ def process_notebooks() -> None:
         Returns: List of notebook file paths
         """
         notebook_files = []
-        for root, dirs, files in os.walk(source_dir):
+        for root, _dirs, files in os.walk(source_dir):
             for file in files:
                 if file.endswith('.ipynb'):
                     if '.ipynb_checkpoints' not in root:  # Skip checkpoint files
@@ -614,7 +613,7 @@ def crawl_rss_feeds() -> None:
     else:
         logger.info("RSS feed crawling phase completed (some feeds may have failed, but process continues)")
 
-def split_text_with_markdown_headers(text: str) -> List[str]:
+def split_text_with_markdown_headers(text: str) -> list[str]:
     """
     Split text using MarkdownHeaderTextSplitter with optional hybrid approach.
     Args: text: Input text to split
@@ -639,7 +638,7 @@ def split_text_with_markdown_headers(text: str) -> List[str]:
         if USE_MARKDOWN_HEADER_SPLITTER:
             # Split by markdown headers first
             md_header_splits = markdown_splitter.split_text(text)
-            final_chunks: List[str] = []
+            final_chunks: list[str] = []
 
             for doc in md_header_splits:
                 # Split large sections further while preserving header metadata in content
@@ -680,7 +679,7 @@ def split_text_with_markdown_headers(text: str) -> List[str]:
 
         except Exception as e:
             logger.error(f"FATAL ERROR: Error splitting text via FALLBACK method: {str(e)}")
-            raise RuntimeError("FATAL ERROR: Error splitting text via FALLBACK method")
+            raise RuntimeError("FATAL ERROR: Error splitting text via FALLBACK method") from e
 
 
 def generate_corpus_from_sources() -> Path:
@@ -696,12 +695,12 @@ def generate_corpus_from_sources() -> Path:
     # Collect processed documentation files
     if os.path.exists(FIDDLER_MD_DOCS_DIR):
         logger.info("Collecting documentation files...")
-        for root, dirs, files in os.walk(FIDDLER_MD_DOCS_DIR):
+        for root, _dirs, files in os.walk(FIDDLER_MD_DOCS_DIR):
             for filename in files:
                 if filename.endswith(".md"):
                     file_path = os.path.join(os.path.relpath(root), filename)
                     try:
-                        with open(file_path, "r", encoding='utf-8') as f:
+                        with open(file_path, encoding='utf-8') as f:
                             file_content = f.read()
                             # Embed the URL/path of the doc in the content for reference
                             doc_url = os.path.join('https://docs.fiddler.ai/', filename).replace('__', '/')
@@ -714,12 +713,12 @@ def generate_corpus_from_sources() -> Path:
     # Collect converted notebook files
     if os.path.exists(FIDDLER_MD_NOTEBOOKS_DIR):
         logger.info("Collecting converted notebook files...")
-        for root, dirs, files in os.walk(FIDDLER_MD_NOTEBOOKS_DIR):
+        for root, _dirs, files in os.walk(FIDDLER_MD_NOTEBOOKS_DIR):
             for filename in files:
                 if filename.endswith(".md"):
                     file_path = os.path.join(os.path.relpath(root), filename)
                     try:
-                        with open(file_path, "r", encoding='utf-8') as f:
+                        with open(file_path, encoding='utf-8') as f:
                             file_content = f.read()
                             # Mark as notebook content
                             doc_url = f'NOTEBOOK_URL:{file_path[:-3]}'
@@ -731,12 +730,12 @@ def generate_corpus_from_sources() -> Path:
     # Collect blog files
     if os.path.exists(FIDDLER_MD_BLOGS_DIR):
         logger.info("Collecting blog files...")
-        for root, dirs, files in os.walk(FIDDLER_MD_BLOGS_DIR):
+        for root, _dirs, files in os.walk(FIDDLER_MD_BLOGS_DIR):
             for filename in files:
                 if filename.endswith(".md"):
                     file_path = os.path.join(os.path.relpath(root), filename)
                     try:
-                        with open(file_path, "r", encoding='utf-8') as f:
+                        with open(file_path, encoding='utf-8') as f:
                             file_content = f.read()
                             doc_url = os.path.join(FIDDLER_WEBSITE_BLOG_URL, filename).replace('__', '/')
                             doc_url = f'BLOG_URL:{doc_url[:-3]}'
@@ -748,12 +747,12 @@ def generate_corpus_from_sources() -> Path:
     # Collect resources files
     if os.path.exists(FIDDLER_MD_RESOURCES_DIR):
         logger.info("Collecting resources files...")
-        for root, dirs, files in os.walk(FIDDLER_MD_RESOURCES_DIR):
+        for root, _dirs, files in os.walk(FIDDLER_MD_RESOURCES_DIR):
             for filename in files:
                 if filename.endswith(".md"):
                     file_path = os.path.join(os.path.relpath(root), filename)
                     try:
-                        with open(file_path, "r", encoding='utf-8') as f:
+                        with open(file_path, encoding='utf-8') as f:
                             file_content = f.read()
                             doc_url = os.path.join(FIDDLER_WEBSITE_RESOURCES_URL, filename).replace('__', '/')
                             doc_url = f'RESOURCES_URL:{doc_url[:-3]}'
@@ -795,7 +794,7 @@ def generate_corpus_from_sources() -> Path:
     df = pd.DataFrame({'text': corpus_chunks})
 
     # Create output filename
-    output_filename = f'vector_index_feed_{datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")}.csv'
+    output_filename = f'vector_index_feed_{datetime.now(datetime.UTC).strftime("%Y%m%d%H%M%S")}.csv'  # type: ignore[attr-defined]
     output_path = os.path.join(LOCAL_DATA_ASSETS_DIR, output_filename)
 
     try:
@@ -806,7 +805,7 @@ def generate_corpus_from_sources() -> Path:
 
     except Exception as e:
         logger.error(f"Failed to save corpus CSV: {str(e)}")
-        raise RuntimeError("Failed to save corpus CSV")
+        raise RuntimeError("Failed to save corpus CSV") from e
 
 
 def corpus_data_generation_process() -> Path | None:
