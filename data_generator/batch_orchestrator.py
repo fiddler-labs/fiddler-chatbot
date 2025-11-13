@@ -93,7 +93,7 @@ if __name__ == "__main__":
         thread_id = str(uuid.uuid4())
         persona_text = persona_dict['text']
         persona_name = persona_dict.get('name', 'Unknown')
-        print(f"Running simulation for persona: {persona_name} ({persona_text[:50]}...)")
+        print(f"Running simulation for persona: {persona_name} ({persona_text[:20]}...)")
         # Pass persona_dict to run_simulation for metadata access
         conversations = run_simulation(persona_dict, thread_id, args.max_iterations)
         conversation_df = convert_conversation_to_df(conversations, thread_id, persona_text)

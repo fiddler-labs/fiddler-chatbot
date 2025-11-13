@@ -3,37 +3,24 @@ import sys
 import uuid
 import warnings
 import argparse
-import json
 import pandas as pd
 
 from dotenv import load_dotenv
-from typing import Annotated, Sequence
-from typing_extensions import TypedDict
-# from collections.abc import Sequence
+from collections.abc import Sequence
 
-
-# Suppress cassandra driver warnings about optional dependencies
-warnings.filterwarnings("ignore", message=".*EventletConnection not available.*")
-warnings.filterwarnings("ignore", message=".*TwistedConnection not available.*")
-
-# Add the src directory to the Python path
-script_dir = os.path.dirname(os.path.abspath(__file__))
-src_path = os.path.abspath(os.path.join(script_dir, '..', 'src'))
-if src_path not in sys.path:
-    sys.path.insert(0, src_path)
-
-# Import required modules
 from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langchain_core.runnables.config import RunnableConfig
 from langchain_openai import ChatOpenAI
 
-import chatbot_chainlit_react as chatbot_core
+from systemprompts import PROMPTS_CONFIG
 
-from fiddler_langgraph import FiddlerClient
-from fiddler_langgraph.tracing.instrumentation import LangGraphInstrumentor
-from opentelemetry.exporter.otlp.proto.http import Compression
+from src.chatbot_chainlit_react import app as chatbot_core, SYSTEM_INSTRUCTIONS_PROMPT
 
 load_dotenv()
+
+# Suppress cassandra driver warnings about optional dependencies
+warnings.filterwarnings("ignore", message=".*EventletConnection not available.*")
+warnings.filterwarnings("ignore", message=".*TwistedConnection not available.*")
 
 # Constants
 GPT_5 = 'gpt-4o-mini'
@@ -54,32 +41,10 @@ THREAD_ID = 'thread_id'
 MAX_CONVERSATION_LENGTH = 7
 
 # Initialize LLM
-LLM = ChatOpenAI(model=GPT_5, max_tokens=4096)
+LLM = ChatOpenAI(model=GPT_5)
 
-# fdl_client = FiddlerClient(
-#     api_key=os.environ["FIDDLER_API_KEY"],
-#     application_id=os.environ["FIDDLER_APP_ID"],
-#     url=os.environ["FIDDLER_URL"],
-#     console_tracer=False,
-#     span_limits=None,
-#     sampler=None,
-#     compression=Compression.Gzip,
-#     jsonl_capture_enabled=True,
-#     jsonl_file_path='./simulator.jsonl',
-# )
-
-# instrumentor = LangGraphInstrumentor(fdl_client)
-# instrumentor.instrument()
-
-# Load system prompts from configuration file
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROMPTS_CONFIG_PATH = os.path.join(SCRIPT_DIR, 'systemprompts.json')
-
-with open(PROMPTS_CONFIG_PATH, 'r') as f:
-    prompts_config = json.load(f)
-
-SIM_SYSTEM_PROMPT = prompts_config['sim_system_prompt']
-USER_SIM_PROMPT = prompts_config['user_sim_prompt_active']  # Use active version by default
+SIM_SYSTEM_PROMPT = PROMPTS_CONFIG['sim_system_prompt']
+USER_SIM_PROMPT = PROMPTS_CONFIG['user_sim_prompt_active']  # Use active version by default
 
 def simulate_synthetic_question(persona, conversation: Sequence[BaseMessage]):
     """
@@ -110,7 +75,7 @@ def simulate_synthetic_question(persona, conversation: Sequence[BaseMessage]):
         HumanMessage(content=USER_SIM_PROMPT.format(persona=persona_text, conversation_thread=conversation))
         ]
     response = LLM.invoke(messages)
-    print(f'Simulated Question: {response.content}')
+    # print(f'Simulated Question: {response.content}')
     return response.content
 
 def run_simulation(persona, thread_id: str, max_iterations: int = 20):
@@ -133,21 +98,20 @@ def run_simulation(persona, thread_id: str, max_iterations: int = 20):
     print(f"Starting simulation with persona: {persona_display}")
 
     thread_config = RunnableConfig(configurable={THREAD_ID: thread_id}, recursion_limit=max_iterations)
-    chatbot = chatbot_core.app
 
     conversation = {
         MESSAGES: []
     }
     while (user_question := simulate_synthetic_question(persona, conversation[MESSAGES])) != 'EXIT NOW':
         if len(conversation[MESSAGES]) == 0:
-            conversation = chatbot.invoke({
+            conversation = chatbot_core.invoke({
                 MESSAGES: [
-                    SystemMessage(content=chatbot_core.SYSTEM_INSTRUCTIONS_PROMPT),
+                    SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT),
                     HumanMessage(content=user_question)
                 ]
             }, thread_config)
         else:
-            conversation = chatbot.invoke({
+            conversation = chatbot_core.invoke({
                 MESSAGES: conversation[MESSAGES] + [HumanMessage(content=user_question)]
             },
             thread_config

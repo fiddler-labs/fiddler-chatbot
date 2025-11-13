@@ -27,7 +27,7 @@ from enum import Enum
 # Need to provide asyncore compatibility for Python 3.13
 # Python 3.12+ removed asyncore module, so we need to provide a compatibility layer
 try:
-    from utils.cassandra_compatibility import setup_cassandra_compatibility
+    from src.utils.cassandra_compatibility import setup_cassandra_compatibility
     Cluster, Session, PlainTextAuthProvider, named_tuple_factory, cassandra_connection_class = setup_cassandra_compatibility()
 except Exception as e:
     print(f"❌ Failed to setup Cassandra compatibility: {e}")
@@ -41,9 +41,9 @@ from langchain_community.vectorstores import Cassandra
 from langchain_openai import OpenAI
 from langchain_openai import OpenAIEmbeddings
 
-from config import CONFIG_VECTOR_INDEX_MGMT as config  # noqa: N811
+from src.config import CONFIG_VECTOR_INDEX_MGMT as config  # noqa: N811
 
-from utils.custom_logging import setup_logging
+from src.utils.custom_logging import setup_logging
 
 setup_logging(log_level="DEBUG")
 logger = logging.getLogger(__name__)

@@ -14,7 +14,7 @@ RUN apt-get update \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/app/src \
+    PYTHONPATH=/app/src \ # todo - porblematic , establish a unified execution home path
     # Default Chainlit bind host and port (can be overridden at runtime)
     HOST=0.0.0.0 \
     PORT=8000

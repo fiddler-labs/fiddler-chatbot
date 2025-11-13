@@ -6,8 +6,8 @@ from langchain_community.vectorstores import Cassandra as CassandraVectorStore
 from langchain_core.tools import Tool, tool  # noqa: F401
 # from langchain.tools.retriever import create_retriever_tool
 
-from vector_index_mgmt import open_cassandra_connection, close_cassandra_connection
-from config import CONFIG_VECTOR_INDEX_MGMT , CONFIG_CHATBOT_NEW
+from src.vector_index_mgmt import open_cassandra_connection, close_cassandra_connection
+from src.config import CONFIG_VECTOR_INDEX_MGMT , CONFIG_CHATBOT_NEW
 
 logger = logging.getLogger(__name__)
 

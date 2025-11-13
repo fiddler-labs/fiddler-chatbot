@@ -43,20 +43,20 @@ from fiddler_langgraph.tracing.instrumentation import (  # todo - use this later
 from opentelemetry.exporter.otlp.proto.http import Compression
 from opentelemetry.sdk.trace import SpanLimits
 
-from agentic_tools.rag import (
+from src.agentic_tools.rag import (
     rag_over_fiddler_knowledge_base,
     init_rag_resources,
     # shutdown_rag_resources,
     )
-from agentic_tools.validator_url import validate_url
-from agentic_tools.fiddler_gaurdrails import (
+from src.agentic_tools.validator_url import validate_url
+from src.agentic_tools.fiddler_gaurdrails import (
     tool_fiddler_guardrail_faithfulness,
     tool_fiddler_guardrail_safety,
     )
 
-from utils.custom_logging import setup_logging
+from src.utils.custom_logging import setup_logging
 # from utils.pretty_formatter import try_pretty_formatting
-from config import CONFIG_CHATBOT_NEW as config  # noqa: N811
+from src.config import CONFIG_CHATBOT_NEW as config  # noqa: N811
 
 
 load_dotenv()
@@ -95,7 +95,7 @@ fdl_client = FiddlerClient(
     sampler=None,
     compression=Compression.Gzip,
     jsonl_capture_enabled=True,
-    jsonl_file_path='./chatbot_run_export.jsonl',
+    jsonl_file_path='./data_generator/data/chatbot_run_export.jsonl',
     )
 
 # Instrument the application

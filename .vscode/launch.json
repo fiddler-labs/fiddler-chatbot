@@ -6,14 +6,14 @@
       "request": "launch",
       "program": "${workspaceFolder}/data_generator/batch_orchestrator.py",
       "args": [
-        "--personas", "personas.json",
-        "--output", "data/agentic_conversations.csv",
+        "--personas", "data_generator/personas.json",
+        "--output", "data_generator/data/agentic_conversations.csv",
         "--max-iterations", "20"
       ],
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
-      "cwd": "${workspaceFolder}/data_generator",
+      "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.env",
       "preLaunchTask": "Load Environment Variables",
       "env": {
@@ -26,14 +26,14 @@
       "request": "launch",
       "program": "${workspaceFolder}/data_generator/batch_orchestrator.py",
       "args": [
-        "--personas", "jailed_personas.json",
-        "--output", "data/jailed_conversations.csv",
+        "--personas", "data_generator/jailed_personas.json",
+        "--output", "data_generator/data/jailed_conversations.csv",
         "--max-iterations", "20"
       ],
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
-      "cwd": "${workspaceFolder}/data_generator",
+      "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.env",
       "preLaunchTask": "Load Environment Variables",
       "env": {
@@ -49,7 +49,7 @@
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
-      "cwd": "${workspaceFolder}/data_generator",
+      "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.env",
       "preLaunchTask": "Load Environment Variables",
       "env": {
@@ -64,12 +64,12 @@
       "args": [
         "--persona", "You are a Data Scientist interested in Fiddler",
         "--max-iterations", "20",
-        "--output-file", "data/test_conversation.csv"
+        "--output-file", "data_generator/data/test_conversation.csv"
       ],
       "console": "integratedTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
-      "cwd": "${workspaceFolder}/data_generator",
+      "cwd": "${workspaceFolder}",
       "envFile": "${workspaceFolder}/.env",
       "preLaunchTask": "Load Environment Variables",
       "env": {

@@ -7,7 +7,7 @@ import requests
 from langchain_core.documents import Document
 from langchain_core.tools import tool
 
-from config import CONFIG_CHATBOT_NEW as config  # noqa: N811
+from src.config import CONFIG_CHATBOT_NEW as config  # noqa: N811
 
 FDL_GAURDRAIL_REQUESTS_TIMEOUT = config["FDL_GAURDRAIL_REQUESTS_TIMEOUT"]
 
@@ -41,7 +41,7 @@ def get_faithfulness_guardrail_results(
     max_context_chars  = int(3500 * 4 * 0.85)  # 85% of the theoretical limit as a safety margin
     max_response_chars = int(350  * 4 * 0.85)  # 85% of the theoretical limit as a safety margin
     # todo - move these magic numbers to a config file
-    
+
     if len(context_text) > max_context_chars:
         logger.warning( f"Context text truncated from {len(context_text)} to {max_context_chars} characters to meet API limits")
         context_text = context_text[:max_context_chars]
