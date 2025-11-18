@@ -4,13 +4,16 @@
 
 - make repo private , now that streamlit community cloud is not used
 
-- Data Generation tasks
-  - python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
-  - need to showcase to team all the possible methods for MD generation to see what works best
-    - make a notebook to that leverages data_generation.py and the /utils to create demp props
+- python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
+
+- HIGH P : Add MCP from gitbooks to replace the cassandra stack
+
+## Lower priority considerations / Deep future tasks
 
 - More Tools implementation for agentic orchestration
-  - Add a prompt optimization step in the langgraph app
+
+  - Also explore the gitbook APIs : those can be a tool call ideas too
+
   - Python Code Validation Tool:
     - **Problem**: LLM-generated code may contain syntax/type errors or hallucinated functions
     - **Solution**: Implement type checking on LLM outputs using tools like Pyright/Pylsp
@@ -20,10 +23,6 @@
       - Return corrected, validated code
     - **Goal**: Reduce code hallucination and improve accuracy
     - **Architecture**: Can be wrapped as module-as-a-service or lightweight agent
-  - Also explore the gitbook APIs : those can be a tool call ideas too
-  - HIGH P : TRY add mcp from gitbooks to replace the cassandra stack
-
-## Lower priority considerations / Deep future tasks
 
 - Deployment and Development QoL
   - Set up GitHub Actions workflow for automated embedding update

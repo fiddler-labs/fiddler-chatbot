@@ -109,13 +109,12 @@ def run_simulation(persona, thread_id: str, max_iterations: int = 20):
                     SystemMessage(content=SYSTEM_INSTRUCTIONS_PROMPT),
                     HumanMessage(content=user_question)
                 ]
-            }, thread_config)
+            }, thread_config )
+        
         else:
             conversation = chatbot_core.invoke({
                 MESSAGES: conversation[MESSAGES] + [HumanMessage(content=user_question)]
-            },
-            thread_config
-            )
+            }, thread_config )
 
     return conversation
 

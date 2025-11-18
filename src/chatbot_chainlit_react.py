@@ -114,6 +114,9 @@ base_llm = ChatOpenAI(
     api_key=SecretStr(OPENAI_API_KEY) if OPENAI_API_KEY else None,
     streaming=True,
     )
+
+set_llm_context(base_llm,"TEST CONTEXT : HEXOP")
+
 logger.info("✓ language model initialized successfully")
 
 @tool
@@ -266,8 +269,6 @@ async def on_message(message: cl.Message):
             messages = event.get("messages", [])
             if messages:
                 last_message = messages[-1]
-                set_llm_context(base_llm, str(messages[::-1]))
-
                 # Stream AI response content
                 if isinstance(last_message, AIMessage):
                     final_ai_message = last_message

@@ -63,7 +63,7 @@ def get_faithfulness_guardrail_results(
         {
             "data": {
                 "response": response,
-                "context": context_text,  # Now a single string as required
+                "context": context_text,
             }
         }
     )
