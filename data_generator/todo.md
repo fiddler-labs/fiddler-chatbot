@@ -2,6 +2,7 @@
 
 ## Main Tasks
 
+- implement and test middleware for fiddler context
 - Re-run harness to generate 2 new JSONL files
 
 ## Low Priority Refactoring Suggestions
