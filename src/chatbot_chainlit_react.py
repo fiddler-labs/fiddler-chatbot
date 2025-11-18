@@ -40,6 +40,8 @@ from fiddler_langgraph.tracing.instrumentation import (  # todo - use this later
     set_conversation_id,
     set_llm_context,
     )
+
+from src.middleware.fiddler_context_middleware import create_fiddler_context_middleware
 from opentelemetry.exporter.otlp.proto.http import Compression
 from opentelemetry.sdk.trace import SpanLimits
 
@@ -115,8 +117,6 @@ base_llm = ChatOpenAI(
     streaming=True,
     )
 
-set_llm_context(base_llm,"TEST CONTEXT : HEXOP")
-
 logger.info("✓ language model initialized successfully")
 
 @tool
@@ -139,7 +139,8 @@ app = create_agent(
     model=base_llm,
     tools=tools,
     system_prompt=SYSTEM_INSTRUCTIONS_PROMPT,
-    checkpointer=checkpointer
+    checkpointer=checkpointer,
+    middleware=[create_fiddler_context_middleware]
     )
 
 ok, msg = init_rag_resources()
