@@ -35,6 +35,13 @@ def validate_url(url: str) -> str:
              If invalid, returns {"status": "invalid", "url": url,
              "reason": "reason for failure"}.
     """
+    return validate_url_def(url)
+
+def validate_url_def(url: str) -> str:
+    """
+    Validates a URL by checking its syntax and accessibility.
+    This is the actual implementation of the tool , not the LC Tool
+    """
     # 1. Syntactic Validation
     try:
         parsed_url = urlparse(url)

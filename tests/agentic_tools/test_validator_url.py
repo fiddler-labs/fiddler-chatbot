@@ -13,7 +13,7 @@ import responses
 from requests.exceptions import ConnectionError, RequestException, Timeout
 
 # Import the function under test
-from agentic_tools.validator_url import validate_url
+from ...src.agentic_tools.validator_url import validate_url_def
 
 
 class TestValidateUrlSyntax:
@@ -25,7 +25,7 @@ class TestValidateUrlSyntax:
         with responses.RequestsMock() as rsps:
             rsps.add(responses.HEAD, sample_urls['valid_https'], status=200)
 
-            result = validate_url(sample_urls['valid_https'])
+            result = validate_url_def(sample_urls['valid_https'])
             result_data = json.loads(result)
 
             assert result_data['status'] == 'valid'
@@ -36,7 +36,7 @@ class TestValidateUrlSyntax:
         with responses.RequestsMock() as rsps:
             rsps.add(responses.HEAD, sample_urls['valid_http'], status=200)
 
-            result = validate_url(sample_urls['valid_http'])
+            result = validate_url_def(sample_urls['valid_http'])
             result_data = json.loads(result)
 
             assert result_data['status'] == 'valid'
@@ -44,7 +44,7 @@ class TestValidateUrlSyntax:
 
     def test_invalid_no_scheme(self, sample_urls):
         """Test that URLs without scheme are marked as invalid."""
-        result = validate_url(sample_urls['invalid_no_scheme'])
+        result = validate_url_def(sample_urls['invalid_no_scheme'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -53,7 +53,7 @@ class TestValidateUrlSyntax:
 
     def test_invalid_no_domain(self, sample_urls):
         """Test that URLs without domain are marked as invalid."""
-        result = validate_url(sample_urls['invalid_no_domain'])
+        result = validate_url_def(sample_urls['invalid_no_domain'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -62,7 +62,7 @@ class TestValidateUrlSyntax:
 
     def test_invalid_malformed_url(self, sample_urls):
         """Test that completely malformed URLs are marked as invalid."""
-        result = validate_url(sample_urls['invalid_malformed'])
+        result = validate_url_def(sample_urls['invalid_malformed'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -71,7 +71,7 @@ class TestValidateUrlSyntax:
 
     def test_empty_url(self):
         """Test that empty URLs are handled gracefully."""
-        result = validate_url("")
+        result = validate_url_def("")
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -81,7 +81,7 @@ class TestValidateUrlSyntax:
     def test_none_url_raises_error(self):
         """Test that None URL raises appropriate error."""
         with pytest.raises(TypeError):
-            validate_url(None)
+            validate_url_def(None)  # type: ignore
 
 
 class TestValidateUrlAccessibility:
@@ -96,7 +96,7 @@ class TestValidateUrlAccessibility:
             status=200
         )
 
-        result = validate_url(sample_urls['valid_https'])
+        result = validate_url_def(sample_urls['valid_https'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'valid'
@@ -111,7 +111,7 @@ class TestValidateUrlAccessibility:
             status=302
         )
 
-        result = validate_url(sample_urls['valid_https'])
+        result = validate_url_def(sample_urls['valid_https'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'valid'
@@ -126,7 +126,7 @@ class TestValidateUrlAccessibility:
             status=404
         )
 
-        result = validate_url(sample_urls['valid_https'])
+        result = validate_url_def(sample_urls['valid_https'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -142,7 +142,7 @@ class TestValidateUrlAccessibility:
             status=500
         )
 
-        result = validate_url(sample_urls['valid_https'])
+        result = validate_url_def(sample_urls['valid_https'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -158,7 +158,7 @@ class TestValidateUrlAccessibility:
             status=403
         )
 
-        result = validate_url(sample_urls['valid_https'])
+        result = validate_url_def(sample_urls['valid_https'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -174,7 +174,7 @@ class TestValidateUrlNetworkErrors:
         """Test that timeout errors are handled gracefully."""
         mock_head.side_effect = Timeout("Request timed out")
 
-        result = validate_url(sample_urls['valid_https'])
+        result = validate_url_def(sample_urls['valid_https'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -186,7 +186,7 @@ class TestValidateUrlNetworkErrors:
         """Test that connection errors are handled gracefully."""
         mock_head.side_effect = ConnectionError("Connection failed")
 
-        result = validate_url(sample_urls['valid_https'])
+        result = validate_url_def(sample_urls['valid_https'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -198,7 +198,7 @@ class TestValidateUrlNetworkErrors:
         """Test that general request exceptions are handled gracefully."""
         mock_head.side_effect = RequestException("General request error")
 
-        result = validate_url(sample_urls['valid_https'])
+        result = validate_url_def(sample_urls['valid_https'])
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -217,7 +217,7 @@ class TestValidateUrlLogging:
         mock_head.return_value = mock_response
 
         with patch('agentic_tools.validator_url.logger', mock_logger):
-            validate_url(sample_urls['valid_https'])
+            validate_url_def(sample_urls['valid_https'])
 
             mock_logger.info.assert_called_once()
             call_args = mock_logger.info.call_args[0][0]
@@ -226,7 +226,7 @@ class TestValidateUrlLogging:
     def test_syntax_error_logs_warning(self, mock_logger, sample_urls):
         """Test that syntax errors log warning messages."""
         with patch('agentic_tools.validator_url.logger', mock_logger):
-            validate_url(sample_urls['invalid_no_scheme'])
+            validate_url_def(sample_urls['invalid_no_scheme'])
 
             mock_logger.warning.assert_called_once()
             call_args = mock_logger.warning.call_args[0][0]
@@ -238,7 +238,7 @@ class TestValidateUrlLogging:
         mock_head.side_effect = RequestException("Network error")
 
         with patch('agentic_tools.validator_url.logger', mock_logger):
-            validate_url(sample_urls['valid_https'])
+            validate_url_def(sample_urls['valid_https'])
 
             mock_logger.error.assert_called_once()
             call_args = mock_logger.error.call_args[0][0]
@@ -254,7 +254,7 @@ class TestValidateUrlEdgeCases:
         long_url = "https://example.com/" + "a" * 2000
         responses.add(responses.HEAD, long_url, status=200)
 
-        result = validate_url(long_url)
+        result = validate_url_def(long_url)
         result_data = json.loads(result)
 
         assert result_data['status'] == 'valid'
@@ -266,7 +266,7 @@ class TestValidateUrlEdgeCases:
         url_with_params = "https://example.com/search?q=test&page=1&sort=date"
         responses.add(responses.HEAD, url_with_params, status=200)
 
-        result = validate_url(url_with_params)
+        result = validate_url_def(url_with_params)
         result_data = json.loads(result)
 
         assert result_data['status'] == 'valid'
@@ -278,7 +278,7 @@ class TestValidateUrlEdgeCases:
         url_with_fragment = "https://example.com/page#section1"
         responses.add(responses.HEAD, url_with_fragment, status=200)
 
-        result = validate_url(url_with_fragment)
+        result = validate_url_def(url_with_fragment)
         result_data = json.loads(result)
 
         assert result_data['status'] == 'valid'
@@ -290,7 +290,7 @@ class TestValidateUrlEdgeCases:
         unicode_url = "https://example.com/café"
         responses.add(responses.HEAD, unicode_url, status=200)
 
-        result = validate_url(unicode_url)
+        result = validate_url_def(unicode_url)
         result_data = json.loads(result)
 
         assert result_data['status'] == 'valid'
@@ -301,7 +301,7 @@ class TestValidateUrlEdgeCases:
         # Create a URL that might cause parsing issues
         problematic_url = "https://[::1:80"  # Malformed IPv6
 
-        result = validate_url(problematic_url)
+        result = validate_url_def(problematic_url)
         result_data = json.loads(result)
 
         # Should either be handled as invalid syntax or parsing error
@@ -319,7 +319,7 @@ class TestValidateUrlIntegration:
         # Using a reliable test service
         test_url = "https://httpstat.us/200"
 
-        result = validate_url(test_url)
+        result = validate_url_def(test_url)
         result_data = json.loads(result)
 
         # This test might fail if network is unavailable
@@ -333,7 +333,7 @@ class TestValidateUrlIntegration:
         """Test validation against a real 404 URL (requires network)."""
         test_url = "https://httpstat.us/404"
 
-        result = validate_url(test_url)
+        result = validate_url_def(test_url)
         result_data = json.loads(result)
 
         assert result_data['status'] == 'invalid'
@@ -349,7 +349,7 @@ class TestValidateUrlResponseFormat:
         with responses.RequestsMock() as rsps:
             rsps.add(responses.HEAD, sample_urls['valid_https'], status=200)
 
-            result = validate_url(sample_urls['valid_https'])
+            result = validate_url_def(sample_urls['valid_https'])
             result_data = json.loads(result)
 
             # Check required fields
@@ -363,7 +363,7 @@ class TestValidateUrlResponseFormat:
 
     def test_invalid_response_structure(self, sample_urls):
         """Test that invalid responses have the correct structure."""
-        result = validate_url(sample_urls['invalid_no_scheme'])
+        result = validate_url_def(sample_urls['invalid_no_scheme'])
         result_data = json.loads(result)
 
         # Check required fields
@@ -382,11 +382,11 @@ class TestValidateUrlResponseFormat:
         with responses.RequestsMock() as rsps:
             rsps.add(responses.HEAD, sample_urls['valid_https'], status=200)
 
-            result = validate_url(sample_urls['valid_https'])
+            result = validate_url_def(sample_urls['valid_https'])
             # Should not raise an exception
             json.loads(result)
 
         # Test with invalid URL
-        result = validate_url(sample_urls['invalid_no_scheme'])
+        result = validate_url_def(sample_urls['invalid_no_scheme'])
         # Should not raise an exception
         json.loads(result)

@@ -751,6 +751,10 @@ def _copy_table_data_chunked(session, source_table: str, target_table: str) -> b
 
         # Get full row data for this chunk
         for row_id in tqdm(row_ids, total=len(row_ids), desc=f"Copy-Inserting rows into target table {target_table} 1by1" ):
+
+            select_query = ""
+            row_result = None
+            row_data = []
             try:
                 select_query = f"SELECT row_id, vector, body_blob, metadata_s FROM {config['keyspace']}.{source_table} WHERE row_id = '{row_id}'"
                 row_result = session.execute(select_query)

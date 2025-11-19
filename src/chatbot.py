@@ -52,19 +52,19 @@ from streamlit.logger import get_logger
 
 from agentic_tools.fiddler_gaurdrails import get_safety_guardrail_results, get_faithfulness_guardrail_results
 
-from config import CONFIG_CHATBOT_OLD as config
+from config import CONFIG_CHATBOT_OLD as CONFIG
 
-FIDDLER_CHATBOT_PROJECT_NAME = config["PROJECT_NAME"]
-FIDDLER_CHATBOT_MODEL_NAME   = config["MODEL_NAME"]
-FIDDLER_URL                  = config["FIDDLER_URL"]
+FIDDLER_CHATBOT_PROJECT_NAME = CONFIG["PROJECT_NAME"]
+FIDDLER_CHATBOT_MODEL_NAME   = CONFIG["MODEL_NAME"]
+FIDDLER_URL                  = CONFIG["FIDDLER_URL"]
 
-ASTRA_DB_SECURE_BUNDLE_PATH = config["ASTRA_DB_SECURE_BUNDLE_PATH"]
-ASTRA_DB_KEYSPACE           = config["ASTRA_DB_KEYSPACE"]
-ASTRA_DB_TABLE_NAME         = config["ASTRA_DB_TABLE_NAME"]
-ASTRA_DB_LEDGER_TABLE_NAME  = config["ASTRA_DB_LEDGER_TABLE_NAME"]
+ASTRA_DB_SECURE_BUNDLE_PATH = CONFIG["ASTRA_DB_SECURE_BUNDLE_PATH"]
+ASTRA_DB_KEYSPACE           = CONFIG["ASTRA_DB_KEYSPACE"]
+ASTRA_DB_TABLE_NAME         = CONFIG["ASTRA_DB_TABLE_NAME"]
+ASTRA_DB_LEDGER_TABLE_NAME  = CONFIG["ASTRA_DB_LEDGER_TABLE_NAME"]
 
-EMBEDDING_MODEL = config["OPENAI_EMBEDDING_MODEL"]
-LLM_MODEL       = config["OPENAI_LLM_MODEL"]
+EMBEDDING_MODEL = CONFIG["OPENAI_EMBEDDING_MODEL"]
+LLM_MODEL       = CONFIG["OPENAI_LLM_MODEL"]
 
 # Chat instance Global state inits # todo - this is not the best pattern , to use global vars for state management as such
 CHAT_INSTANCE__PROMPT = "prompt"
@@ -97,7 +97,7 @@ CHAT_INSTANCE__DB_CONN = "db_conn"
 
 # Read the system instructions template
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # Go up 2 levels from src/chatbot.py to project root ./
-with open(os.path.join(PROJECT_ROOT, "src", "system_instructions_LEGACY.md"), "r") as f:
+with open(os.path.join(PROJECT_ROOT, "src", "system_instructions_LEGACY.md") ) as f:
     TEMPLATE = f.read().strip()
 
 QA_CHAIN_PROMPT = PromptTemplate.from_template(TEMPLATE)
@@ -326,6 +326,7 @@ def main():
         for message in st.session_state.messages:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
+
     if prompt := st.chat_input("Ask your questions about Fiddler platform here."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
@@ -346,7 +347,7 @@ def main():
             qa = ConversationalRetrievalChain(
                 combine_docs_chain=doc_chain,
                 question_generator=question_generator,
-                retriever=docsearch_preexisting.as_retriever(search_kwargs={"k": config["TOP_K_RETRIEVAL"]}),
+                retriever=docsearch_preexisting.as_retriever(search_kwargs={"k": CONFIG["TOP_K_RETRIEVAL"]}),
                 memory=st.session_state[CHAT_INSTANCE__MEMORY],
                 max_tokens_limit=5000,
                 return_source_documents=True,

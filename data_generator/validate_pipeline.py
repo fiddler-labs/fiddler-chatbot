@@ -216,7 +216,9 @@ def validate_message_content(df: pd.DataFrame) -> Dict:
 
     for role in df['role'].unique():
         role_messages = df[df['role'] == role]
-        content_lengths = role_messages['content'].str.len()
+        # Ensure we're working with a pandas Series, not numpy array
+        content_series = pd.Series(role_messages['content'], dtype='string')
+        content_lengths = content_series.str.len()
         results['avg_content_length'][role] = content_lengths.mean()
         print_info(f"Average {role} message length: {results['avg_content_length'][role]:.0f} characters")
 
@@ -232,7 +234,9 @@ def validate_message_content(df: pd.DataFrame) -> Dict:
 
     # Check for very short AI responses (potential issues)
     ai_messages = df[df['role'] == 'ai']
-    short_ai = ai_messages[ai_messages['content'].str.len() < 100]
+    # Ensure we're working with a pandas Series, not numpy array
+    ai_content_series = pd.Series(ai_messages['content'], dtype='string')
+    short_ai = ai_messages[ai_content_series.str.len() < 100]
     if len(short_ai) > 0:
         print_warning(f"Found {len(short_ai)} AI messages shorter than 100 characters")
 
@@ -254,7 +258,7 @@ def validate_output_file_matches_expected(csv_path: str, expected_output: str) -
         print_info(f"  Actual: {csv_path}")
         return False
 
-def generate_validation_report(results: Dict, output_file: str = None):
+def generate_validation_report(results: Dict, output_file: str | None = None):
     """Generate a summary validation report."""
     print_header("Validation Summary")
 

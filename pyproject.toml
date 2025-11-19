@@ -93,3 +93,11 @@ ignore = [
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
+
+[tool.pyright]
+exclude = [
+    "local_assets/**",
+    ".venv/**",
+    "src/archived/**",
+    "data_generator/archived/**",
+]
