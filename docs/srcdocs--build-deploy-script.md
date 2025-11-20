@@ -183,8 +183,9 @@ The script includes comprehensive error handling:
 ```
 **Solution**: Ensure you have authenticated to the Fiddler AWS account first:
 ```bash
-# Step 1: Authenticate to Fiddler AWS account
-fiddler/scripts/gsts/awslogin.sh <your-username>@fiddler.ai
+# Step 1: Authenticate to Fiddler AWS account ( via alreadylocally set alias command in .bashrc)
+
+awslogin
 
 # Step 2: Verify authentication
 aws sts get-caller-identity

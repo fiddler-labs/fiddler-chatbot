@@ -11,11 +11,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Avoid creating .pyc files and ensure stdout/stderr are unbuffered
+# todo - PYTHONPATH may be problematic, establish a unified execution home path
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/app/src \ # todo - porblematic , establish a unified execution home path
-    # Default Chainlit bind host and port (can be overridden at runtime)
+    PYTHONPATH=/app/src \
     HOST=0.0.0.0 \
     PORT=8000
 
