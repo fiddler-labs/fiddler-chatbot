@@ -61,21 +61,88 @@ fiddler/scripts/gsts/awslogin.sh <your-username>@fiddler.ai
 Run the script from the project root directory:
 
 ```bash
+# Build with cache enabled (default, faster builds)
 ./build-and-deploy.sh
+
+# Build without cache (clean rebuild, slower but ensures fresh layers)
+./build-and-deploy.sh --no-cache
 ```
+
+#### Command Line Options
+
+- `--no-cache` or `--disable-cache` - Disables Docker build cache, forcing a complete rebuild of all layers from scratch
+- `-h` or `--help` - Shows usage information and available options
 
 ### What the Script Does
 
 The script follows this sequence:
 
-1. **Prerequisites Check** - Verifies all required tools are available
-2. **ECR Authentication** - Logs into AWS ECR using your AWS credentials
-3. **Docker Build** - Builds the image with tag `fiddler-chatbot:latest`
-4. **Docker Tag** - Tags the image for ECR as `079310353266.dkr.ecr.us-west-2.amazonaws.com/fiddler-chatbot:latest`
-5. **Docker Push** - Pushes the image to ECR
-6. **Kubectl Configuration** - Ensures kubectl is configured for the `fdl-extqa` cluster
-7. **Deployment Restart** - Restarts all deployments in the `fiddler-chatbot` namespace
-8. **Status Check** - Waits for rollout completion and shows final status
+1. **Argument Parsing** - Parses command line arguments (e.g., `--no-cache`)
+2. **Prerequisites Check** - Verifies all required tools are available
+3. **ECR Authentication** - Logs into AWS ECR using your AWS credentials
+4. **Docker Build** - Builds the image with tag `fiddler-chatbot:latest` (with or without cache based on flags)
+5. **Docker Tag** - Tags the image for ECR as `079310353266.dkr.ecr.us-west-2.amazonaws.com/fiddler-chatbot:latest`
+6. **Docker Push** - Pushes the image to ECR
+7. **Kubectl Configuration** - Ensures kubectl is configured for the `fdl-extqa` cluster
+8. **Deployment Restart** - Restarts all deployments in the `fiddler-chatbot` namespace
+9. **Status Check** - Waits for rollout completion and shows final status
+
+## Docker Build Cache Control
+
+By default, Docker caches intermediate layers during the build process to speed up subsequent builds. The script provides control over this behavior through command line arguments.
+
+### Default Behavior (Cache Enabled)
+
+When run without any flags, the script uses Docker's default caching behavior:
+
+```bash
+./build-and-deploy.sh
+```
+
+**Benefits:**
+- Faster builds when dependencies haven't changed
+- Reuses cached layers for unchanged parts of the Dockerfile
+- Reduces build time and network usage
+
+**How it works:**
+- Docker caches each layer (RUN, COPY, etc.) based on the layer's content and the commands that created it
+- If a layer's inputs haven't changed, Docker reuses the cached layer
+- Only changed layers and subsequent layers are rebuilt
+
+### Disabling Cache (Clean Rebuild)
+
+To force a complete rebuild without using cached layers:
+
+```bash
+./build-and-deploy.sh --no-cache
+# or
+./build-and-deploy.sh --disable-cache
+```
+
+**When to use:**
+- When you suspect cached layers may be causing issues
+- When you want to ensure all dependencies are freshly downloaded
+- When debugging build problems
+- When base images or dependencies may have been updated externally
+
+**Trade-offs:**
+- Slower builds (all layers rebuilt from scratch)
+- More network usage (dependencies re-downloaded)
+- Ensures completely fresh build environment
+
+### Cache Behavior Details
+
+The Dockerfile is structured to maximize cache efficiency:
+
+- **Early layers** (base image, OS packages) are cached and reused when unchanged
+- **Dependency installation** (`pyproject.toml`, `uv.lock`) is cached separately from application code
+- **Application code** (`COPY . .`) invalidates cache when any file changes
+
+When cache is disabled (`--no-cache`), Docker will:
+- Re-download base images
+- Re-install all OS packages
+- Re-install all Python dependencies
+- Re-copy all application files
 
 ## Configuration
 
@@ -88,6 +155,7 @@ TAG="latest"
 NAMESPACE="fiddler-chatbot"
 AWS_REGION="us-west-2"
 EKS_CLUSTER="fdl-extqa"
+DISABLE_CACHE=false  # Can be overridden via --no-cache flag
 ```
 
 ### Customizing Configuration
@@ -134,8 +202,10 @@ The script provides colored output for better readability:
 
 ### Example Output
 
+**With cache enabled (default):**
 ```
 [INFO] Starting fiddler-chatbot build and deployment process...
+[INFO] Build cache: ENABLED (default)
 
 [INFO] Checking prerequisites...
 [SUCCESS] All prerequisites are available
@@ -144,6 +214,23 @@ The script provides colored output for better readability:
 [SUCCESS] Successfully authenticated to ECR
 
 [INFO] Building Docker image...
+[INFO] Docker build cache enabled (using cached intermediate layers)
+[SUCCESS] Docker image built successfully
+```
+
+**With cache disabled (`--no-cache`):**
+```
+[INFO] Starting fiddler-chatbot build and deployment process...
+[INFO] Build cache: DISABLED (--no-cache)
+
+[INFO] Checking prerequisites...
+[SUCCESS] All prerequisites are available
+
+[INFO] Authenticating to ECR...
+[SUCCESS] Successfully authenticated to ECR
+
+[INFO] Building Docker image...
+[INFO] Docker build cache disabled (--no-cache flag enabled)
 [SUCCESS] Docker image built successfully
 
 [INFO] Tagging image for ECR...
@@ -195,7 +282,10 @@ aws sts get-caller-identity
 ```
 [ERROR] Failed to build Docker image
 ```
-**Solution**: Check Dockerfile syntax and ensure all required files are present.
+**Solution**:
+- Check Dockerfile syntax and ensure all required files are present
+- Try building without cache to rule out cache-related issues: `./build-and-deploy.sh --no-cache`
+- Verify Docker has sufficient disk space for the build
 
 #### 3. ECR Push Failed
 ```
@@ -229,8 +319,11 @@ To debug issues, you can run individual steps manually:
 # Test ECR authentication
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 079310353266.dkr.ecr.us-west-2.amazonaws.com
 
-# Test Docker build
+# Test Docker build (with cache)
 docker build -t fiddler-chatbot:latest .
+
+# Test Docker build (without cache)
+docker build --no-cache -t fiddler-chatbot:latest .
 
 # Test kubectl access
 kubectl get pods -n fiddler-chatbot
@@ -247,10 +340,13 @@ kubectl get pods -n fiddler-chatbot
 ## Best Practices
 
 1. **Test Locally** - Always test Docker builds locally before running the full script
-2. **Review Changes** - Check what files are being copied into the Docker image
-3. **Monitor Deployments** - Watch the deployment status after script completion
-4. **Backup Strategy** - Keep previous image versions in ECR for rollback capability
-5. **Environment Separation** - Use different ECR repositories for different environments
+2. **Use Cache for Development** - Use default caching behavior during development for faster iteration
+3. **Disable Cache for Production** - Consider using `--no-cache` for production builds to ensure completely fresh dependencies
+4. **Review Changes** - Check what files are being copied into the Docker image
+5. **Monitor Deployments** - Watch the deployment status after script completion
+6. **Backup Strategy** - Keep previous image versions in ECR for rollback capability
+7. **Environment Separation** - Use different ECR repositories for different environments
+8. **Cache Troubleshooting** - If builds behave unexpectedly, try `--no-cache` to rule out stale cache issues
 
 ## Support
 

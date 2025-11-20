@@ -13,6 +13,9 @@ NAMESPACE="fiddler-chatbot"
 AWS_REGION="us-west-2"
 EKS_CLUSTER="fdl-extqa"
 
+# Build options (can be overridden via CLI arguments)
+DISABLE_CACHE=false
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -86,7 +89,14 @@ authenticate_ecr() {
 build_image() {
     log_info "Building Docker image..."
 
-    docker build -t "$IMAGE_NAME:$TAG" .
+    # Build Docker image with optional --no-cache flag
+    if [ "$DISABLE_CACHE" = true ]; then
+        log_info "Docker build cache disabled (--no-cache flag enabled)"
+        docker build --no-cache -t "$IMAGE_NAME:$TAG" .
+    else
+        log_info "Docker build cache enabled (using cached intermediate layers)"
+        docker build -t "$IMAGE_NAME:$TAG" .
+    fi
 
     if [ $? -eq 0 ]; then
         log_success "Docker image built successfully"
@@ -193,9 +203,62 @@ show_deployment_status() {
     kubectl get deployment -n "$NAMESPACE" -o wide
 }
 
+# Function to show usage information
+show_usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+Build, tag, push and restart fiddler-chatbot deployment.
+
+OPTIONS:
+    --no-cache, --disable-cache    Disable Docker build cache (rebuild all layers from scratch)
+    -h, --help                     Show this help message
+
+EXAMPLES:
+    # Build with cache (default, faster builds)
+    $0
+
+    # Build without cache (clean rebuild)
+    $0 --no-cache
+
+    # Build without cache (alternative syntax)
+    $0 --disable-cache
+
+EOF
+}
+
+# Function to parse command line arguments
+parse_arguments() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --no-cache|--disable-cache)
+                DISABLE_CACHE=true
+                shift
+                ;;
+            -h|--help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
+}
+
 # Main execution
 main() {
+    # Parse command line arguments
+    parse_arguments "$@"
+
     log_info "Starting fiddler-chatbot build and deployment process..."
+    if [ "$DISABLE_CACHE" = true ]; then
+        log_info "Build cache: DISABLED (--no-cache)"
+    else
+        log_info "Build cache: ENABLED (default)"
+    fi
     echo ""
 
     # Step 1: Check prerequisites

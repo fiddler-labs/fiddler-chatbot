@@ -62,10 +62,44 @@
       "problemMatcher": []
     },
     {
+      "label": "Run Build Script without Cache",
+      "type": "shell",
+      "command": "./build-and-deploy.sh --no-cache",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Deploy Chatbot to QA",
       "dependsOn": [
         "AWS Login",
         "Run Build Script"
+      ],
+      "dependsOrder": "sequence",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Deploy Chatbot to QA (Full rebuild)",
+      "dependsOn": [
+        "AWS Login",
+        "Run Build Script without Cache"
       ],
       "dependsOrder": "sequence",
       "presentation": {
