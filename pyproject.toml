@@ -88,8 +88,8 @@ ignore = [
 # Allow unused imports in __init__.py files
 "**/__init__.py" = ["F401"]
 
+# Use ruff's formatter
 [tool.ruff.format]
-# Use ruff's formatter (like black)
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
@@ -100,4 +100,5 @@ exclude = [
     ".venv/**",
     "src/archived/**",
     "data_generator/archived/**",
-]
+    ]
+typeCheckingMode = "standard"

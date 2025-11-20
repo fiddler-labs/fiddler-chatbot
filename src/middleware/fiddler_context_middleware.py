@@ -10,10 +10,14 @@ For StateGraph-based agents, use the helper function `set_context_from_tool_mess
 
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from typing import Any
 
-from langchain.agents.middleware import ModelRequest, ModelResponse, wrap_model_call
+from langchain.agents.middleware import (
+    AgentMiddleware,
+    ModelRequest,
+    ModelResponse,
+)
 from langchain_core.messages import ToolMessage
 
 from fiddler_langgraph.tracing.instrumentation import set_llm_context
@@ -62,11 +66,7 @@ def _format_tool_context(tool_messages: list[ToolMessage]) -> str:
     return "\n".join(context_parts)
 
 
-@wrap_model_call
-def create_fiddler_context_middleware(
-    request: ModelRequest,
-    handler: Callable[[ModelRequest], ModelResponse]
-) -> ModelResponse:
+class FiddlerContextMiddleware(AgentMiddleware):
     """
     Middleware to automatically capture tool call context and set LLM context.
 
@@ -74,42 +74,84 @@ def create_fiddler_context_middleware(
     conversation state. It formats the tool call information and passes it to
     Fiddler's set_llm_context function for enhanced observability.
 
-    Args:
-        request: The model request containing state and model information
-        handler: The next handler in the middleware chain
-
-    Returns:
-        ModelResponse from the handler
+    Supports both sync and async execution contexts.
     """
-    try:
-        state = request.state
 
-        # Extract ToolMessages from the conversation state
-        if 'messages' in state:
-            tool_messages = [
-                msg for msg in state['messages']
-                if isinstance(msg, ToolMessage)
-            ]
+    def wrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], ModelResponse]
+    ) -> ModelResponse:
+        """Synchronous version of the middleware."""
+        try:
+            state = request.state
 
-            if tool_messages:
-                # Format tool context
-                context = _format_tool_context(tool_messages)
+            # Extract ToolMessages from the conversation state
+            if 'messages' in state:
+                tool_messages = [
+                    msg for msg in state['messages']
+                    if isinstance(msg, ToolMessage)
+                ]
 
-                # Set LLM context with tool call information
-                if context:
-                    set_llm_context(request.model, context)
-                    logger.debug(f"Set LLM context with {len(tool_messages)} tool call(s)")
+                if tool_messages:
+                    # Format tool context
+                    context = _format_tool_context(tool_messages)
+
+                    # Set LLM context with tool call information
+                    if context:
+                        set_llm_context(request.model, context)
+                        logger.debug(f"Set LLM context with {len(tool_messages)} tool call(s)")
+                else:
+                    logger.debug("No tool messages found in state, skipping context setting")
             else:
-                logger.debug("No tool messages found in state, skipping context setting")
-        else:
-            logger.debug("No 'messages' key in state, skipping context setting")
+                logger.debug("No 'messages' key in state, skipping context setting")
 
-    except Exception as e:
-        # Log error but don't break the execution flow
-        logger.warning(f"Error in Fiddler context middleware: {e}", exc_info=True)
+        except Exception as e:
+            # Log error but don't break the execution flow
+            logger.warning(f"Error in Fiddler context middleware: {e}", exc_info=True)
 
-    # Always call the handler to continue the execution
-    return handler(request)
+        # Always call the handler to continue the execution
+        return handler(request)
+
+    async def awrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], Awaitable[ModelResponse]]
+    ) -> ModelResponse:
+        """Asynchronous version of the middleware."""
+        try:
+            state = request.state
+
+            # Extract ToolMessages from the conversation state
+            if 'messages' in state:
+                tool_messages = [
+                    msg for msg in state['messages']
+                    if isinstance(msg, ToolMessage)
+                ]
+
+                if tool_messages:
+                    # Format tool context
+                    context = _format_tool_context(tool_messages)
+
+                    # Set LLM context with tool call information
+                    if context:
+                        set_llm_context(request.model, context)
+                        logger.debug(f"Set LLM context with {len(tool_messages)} tool call(s)")
+                else:
+                    logger.debug("No tool messages found in state, skipping context setting")
+            else:
+                logger.debug("No 'messages' key in state, skipping context setting")
+
+        except Exception as e:
+            # Log error but don't break the execution flow
+            logger.warning(f"Error in Fiddler context middleware: {e}", exc_info=True)
+
+        # Always call the handler to continue the execution
+        return await handler(request)
+
+
+# Create a singleton instance for use as middleware
+create_fiddler_context_middleware = FiddlerContextMiddleware()
 
 
 def set_context_from_tool_messages(

@@ -106,11 +106,22 @@ EKS_CLUSTER="your-cluster"
 
 ## Environment Variables
 
-The script does **not** load environment variables from a `.env` file during the build process. Instead:
+The script does **not** handle environment variables or `.env` files. Environment variables must be managed separately through Kubernetes Secrets or ConfigMaps.
 
-- The `.env` file is copied into the Docker image via `COPY . .` in the Dockerfile
-- Environment variables are loaded at **runtime** when the container starts
-- This approach is more secure as secrets aren't baked into image layers
+### How Environment Variables Are Managed
+
+- **`.env` files are NOT copied into Docker images** - The `.dockerignore` file explicitly excludes `.env` and `.env.*` files from Docker builds
+- **Environment variables are provided at runtime** via Kubernetes Secrets or ConfigMaps
+- **The application uses `python-dotenv`** to load environment variables, but expects them to be available as environment variables in the container (not from a `.env` file in the image)
+
+### Required Environment Variables
+
+The application expects these environment variables:
+- `FIDDLER_API_KEY` - Fiddler API key for authentication
+- `OPENAI_API_KEY` - OpenAI API key for LLM access
+- `FIDDLER_APP_ID` - Fiddler application ID (may be in config or env var)
+
+
 
 ## Output and Logging
 
@@ -226,8 +237,9 @@ kubectl get pods -n fiddler-chatbot
 
 ## Security Considerations
 
-- **No Secrets in Build** - Environment variables are not passed during Docker build
-- **Runtime Loading** - Secrets are loaded from `.env` file when container starts
+- **No Secrets in Build** - Environment variables are not passed during Docker build, and `.env` files are excluded from Docker images via `.dockerignore`
+- **Kubernetes Secrets** - Sensitive data should be stored in Kubernetes Secrets, not in `.env` files committed to the repository
+- **Runtime Configuration** - Environment variables are provided to containers via Kubernetes Secrets/ConfigMaps at runtime
 - **ECR Security** - Uses AWS IAM for authentication
 - **Kubernetes RBAC** - Relies on existing Kubernetes permissions
 

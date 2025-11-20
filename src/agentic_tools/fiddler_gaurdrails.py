@@ -12,7 +12,7 @@ from src.config import CONFIG_CHATBOT_NEW as config  # noqa: N811
 FDL_GAURDRAIL_REQUESTS_TIMEOUT = config["FDL_GAURDRAIL_REQUESTS_TIMEOUT"]
 
 token = os.getenv("FIDDLER_API_KEY_GUARDRAILS")
-fiddler_url = config[ "FIDDLER_URL_GUARDRAILS"]  # CONFIG_CHATBOT_NEW["FIDDLER_URL"] for preprod
+fiddler_url = config[ "FIDDLER_URL_GUARDRAILS"]
 url_safety = f"{fiddler_url}/v3/guardrails/ftl-safety"
 url_faithfulness = f"{fiddler_url}/v3/guardrails/ftl-response-faithfulness"
 

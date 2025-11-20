@@ -59,7 +59,7 @@ default_avatar_file_url = "/public/logo.png"
     name = "Fiddler Monitoring"
     display_name = "Monitor in Fiddler"
     icon_url = "/public/logo.png"
-    url = "https://preprod.cloud.fiddler.ai/"
+    url = "https://demo.fiddler.ai/"
 
 [meta]
 generated_by = "2.6.5"
