@@ -1,6 +1,20 @@
 {
   "configurations": [
     {
+      "name": "Deploy Chatbot to QA",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/utils/post_deploy_dest.py",
+      "args": [],
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "preLaunchTask": "Deploy Chatbot to QA",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
       "name": "Data Generator: Batch Orchestrator (Personas)",
       "type": "debugpy",
       "request": "launch",
