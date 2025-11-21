@@ -16,21 +16,6 @@
       "problemMatcher": []
     },
     {
-      "label": "Example Task",
-      "type": "shell",
-      "command": "source ${workspaceFolder}/any_script.sh",
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "silent",
-        "focus": false,
-        "panel": "shared",
-        "showReuseMessage": false,
-        "clear": false
-      },
-      "problemMatcher": []
-    },
-    {
       "label": "Update Chainlit.md with Build Info",
       "type": "shell",
       "command": "${workspaceFolder}/.venv/bin/python ${workspaceFolder}/src/utils/update_chainlit_version.py",
@@ -96,11 +81,29 @@
       "problemMatcher": []
     },
     {
+      "label": "Get List of Running Pods",
+      "type": "shell",
+      "command": "kubectl get pods -n fiddler-chatbot",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Deploy Chatbot to QA",
       "dependsOn": [
         "Update Chainlit.md with Build Info",
         "AWS Login",
-        "Run Build Script"
+        "Run Build Script",
+        "Get List of Running Pods"
       ],
       "dependsOrder": "sequence",
       "presentation": {
@@ -118,7 +121,8 @@
       "dependsOn": [
         "Update Chainlit.md with Build Info",
         "AWS Login",
-        "Run Build Script without Cache"
+        "Run Build Script without Cache",
+        "Get List of Running Pods"
       ],
       "dependsOrder": "sequence",
       "presentation": {

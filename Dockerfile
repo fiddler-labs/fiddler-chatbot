@@ -15,7 +15,7 @@ RUN apt-get update \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PYTHONPATH=/app/src \
+    PYTHONPATH=/app \
     HOST=0.0.0.0 \
     PORT=8000
 

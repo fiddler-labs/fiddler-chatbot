@@ -329,6 +329,51 @@ docker build --no-cache -t fiddler-chatbot:latest .
 kubectl get pods -n fiddler-chatbot
 ```
 
+## Monitoring Pods After Deployment
+
+After deployment completes, you can monitor the running pods and view their logs to verify the deployment is working correctly.
+
+### List Running Pods
+
+To see all running pods in the `fiddler-chatbot` namespace:
+
+```bash
+kubectl get pods -n fiddler-chatbot
+```
+
+This command will display output similar to:
+
+```
+NAME                               READY   STATUS    RESTARTS   AGE
+fiddler-chatbot-7f7485766f-7lvpv   1/1     Running   0          4m57s
+fiddler-chatbot-7f7485766f-8mkl4   1/1     Running   0          75m
+```
+
+**Note:** This command is automatically executed at the end of both deployment workflows (with cache and without cache) as part of the VS Code task sequence.
+
+### View Pod Logs
+
+To view logs from a specific pod, you need the exact pod name from the `kubectl get pods` output above:
+
+```bash
+kubectl logs -n fiddler-chatbot <pod-name>
+```
+
+**Example:**
+```bash
+kubectl logs -n fiddler-chatbot fiddler-chatbot-7f7485766f-8mkl4
+```
+
+**Important:** The logs command requires the exact pod name from the first command. Since pod names are dynamically generated (they include unique identifiers), this cannot be fully automated. After running `kubectl get pods`, copy the pod name and use it in the logs command.
+
+### Follow Logs in Real-Time
+
+To stream logs in real-time (similar to `tail -f`):
+
+```bash
+kubectl logs -n fiddler-chatbot <pod-name> -f
+```
+
 ## Security Considerations
 
 - **No Secrets in Build** - Environment variables are not passed during Docker build, and `.env` files are excluded from Docker images via `.dockerignore`
