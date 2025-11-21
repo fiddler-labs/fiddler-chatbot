@@ -31,6 +31,23 @@
       "problemMatcher": []
     },
     {
+      "label": "Update Chainlit.md with Build Info",
+      "type": "shell",
+      "command": "${workspaceFolder}/.venv/bin/python ${workspaceFolder}/src/utils/update_chainlit_version.py",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": false
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "AWS Login",
       "type": "shell",
       "command": "awslogin",
@@ -81,6 +98,7 @@
     {
       "label": "Deploy Chatbot to QA",
       "dependsOn": [
+        "Update Chainlit.md with Build Info",
         "AWS Login",
         "Run Build Script"
       ],
@@ -98,6 +116,7 @@
     {
       "label": "Deploy Chatbot to QA (Full rebuild)",
       "dependsOn": [
+        "Update Chainlit.md with Build Info",
         "AWS Login",
         "Run Build Script without Cache"
       ],

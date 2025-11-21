@@ -6,10 +6,10 @@ Your intelligent companion for AI observability, monitoring, and model insights.
 
 Fiddler AI Assistant is powered by advanced language models and enhanced with Fiddler's comprehensive monitoring capabilities. I can help you with:
 
+- **Fiddler Platform**: Navigation, feature explanations, and implementation guidance
 - **AI Model Monitoring**: Understanding model performance, drift detection, and observability best practices
-- **Fiddler Platform**: Navigation, feature explanations, and implementation guidance  
 - **ML Operations**: Best practices for model deployment, monitoring, and governance
-- **Technical Support**: Troubleshooting and optimization recommendations
+- **Technical Support**: Troubleshooting and optimization recommendations for Fiddler's Agentic and ML observability and monitoring platform
 
 ## How I Can Help
 
@@ -26,3 +26,7 @@ Simply start by asking me anything about Fiddler, AI monitoring, or model observ
 ---
 
 Powered by Fiddler's AI Observability Platform
+
+Branch: main
+Commit: 2d327eb
+Date: 20251121
