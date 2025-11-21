@@ -2,8 +2,6 @@
 
 ## Main Tasks
 
-- show git commit hash in the chatbot UI for tracing deployments
-
 - implement PII detection similiarly to jailed personas ,
   - created a json first using imagined PII data , control with a instruction prompt that lists the PII data expected
 

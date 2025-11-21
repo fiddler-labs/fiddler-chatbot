@@ -9,7 +9,7 @@ import uuid
 import logging
 from typing import Literal
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import SecretStr
 import chainlit as cl
 from chainlit.input_widget import Switch
@@ -122,7 +122,7 @@ logger.info("✓ language model initialized successfully")
 @tool
 def get_system_time() -> str:
     """Get the current system time"""
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 tools = [
     get_system_time,
