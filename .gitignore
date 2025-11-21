@@ -18,8 +18,8 @@ build/
 .env
 
 local_assets/*/*.md
-local_assets/vector_index_feed_*.csv
-local_assets/*_output_pandas.csv
+local_assets/cloned_repos/
+# local_assets/*.csv
 
 logs/log_*.log
 
