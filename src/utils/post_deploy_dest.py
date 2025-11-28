@@ -1,1 +1,1 @@
-print("Post deploy destination : deployment completed")
+print("Post deployment attempt destination")

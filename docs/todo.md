@@ -2,8 +2,6 @@
 
 ## Pending action items listed in planned order of execution and priority
 
-- make repo private , now that streamlit community cloud is not used
-
 - python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
 
 - HIGH P : Add MCP from gitbooks to replace the cassandra stack
