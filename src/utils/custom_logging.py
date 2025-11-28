@@ -44,10 +44,10 @@ def setup_logging(log_level: str = "INFO"):
     app_file_handler.setLevel(numeric_level)
     print(f"Application logs will be written to: {app_log_file}")
 
-    # Add console handler for ERROR and above (for stack traces)
+    # Add console handler with same level as file handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
-    console_handler.setLevel(logging.WARNING)
+    console_handler.setLevel(numeric_level)
 
     # Add handlers to the root logger
     root_logger.addHandler(app_file_handler)
