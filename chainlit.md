@@ -28,5 +28,5 @@ Simply start by asking me anything about Fiddler, AI monitoring, or model observ
 Powered by Fiddler's AI Observability Platform
 
 Branch: main
-Commit: 6e1f634
-Date: 20251128
+Commit: c295857
+Date: 20251203

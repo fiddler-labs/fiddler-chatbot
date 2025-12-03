@@ -3,6 +3,8 @@
 ## Pending action items listed in planned order of execution and priority
 
 - python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
+  - the `fiddler-utils` folder is not being processed into the md-notebooks folder
+  - the `misc-utils` folder is not being processed into the md-notebooks folder
 
 - HIGH P : Add MCP from gitbooks to replace the cassandra stack
 
@@ -11,6 +13,8 @@
 - More Tools implementation for agentic orchestration
 
   - Also explore the gitbook APIs : those can be a tool call ideas too
+
+  - Nick's idea : a request a demo funcitonality , where if someone requests a demo , then the chatbot gathers data and sends it to a endpoint  / google form / webhook
 
   - Python Code Validation Tool:
     - **Problem**: LLM-generated code may contain syntax/type errors or hallucinated functions
@@ -35,10 +39,6 @@
 - GitHub Actions workflow for test automation : Immediate feedback on breaking changes
 
 ## Better coding practices
-
-- Data Consistency Problems
-  - No idempotency: Running twice may produce different results. Make process repeatable without side effects
-  - No change detection: Re-processes everything even if sources unchanged
 
 - Resource Management:  No cleanup of temporary files on failure
 - Magic numbers: Hardcoded timeouts, chunk sizes
