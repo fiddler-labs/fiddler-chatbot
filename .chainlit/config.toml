@@ -63,3 +63,5 @@ default_avatar_file_url = "/public/logo.png"
 
 [meta]
 generated_by = "2.6.5"
+
+allowed_origins = ["*"] # todo - wildcard / all is a bad idea
