@@ -65,9 +65,12 @@ def setup_logging(log_level: str = "INFO"):
         # Suppress verbose third-party library logs
         logging.getLogger( 'httpx'     ).setLevel(logging. WARNING )
         logging.getLogger( 'httpcore'  ).setLevel(logging. WARNING )
+        logging.getLogger( 'urllib3'   ).setLevel(logging. INFO    )
         logging.getLogger( 'cassandra' ).setLevel(logging. ERROR   )
         logging.getLogger( 'cassio'    ).setLevel(logging. WARNING )
         logging.getLogger( 'openai'    ).setLevel(logging. WARNING )
         logging.getLogger( 'langgraph' ).setLevel(logging. INFO    )
+        logging.getLogger( 'watchfiles').setLevel(logging. WARNING )
+
 
     configure_third_party_logging()

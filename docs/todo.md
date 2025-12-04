@@ -2,6 +2,8 @@
 
 ## Pending action items listed in planned order of execution and priority
 
+- make repo private
+
 - python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
   - the `fiddler-utils` folder is not being processed into the md-notebooks folder
   - the `misc-utils` folder is not being processed into the md-notebooks folder
@@ -38,7 +40,6 @@
 - Dev and Prod environments currently mixed : Implement config-driven environment switching : Clean separation of development vs production data/settings
 - GitHub Actions workflow for test automation : Immediate feedback on breaking changes
 
-## Better coding practices
-
-- Resource Management:  No cleanup of temporary files on failure
-- Magic numbers: Hardcoded timeouts, chunk sizes
+- Better coding practices
+  - Resource Management:  No cleanup of temporary files on failure
+  - Magic numbers: Hardcoded timeouts, chunk sizes

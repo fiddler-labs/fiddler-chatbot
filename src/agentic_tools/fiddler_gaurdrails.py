@@ -15,6 +15,7 @@ token = os.getenv("FIDDLER_API_KEY_GUARDRAILS")
 fiddler_url = config[ "FIDDLER_URL_GUARDRAILS"]
 url_safety = f"{fiddler_url}/v3/guardrails/ftl-safety"
 url_faithfulness = f"{fiddler_url}/v3/guardrails/ftl-response-faithfulness"
+url_sensitive_information = f"{fiddler_url}/v3/guardrails/sensitive-information"
 
 
 logger = logging.getLogger(__name__)
@@ -157,6 +158,102 @@ def get_safety_guardrail_results(query: str) -> tuple[float, float]:
         raise
 
 
+def get_pii_guardrail_results(
+    text: str,
+    entity_categories: str | list[str] = "PII",
+    custom_entities: list[str] | None = None,
+) -> tuple[list[dict], float]:
+    """Detects sensitive information (PII/PHI) in text using Fiddler's Fast PII API.
+
+    Args:
+        text: The input text to analyze for sensitive information.
+        entity_categories: Detection mode(s) - "PII", "PHI", "Custom Entities", or a list.
+        custom_entities: Custom entity patterns (required when using "Custom Entities" mode).
+
+    Returns:
+        Tuple of (detected_entities_list, latency_in_seconds) where detected_entities_list
+        contains dictionaries with 'label', 'text', and 'score' for each detected entity.
+    """
+    # Validate token limits (approximate using character count)
+    # PII limit: 4096 tokens
+    # Rough estimate: 1 token ≈ 4 characters
+    max_input_chars = int(4096 * 4 * 0.85)  # 85% of the theoretical limit as a safety margin
+
+    if len(text) > max_input_chars:
+        logger.warning(
+            f"Input text truncated from {len(text)} to {max_input_chars} characters to meet API limits"
+        )
+        text = text[:max_input_chars]
+
+    # Validate input
+    if not text.strip():
+        logger.error("Input text cannot be empty")
+        raise ValueError("Input text cannot be empty")
+
+    # Build the request data
+    data: dict = {"input": text}
+
+    # Add entity configuration if specified
+    if entity_categories != "PII" or custom_entities:
+        data["entity_categories"] = entity_categories
+        if custom_entities:
+            data["custom_entities"] = custom_entities
+
+    payload = json.dumps({"data": data})
+    headers = {"Content-Type": "application/json", "Authorization": f"Bearer {token}"}
+
+    guardrail_start_time = time.time()
+    guardrail_response_pii = requests.request(
+        "POST",
+        url_sensitive_information,
+        headers=headers,
+        data=payload,
+        timeout=FDL_GAURDRAIL_REQUESTS_TIMEOUT,
+    )
+    guardrail_end_time = time.time()
+    guardrail_latency = guardrail_end_time - guardrail_start_time
+
+    # Check if request was successful
+    if guardrail_response_pii.status_code != 200:
+        logger.error(
+            f"Error: PII API request failed with status code {guardrail_response_pii.status_code}"
+        )
+        logger.error(f"Response: {guardrail_response_pii.text}")
+        raise ValueError(
+            f"API request failed with status code {guardrail_response_pii.status_code}"
+        )
+
+    try:
+        response_dict = guardrail_response_pii.json()
+        logger.debug(f"PII API Response: {response_dict}")
+
+        # Extract the sensitive information scores
+        if "fdl_sensitive_information_scores" in response_dict:
+            entities = response_dict["fdl_sensitive_information_scores"]
+            # Transform to simplified format (excluding start/end positions)
+            simplified_entities = [
+                {
+                    "label": entity.get("label", "unknown"),
+                    "text": entity.get("text", ""),
+                    "score": entity.get("score", 0.0),
+                }
+                for entity in entities
+            ]
+            return simplified_entities, guardrail_latency
+        else:
+            logger.error(
+                f"Warning: Expected PII key not found. Available keys: {list(response_dict.keys())}"
+            )
+            raise ValueError(
+                f"Expected PII key not found. Available keys: {list(response_dict.keys())}"
+            )
+
+    except json.JSONDecodeError as e:
+        logger.error(f"Error decoding PII JSON response: {e}")
+        logger.error(f"Raw response: {guardrail_response_pii.text}")
+        raise
+
+
 @tool
 def tool_fiddler_guardrail_safety(query: str) -> dict:
     """Jailbreak Detection Guardrail - CRITICAL SECURITY TOOL
@@ -213,3 +310,51 @@ def tool_fiddler_guardrail_faithfulness(response: str, source_docs: list):
     """
     faithfulness_score, latency = get_faithfulness_guardrail_results(response, source_docs)
     return {"faithfulness_score": faithfulness_score, "latency_in_seconds": latency}
+
+@tool
+def tool_fiddler_guardrail_pii(text: str) -> dict:
+    """PII Detection Guardrail - DATA PRIVACY PROTECTION TOOL
+
+    PURPOSE: Detect personally identifiable information (PII) in user inputs to prevent data leakage.
+
+    WHEN TO USE - MANDATORY FOR EVERY USER INPUT:
+    - ALWAYS check user messages for PII before processing
+    - Use to detect names, emails, phone numbers, SSNs, credit cards, addresses, etc.
+    - Invoke BEFORE any RAG retrieval or response generation
+
+    WORKFLOW:
+    1. Analyze user input for PII patterns
+    2. Returns detected entities with labels, text snippets, and confidence scores
+    3. If PII is detected (pii_detected: true):
+       - WARN the user that PII was detected in their message
+       - List the types of PII found (e.g., "email", "phone_number", "social_security_number")
+       - Advise the user to avoid sharing sensitive information
+       - Proceed with caution or ask user to rephrase without PII
+    4. If no PII detected (pii_detected: false): Safe to proceed normally
+
+    Input: text(str): The user's input text to check for PII
+
+    Outputs: (Dictionary/JSON)
+        - pii_detected(bool): Whether any PII was found in the input
+        - entity_count(int): Number of PII entities detected
+        - detected_entities(list): List of detected PII with labels, text, and confidence scores
+        - latency_in_seconds(float): Processing time in seconds
+
+    SUPPORTED PII TYPES (35+ types):
+        - Personal: person, date_of_birth
+        - Contact: email, phone_number, address, postal_code
+        - Financial: credit_card_number, bank_account_number, cvv, iban
+        - Government IDs: social_security_number, passport_number, drivers_license_number
+        - Digital: ip_address
+
+    IMPORTANT: This is a privacy-critical tool. Always check user inputs for PII.
+    """
+    detected_entities, latency = get_pii_guardrail_results(text)
+    pii_detected = len(detected_entities) > 0
+
+    return {
+        "pii_detected": pii_detected,
+        "entity_count": len(detected_entities),
+        "detected_entities": detected_entities,
+        "latency_in_seconds": latency,
+    }

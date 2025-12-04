@@ -5,6 +5,8 @@
 - implement PII detection similiarly to jailed personas ,
   - created a json first using imagined PII data , control with a instruction prompt that lists the PII data expected
 
+- implement deterministic step for guardrails , see /docs/guardrails-deterministic-step-options.md
+
 ## Low Priority Refactoring Suggestions
 
 - **Variable scoping patterns**: Several files had "possibly unbound" variable errors that indicate potential refactoring opportunities:

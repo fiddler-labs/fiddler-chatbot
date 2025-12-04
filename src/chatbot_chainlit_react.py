@@ -54,6 +54,7 @@ from src.agentic_tools.validator_url import validate_url
 from src.agentic_tools.fiddler_gaurdrails import (
     tool_fiddler_guardrail_faithfulness,
     tool_fiddler_guardrail_safety,
+    tool_fiddler_guardrail_pii,
     )
 
 from src.utils.custom_logging import setup_logging
@@ -122,14 +123,15 @@ logger.info("✓ language model initialized successfully")
 @tool
 def get_system_time() -> str:
     """Get the current system time"""
-    return datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    return datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S") # noqa: UP017
 
 tools = [
     get_system_time,
-    rag_over_fiddler_knowledge_base,
+    tool_fiddler_guardrail_pii,
     tool_fiddler_guardrail_safety,
     tool_fiddler_guardrail_faithfulness,
     validate_url,
+    rag_over_fiddler_knowledge_base,
     ]
 logger.info("✓ Tools configured successfully")
 
@@ -142,6 +144,10 @@ app = create_agent(
     checkpointer=checkpointer,
     middleware=[create_fiddler_context_middleware]
     )
+
+# todo : test HEXOP
+get_system_time.invoke({})
+logger.info("System time tool called manually to test HEXOP")
 
 ok, msg = init_rag_resources()
 if not ok:
