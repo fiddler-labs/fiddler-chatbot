@@ -29,7 +29,7 @@
       }
     },
     {
-      "name": "Data Generator: Batch Orchestrator (Personas)",
+      "name": "Chat Simulator : Batch Orchestrator (Personas)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/data_generator/batch_orchestrator.py",
@@ -49,7 +49,7 @@
       }
     },
     {
-      "name": "Data Generator: Batch Orchestrator (Jailbreak Personas)",
+      "name": "Chat Simulator : Batch Orchestrator (Jailbreak Personas)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/data_generator/batch_orchestrator.py",
@@ -69,7 +69,7 @@
       }
     },
     {
-      "name": "Data Generator: Validate Pipeline",
+      "name": "Chat Simulator : Validate Pipeline",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/data_generator/validate_pipeline.py",
@@ -85,7 +85,7 @@
       }
     },
     {
-      "name": "Data Generator: Single Persona Simulator",
+      "name": "Chat Simulator : Single Persona Simulator",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/data_generator/chat_simulator_agent.py",
@@ -105,7 +105,7 @@
       }
     },
     {
-      "name": "Run REACT CHAINLIT Chatbot (Local)",
+      "name": "Run Chatbot Local : Chainlit LangGraph_Agent",
       "type": "debugpy",
       "request": "launch",
       "module": "chainlit",
@@ -120,98 +120,83 @@
         "PYTHONPATH": "${workspaceFolder}"
       }
     },
-    {
-      "name": "Run AGENTIC CHAINLIT Chatbot (Local)",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "chainlit",
-      "args": ["run", "${workspaceFolder}/src/chatbot_chainlit.py", "-w"],
-      "console": "integratedTerminal",
-      // "console": "externalTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "preLaunchTask": "Load Environment Variables",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Run AGENTIC Chatbot (Manual CLI chat)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/chatbot_agentic.py",
-      "console": "integratedTerminal",
-      // "console": "externalTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "preLaunchTask": "Load Environment Variables",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Run AGENTIC Chatbot (Automated)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/chatbot_agentic.py",
-      "args": ["Hello", "What is the current time?", "quit"],
-      "console": "integratedTerminal",
-      // "console": "externalTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "preLaunchTask": "Load Environment Variables",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Run LEGACY Chatbot CLI",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/chatbot.py",
-      // "args": [],
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "preLaunchTask": "Load Environment Variables",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Run LEGACY Chatbot Streamlit",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "streamlit",
-      "args": ["run", "${workspaceFolder}/src/chatbot.py"],
-      "console": "integratedTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
-    {
-      "name": "Data Generation: Run Workflow",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/data_generation.py",
-      // "args": [],
-      "console": "integratedTerminal",
-      // "console": "externalTerminal",
-      "justMyCode": true,
-      "python": "${workspaceFolder}/.venv/bin/python",
-      "envFile": "${workspaceFolder}/.env",
-      "preLaunchTask": "Load Environment Variables",
-      "env": {
-        "PYTHONPATH": "${workspaceFolder}"
-      }
-    },
+    // {
+    //   "name": "Run AGENTIC CHAINLIT Chatbot (Local)",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "module": "chainlit",
+    //   "args": ["run", "${workspaceFolder}/src/chatbot_chainlit.py", "-w"],
+    //   "console": "integratedTerminal",
+    //   // "console": "externalTerminal",
+    //   "justMyCode": true,
+    //   "python": "${workspaceFolder}/.venv/bin/python",
+    //   "envFile": "${workspaceFolder}/.env",
+    //   "preLaunchTask": "Load Environment Variables",
+    //   "env": {
+    //     "PYTHONPATH": "${workspaceFolder}"
+    //   }
+    // },
+    // {
+    //   "name": "Run AGENTIC Chatbot (Manual CLI chat)",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "program": "${workspaceFolder}/src/chatbot_agentic.py",
+    //   "console": "integratedTerminal",
+    //   // "console": "externalTerminal",
+    //   "justMyCode": true,
+    //   "python": "${workspaceFolder}/.venv/bin/python",
+    //   "envFile": "${workspaceFolder}/.env",
+    //   "preLaunchTask": "Load Environment Variables",
+    //   "env": {
+    //     "PYTHONPATH": "${workspaceFolder}"
+    //   }
+    // },
+    // {
+    //   "name": "Run AGENTIC Chatbot (Automated)",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "program": "${workspaceFolder}/src/chatbot_agentic.py",
+    //   "args": ["Hello", "What is the current time?", "quit"],
+    //   "console": "integratedTerminal",
+    //   // "console": "externalTerminal",
+    //   "justMyCode": true,
+    //   "python": "${workspaceFolder}/.venv/bin/python",
+    //   "envFile": "${workspaceFolder}/.env",
+    //   "preLaunchTask": "Load Environment Variables",
+    //   "env": {
+    //     "PYTHONPATH": "${workspaceFolder}"
+    //   }
+    // },
+    // {
+    //   "name": "Run LEGACY Chatbot CLI",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "program": "${workspaceFolder}/src/chatbot.py",
+    //   // "args": [],
+    //   "console": "integratedTerminal",
+    //   "justMyCode": true,
+    //   "python": "${workspaceFolder}/.venv/bin/python",
+    //   "envFile": "${workspaceFolder}/.env",
+    //   "preLaunchTask": "Load Environment Variables",
+    //   "env": {
+    //     "PYTHONPATH": "${workspaceFolder}"
+    //   }
+    // },
+    // {
+    //   "name": "Run LEGACY Chatbot Streamlit",
+    //   "type": "debugpy",
+    //   "request": "launch",
+    //   "module": "streamlit",
+    //   "args": ["run", "${workspaceFolder}/src/chatbot.py"],
+    //   "console": "integratedTerminal",
+    //   "justMyCode": true,
+    //   "python": "${workspaceFolder}/.venv/bin/python",
+    //   "envFile": "${workspaceFolder}/.env",
+    //   "env": {
+    //     "PYTHONPATH": "${workspaceFolder}"
+    //   }
+    // },
+
     {
       "name": "Vector Index: UPDATE: Safe Mode (APPEND ONLY)",
       "type": "debugpy",
@@ -264,6 +249,22 @@
       "program": "${workspaceFolder}/src/vector_index_mgmt.py",
       "args": ["--health-check"],
       "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "envFile": "${workspaceFolder}/.env",
+      "preLaunchTask": "Load Environment Variables",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      }
+    },
+    {
+      "name": "RAG Data Corpus Generation: Run Workflow",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/data_generation.py",
+      // "args": [],
+      "console": "integratedTerminal",
+      // "console": "externalTerminal",
       "justMyCode": true,
       "python": "${workspaceFolder}/.venv/bin/python",
       "envFile": "${workspaceFolder}/.env",
