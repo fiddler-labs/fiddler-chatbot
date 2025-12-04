@@ -327,15 +327,16 @@ async def on_chat_end():
     # except Exception as e:
     #     logger.warning(f"RAG shutdown encountered an error: {e}")
 
-    # Clean up instrumentation if needed
-    if instrumentor:
-        try:
-            instrumentor.uninstrument()
-            logger.info("✓ Fiddler instrumentation cleaned up")
-        except Exception as e:
-            logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
-            logger.error(traceback.format_exc())
-            raise e
+    # # Clean up instrumentation if needed
+    # if instrumentor:
+    #     try:
+    #         instrumentor.uninstrument()
+    #         logger.info("✓ Fiddler instrumentation cleaned up")
+    #     except Exception as e:
+    #         logger.error(f"Error cleaning up Fiddler instrumentation: {e}")
+    #         logger.error(traceback.format_exc())
+    #         raise e
+    pass
 
 
 if __name__ == "__main__":

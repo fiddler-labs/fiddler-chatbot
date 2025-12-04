@@ -4,6 +4,9 @@
 
 - make repo private
 
+- include try-except blocks inside the guardrail calling tools itself
+  - please explore the best way to do this as per the langgraph best practices
+
 - python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
   - the `fiddler-utils` folder is not being processed into the md-notebooks folder
   - the `misc-utils` folder is not being processed into the md-notebooks folder
