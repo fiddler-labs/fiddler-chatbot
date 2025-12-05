@@ -41,10 +41,9 @@ RUN if [ -f uv.lock ]; then uv sync --frozen; else uv sync; fi
 # Copy the entire project, relying on .dockerignore to exclude unnecessary files
 COPY . .
 
-
 # Expose the internal Chainlit port (informational only)
 EXPOSE 8000
 
-# Optionally load a mounted .env at runtime via python-dotenv (already in code),
-# or pass env vars with --env-file. Start Chainlit bound to HOST:PORT.
-CMD ["sh", "-lc", "/app/.venv/bin/chainlit run src/chatbot_chainlit_react.py --host ${HOST:-0.0.0.0} --port ${PORT:-8000}"]
+# Start guardrails warmup daemon in background and Chainlit in foreground
+# Using exec for Chainlit so it becomes PID 1 and receives signals properly
+CMD sh -c "/app/.venv/bin/python /app/src/uitls/guardrails_warmup.py & exec /app/.venv/bin/chainlit run src/chatbot_chainlit_react.py --host ${HOST:-0.0.0.0} --port ${PORT:-8000}"

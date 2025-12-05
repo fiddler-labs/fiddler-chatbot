@@ -5,18 +5,21 @@ Quick health check to verify all three Fiddler guardrails are responding.
 Run this before deeper chatbot testing to ensure the guardrails environment is up.
 """
 
+import logging
 from dotenv import load_dotenv
-
-load_dotenv()
 
 from src.agentic_tools.fiddler_gaurdrails import (
     get_faithfulness_guardrail_results,
     get_pii_guardrail_results,
     get_safety_guardrail_results,
 )
-from src.utils.custom_logging import setup_logging
 
+from src.utils.custom_logging import setup_logging
 setup_logging(log_level="INFO")
+logger = logging.getLogger(__name__)
+
+
+load_dotenv()
 
 # Test data
 TEST_SAFETY_QUERY = "What is machine learning and how does it work?"
@@ -55,9 +58,9 @@ def test_pii_guardrail() -> tuple[bool, str]:
 
 
 def main():
-    print("\n" + "=" * 60)
-    print("FIDDLER GUARDRAILS AVAILABILITY TEST")
-    print("=" * 60 + "\n")
+    logger.info("=" * 20)
+    logger.info("FIDDLER GUARDRAILS AVAILABILITY TEST")
+    logger.info("=" * 20 + "\n")
 
     tests = [
         ("Safety Guardrail", test_safety_guardrail),
@@ -70,12 +73,12 @@ def main():
         passed, detail = test_fn()
         status = "[PASS]" if passed else "[FAIL]"
         results.append((name, passed, detail))
-        print(f"{status} {name} - {detail}")
+        logger.info(f"{status} {name} - {detail}")
 
-    print("\n" + "-" * 60)
+    logger.info("-" * 20)
     passed_count = sum(1 for _, passed, _ in results if passed)
-    print(f"Summary: {passed_count}/{len(results)} guardrails operational")
-    print("-" * 60 + "\n")
+    logger.info(f"Summary: {passed_count}/{len(results)} guardrails operational")
+    logger.info("-" * 20 + "\n")
 
     return all(passed for _, passed, _ in results)
 

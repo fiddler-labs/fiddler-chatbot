@@ -4,6 +4,10 @@
 
 - make repo private
 
+- check gaurdrails aliveness on every session start .
+  - alert the user on teh frontend if the check fails
+  - also run it on a loop so that the gaurdrails are always alive
+
 - include try-except blocks inside the guardrail calling tools itself
   - please explore the best way to do this as per the langgraph best practices
 
@@ -11,7 +15,7 @@
   - the `fiddler-utils` folder is not being processed into the md-notebooks folder
   - the `misc-utils` folder is not being processed into the md-notebooks folder
 
-- HIGH P : Add MCP from gitbooks to replace the cassandra stack
+- HIGH P : Add MCP as a tool from gitbooks to replace the cassandra stack
 
 ## Lower priority considerations / Deep future tasks
 
