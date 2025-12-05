@@ -2,9 +2,7 @@
 
 ## Pending action items listed in planned order of execution and priority
 
-- make repo private
-
-- dont raise errors in the test_guardrails_availability.py script , just log the error and continue gracefully , let the LLM know the response is not available in this call , maybe a success flag
+## Main Tasks
 
 - check gaurdrails aliveness on every session start .
   - alert the user on teh frontend if the check fails
@@ -12,12 +10,23 @@
 
 - include try-except blocks inside the guardrail calling tools itself
   - please explore the best way to do this as per the langgraph best practices
+  - dont raise errors in the test_guardrails_availability.py script , just log the error and continue gracefully , let the LLM know the response is not available in this call , maybe a success flag
+
+- implement PII detection similiarly to jailed personas ,
+  - created a json first using imagined PII data , control with a instruction prompt that lists the PII data expected
+
+- implement deterministic step for guardrails , see /docs/guardrails-deterministic-step-options.md
+
+- make repo private
+  - Find Praveen's commit : and revert it , now that the repo is private , lets implement the github actions
+
+- Add MCP as a tool from gitbooks to replace the cassandra stack
+  - pitch this is as long term replacement to the clunky data stax rag stack ( 75% of the codebase is related to the cassandra stack )
 
 - python files not getting processed in to the md-notebooks folder from the fiddler-exmaples folder
   - the `fiddler-utils` folder is not being processed into the md-notebooks folder
   - the `misc-utils` folder is not being processed into the md-notebooks folder
 
-- HIGH P : Add MCP as a tool from gitbooks to replace the cassandra stack
 
 ## Lower priority considerations / Deep future tasks
 
@@ -51,4 +60,13 @@
 
 - Better coding practices
   - Resource Management:  No cleanup of temporary files on failure
-  - Magic numbers: Hardcoded timeouts, chunk sizes
+  - Extract constants / Magic numbers: Hardcoded timeouts, chunk sizes, special prefixes, etc.
+  - Add type hints throughout
+  - data_generation.py - Extract configuration to config file
+  - data_generation.py - Add progress tracking/logging for batch processing
+
+- **Variable scoping patterns**: Several files had "possibly unbound" variable errors that indicate potential refactoring opportunities:
+  - `src/vector_index_mgmt.py`: Exception handlers referencing variables that might not be initialized - pattern suggests need for better error handling structure
+
+- **Type safety improvements**:
+  - `data_generator/validate_pipeline.py`: Had to explicitly convert DataFrame columns to pandas Series for type checker - suggests pandas type hints could be improved throughout codebase
