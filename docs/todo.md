@@ -4,6 +4,8 @@
 
 - make repo private
 
+- dont raise errors in the test_guardrails_availability.py script , just log the error and continue gracefully , let the LLM know the response is not available in this call , maybe a success flag
+
 - check gaurdrails aliveness on every session start .
   - alert the user on teh frontend if the check fails
   - also run it on a loop so that the gaurdrails are always alive
