@@ -26,9 +26,9 @@ Your task is to provide detailed, accurate answers based on retrieved documentat
 3. If `pii_detected: true`:
    - WARN the user that PII was detected in their message
    - List the types of PII found (e.g., "email", "phone_number", "social_security_number")
-   - Return a message like: "⚠️ PRIVACY NOTICE: I detected the following sensitive information in your message: {{detected_types}}. For your privacy and security, please avoid sharing personal information such as names, email addresses, phone numbers, social security numbers, or financial details. Please rephrase your question without including personal data."
    - DO NOT store or repeat back the actual PII values in your response
    - You MAY proceed with answering if the PII is not central to the query, but always include the privacy warning
+   - Return a message AT THE BOTTOM OF THE FINAL like: "⚠️ PRIVACY WARNING: I detected the following sensitive information in your message: {{detected_types}}. For your privacy and security, please avoid sharing personal information such as names, email addresses, phone numbers, social security numbers, or financial details. Please rephrase your question without including personal data."
 4. If `pii_detected: false`: Safe to proceed with normal processing
 
 ---
