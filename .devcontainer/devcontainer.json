@@ -1,33 +1,59 @@
 {
-  "name": "Python 3",
-  // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
+  "name": "Fiddler Chatbot - Chainlit",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/app",
   "customizations": {
     "codespaces": {
       "openFiles": [
         "README.md",
-        "chatbot.py"
+        "src/chatbot_chainlit_react.py"
       ]
     },
     "vscode": {
-      "settings": {},
+      "settings": {
+        "python.defaultInterpreterPath": "/app/.venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.analysis.extraPaths": [
+          "/app/src"
+        ]
+      },
       "extensions": [
         "ms-python.python",
-        "ms-python.vscode-pylance"
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy"
       ]
     }
   },
-  "updateContentCommand": "[ -f packages.txt ] && sudo apt update && sudo apt upgrade -y && sudo xargs apt install -y <packages.txt; [ -f requirements.txt ] && pip3 install --user -r requirements.txt; pip3 install --user streamlit; echo '✅ Packages installed and Requirements met'",
+  // Mount workspace and .env file
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached",
+    "source=${localWorkspaceFolder}/.env,target=/app/.env,type=bind,consistency=cached"
+  ],
+  // Run the application automatically when container starts
   "postAttachCommand": {
-    "server": "streamlit run chatbot.py --server.enableCORS false --server.enableXsrfProtection false"
+    "server": "sh -c '/app/.venv/bin/python /app/src/utils/guardrails_warmup.py & exec /app/.venv/bin/chainlit run src/chatbot_chainlit_react.py --host 0.0.0.0 --port 8000'"
   },
+  // Port forwarding configuration - automatically opens browser
   "portsAttributes": {
-    "8501": {
-      "label": "Application",
+    "8000": {
+      "label": "Chainlit Application",
       "onAutoForward": "openPreview"
     }
   },
   "forwardPorts": [
-    8501
-  ]
+    8000
+  ],
+  // Set environment variables
+  "remoteEnv": {
+    "PYTHONPATH": "/app",
+    "HOST": "0.0.0.0",
+    "PORT": "8000"
+  },
+  // Use the appuser from Dockerfile
+  "remoteUser": "appuser",
+  // Override command to allow postAttachCommand to run
+  "overrideCommand": true
 }
